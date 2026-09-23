@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>JudgeYou · A field guide to the people in your group chat</title>
+    <meta name="description" content="Paste a group chat. Jev classifies everyone in it into one of twelve species." />
+    <link rel="icon" href="img/types/drama_llama.webp" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,400..900,0..100;1,9..144,400..900,0..100&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+    />
+    <link rel="stylesheet" href="css/theme.css" />
+    <link rel="stylesheet" href="css/style.css" />
+    <script type="module" src="js/app.js"></script>
+  </head>
+  <body>
+    <header class="masthead">
+      <strong>JudgeYou</strong>
+      <span data-i18n="tagline">A field guide to the people in your group chat</span>
+      <span data-i18n="volume">Vol. I · 2026</span>
+      <select id="language" data-i18n-attr="aria-label: language"></select>
+    </header>
+
+    <main>
+      <section class="hero">
+        <h1 data-i18n-html="hero">Who is the <em>problem</em> in your group chat?</h1>
+        <p class="lede" data-i18n="lede"></p>
+      </section>
+
+      <div class="species-strip" aria-hidden="true">
+        <div id="species-track" class="species-track"></div>
+      </div>
+
+      <section class="intake">
+        <div class="intake-label"><b data-i18n="exhibit">Exhibit A</b><span data-i18n="evidence">The evidence</span></div>
+        <div>
+          <div class="chat-mode-picker">
+            <label for="chat-mode" data-i18n="chatModeLabel"></label>
+            <select id="chat-mode">
+              <option value="group" data-i18n="chatModes.group">Group chat</option>
+              <option value="partner" data-i18n="chatModes.partner">Partner chat</option>
+            </select>
+            <p id="partner-hint" data-i18n="partnerHint" hidden></p>
+          </div>
+          <textarea
+            id="chat"
+            spellcheck="false"
+            data-i18n-attr="aria-label: chatLabel; placeholder: chatPlaceholder"
+          ></textarea>
+          <div id="subjects" class="subjects" aria-live="polite"></div>
+          <div class="data-notice">
+            <p data-i18n="fineprint"></p>
+            <p id="raw-notice" data-i18n="rawNotice" hidden></p>
+          </div>
+          <div class="intake-bar">
+            <button id="open-file" class="secondary" type="button">
+              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 16V4m0 0L7 9m5-5 5 5M5 14v5h14v-5" /></svg>
+              <span data-i18n="openFile"></span>
+            </button>
+            <input id="file" type="file" hidden accept=".txt,.zip,.json,.html,.htm,.csv,.tsv,text/plain,application/zip,application/json,text/html,text/csv" />
+            <button id="sample" class="link" type="button" data-i18n="sample"></button>
+            <button id="judge" class="primary" type="button" disabled data-i18n="judge"></button>
+          </div>
+          <form id="names-form" class="names-form" hidden>
+            <label for="names" data-i18n="namesLabel"></label>
+            <input id="names" autocomplete="off" data-i18n-attr="placeholder: namesPlaceholder" />
+            <button type="submit" data-i18n="namesSubmit"></button>
+          </form>
+          <form id="key-form" class="key-form" hidden>
+            <input
+              id="key"
+              type="password"
+              autocomplete="off"
+              required
+              data-i18n-attr="placeholder: keyPlaceholder; aria-label: keyLabel"
+            />
+            <button type="submit" data-i18n="keySubmit"></button>
+          </form>
+          <div class="key-storage">
+            <p data-i18n="keyStorage"></p>
+            <button id="clear-key" class="link" type="button" data-i18n="clearKey"></button>
+            <p id="key-status" role="status" hidden></p>
+          </div>
+          <p id="error" class="error" role="alert" hidden></p>
+        </div>
+      </section>
+
+      <section id="lab" class="lab" aria-live="polite" hidden>
+        <img id="lab-specimen" alt="" width="112" height="112" />
+        <div id="lab-log" class="lab-log"></div>
+      </section>
+
+      <section id="results" class="results" aria-live="polite" hidden>
+        <p id="result-mode" class="result-mode"></p>
+        <p id="partner-caveat" class="partner-caveat" data-i18n="partnerCaveat" hidden></p>
+        <article class="suspect">
+          <img id="suspect-mascot" alt="" width="192" height="192" />
+          <div>
+            <p class="kicker" data-i18n="suspect"></p>
+            <p id="suspect-name" class="suspect-name"></p>
+            <p id="suspect-stat" class="suspect-stat"></p>
+          </div>
+          <div id="suspect-bars" class="bars"></div>
+          <div class="stamp" data-i18n="guilty"></div>
+        </article>
+        <div id="records" class="records"></div>
+        <div id="plates" class="plates"></div>
+        <div class="results-foot">
+          <p id="footnote" class="footnote"></p>
+          <button id="share" class="primary" type="button" data-i18n="share"></button>
+        </div>
+      </section>
+    </main>
+
+    <footer class="colophon" data-i18n="colophon"></footer>
+
+    <dialog id="card-dialog" class="card-dialog">
+      <canvas id="card-canvas" width="1080" height="1350"></canvas>
+      <form method="dialog" class="card-controls">
+        <fieldset>
+          <legend data-i18n="cardNames"></legend>
+          <div id="card-names" class="card-names"></div>
+        </fieldset>
+        <p class="card-score-note" data-i18n="cardScoreNote"></p>
+        <p class="card-preview-heading" data-i18n="cardPreviewHeading"></p>
+        <ul id="card-preview-details" class="card-preview-details"></ul>
+        <p class="card-score-note" data-i18n="cardPrivacyNote"></p>
+        <button id="card-share" class="primary" type="button" data-i18n="cardShare"></button>
+        <button id="card-download" class="primary" type="button" data-i18n="cardDownload"></button>
+        <button class="link" value="close" data-i18n="cardClose"></button>
+      </form>
+    </dialog>
+
+    <template id="bar-row">
+      <div class="bar-row">
+        <span class="who"></span>
+        <div class="track"><div class="fill"></div></div>
+        <span class="value"></span>
+      </div>
+    </template>
+
+    <template id="plate">
+      <article class="plate">
+        <div class="plate-head">
+          <span class="plate-no"></span>
+          <span class="menace"><span class="menace-value">0</span><span class="menace-label"></span></span>
+        </div>
+        <div class="plate-figure"><img alt="" width="240" height="240" /><div class="stamp"></div></div>
+        <h2 class="plate-name"></h2>
+        <p class="plate-type"></p>
+        <p class="plate-species"></p>
+        <p class="plate-note"></p>
+        <div class="stats-caption" hidden></div>
+        <div class="measures"></div>
+        <dl class="counted"></dl>
+        <dl class="findings"></dl>
+      </article>
+    </template>
+
+    <template id="scale">
+      <div class="scale">
+        <div class="scale-top"><span class="scale-name"></span><span class="scale-confidence"></span></div>
+        <div class="track" tabindex="0"><div class="fill"></div></div>
+        <div class="scale-level"></div>
+      </div>
+    </template>
+
+    <template id="finding">
+      <div class="finding"><dt></dt><dd></dd></div>
+    </template>
+  </body>
+</html>

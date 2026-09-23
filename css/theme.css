@@ -1,0 +1,21 @@
+/* The only place raw color values live. A printed field guide: paper, ink,
+   and one vermilion accent reserved for stamps and emphasis. */
+:root {
+  color-scheme: light;
+
+  --paper: #f3ede0;
+  --paper-raised: #f8f4ea;
+  --ink: #1d1b17;
+  --ink-soft: #57524a;
+  --ink-muted: #857e71;
+  --rule: #cfc6b3;
+  --rule-soft: #e2dbcb;
+  --accent: #c2381c;
+
+  /* Fine paper grain, tinted by whatever sits beneath it. */
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.1 0 0 0 0 0.08 0 0 0 0 0.05 0 0 0 0.07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+}
