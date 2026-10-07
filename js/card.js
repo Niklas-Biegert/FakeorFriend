@@ -1,287 +1,198 @@
-// The shareable verdict: one portrait image, drawn on a canvas so it can be
-// downloaded or handed to the phone's share sheet. It shows names, types and
-// counts, never chat text, and names can be changed before anything leaves.
+// One share flow for PNG and Web Share. The canvas and visible checklist use
+// the same curated, editable names, sticker reasons, vibe and one local fact.
 import { t } from './i18n.js';
-import { formatDuration, formatNumber, mascotOf, typeName } from './presentation.js';
-
-const WIDTH = 1080;
-const HEIGHT = 1350;
-const MARGIN = 72;
+import { formatDuration } from './presentation.js';
+import { momentVars } from './moment.js';
+import { ANIMALS } from './animals.js';
 const PHONE_NUMBER = /^[+\d][\d\s()./-]{5,}$/;
-
 const $ = (id) => document.getElementById(id);
-const images = new Map();
-
-/** First names only, and no phone numbers, unless the user types them in. */
+let cardGeneration = 0;
 export function defaultNames(names) {
   let unknown = 0;
-  return names.map((name) =>
-    PHONE_NUMBER.test(name) ? t('unknownNumber', { n: ++unknown }) : name.split(/\s+/)[0],
-  );
+  return names.map((name) => PHONE_NUMBER.test(name) ? t('unknownNumber', { n: ++unknown }) : name.split(/\s+/)[0]);
 }
-
-/** An emptied display field must never fall back to the original full name. */
 export function shownCardName(shown, name) {
   return shown.get(name)?.trim() || t('cardAnonymous');
 }
-
-export function cardPreviewLines(verdict, shownName) {
-  const people = verdict.people.map((person) => `${shownName(person.name)} · ${scoreLabel(person.flags)}${person.highlights.length
-    ? ` · ${person.highlights.map(highlightLabel).join(' · ')}` : ''}`);
-  return verdict.mode === 'partner' ? [t('chatModeResult', { mode: t('chatModes.partner') }), ...people] : people;
+// Both the visible checklist and the PNG consume this one curated model.
+// Only edited names, animal rules, one selected moment and the scope enter it.
+export function cardCopy(verdict, shownName) {
+  return {
+    vibe: t(`cardVibe.${verdict.story ?? 'uncertain'}`),
+    people: verdict.people.slice(0, 2).map((person, i) => {
+      const candidate = verdict.animals?.[i] ?? { key: 'neutral' };
+      const animal = ANIMALS.includes(candidate.key) ? candidate : { key: 'neutral' };
+      return { name: shownName(person.name), animal: t(`animals.${animal.key}.name`),
+        reason: t(`animals.${animal.key}.why`, animal), key: animal.key };
+    }),
+    moment: verdict.moment ? t(`moment.${verdict.moment.key}.card`,
+      momentVars(verdict.moment, shownName, formatDuration)) : null,
+    scope: verdict.scope ? cardScope(verdict.scope) : null,
+  };
 }
-
-/**
- * `verdict` holds `suspect` (a name), `people` ({ name, type, flags, highlights })
- * and `records` ({ key, name, detail }), all with real names.
- */
+export function cardPreviewLines(verdict, shownName) {
+  const copy = cardCopy(verdict, shownName);
+  return [copy.vibe, ...copy.people.map(({ name, animal, reason }) => `${name} · ${animal} · ${reason}`),
+    ...(copy.moment ? [copy.moment] : []), ...(copy.scope ? [copy.scope] : [])];
+}
+function cardScope({ judged, total }) {
+  return t(judged < total ? 'cardScopePartial' : 'cardScopeFull', { n: judged, total });
+}
+async function asFile(canvas) {
+  const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+  if (!blob) throw new Error('PNG unavailable');
+  return new File([blob], 'fakeorfriend.png', { type: 'image/png' });
+}
+function drawAnimal(ctx, x, y, sticker) {
+  const colors = { mouse: '#c0e8ff', cat: '#dccbff', dog: '#f2db91', hedgehog: '#f9c4ac', owl: '#d8a8f5', rabbit: '#c1e9dc', tortoise: '#b9dc91', neutral: '#d8d0df' };
+  const key = sticker?.key ?? 'neutral';
+  ctx.fillStyle = colors[key] ?? colors.neutral;
+  ctx.beginPath(); ctx.roundRect(x, y, 340, 235, 42); ctx.fill();
+  ctx.fillStyle = '#39283d';
+  if (key === 'cat') {
+    for (const offset of [85, 255]) { ctx.beginPath(); ctx.moveTo(x + offset - 35, y + 100); ctx.lineTo(x + offset, y + 32); ctx.lineTo(x + offset + 35, y + 100); ctx.fill(); }
+  } else if (key === 'hedgehog') {
+    for (let i = 0; i < 7; i++) { const left = x + 65 + i * 35; ctx.beginPath(); ctx.moveTo(left, y + 105); ctx.lineTo(left + 17, y + 35 + (i % 2) * 18); ctx.lineTo(left + 36, y + 105); ctx.fill(); }
+  } else if (key === 'mouse' || key === 'dog') {
+    for (const offset of [85, 255]) { ctx.beginPath(); ctx.arc(x + offset, y + (key === 'mouse' ? 84 : 112), 44, 0, Math.PI * 2); ctx.fill(); }
+  }
+  if (key === 'rabbit') {
+    for (const offset of [130, 210]) { ctx.beginPath(); ctx.ellipse(x + offset, y + 54, 23, 65, offset === 130 ? -.2 : .2, 0, Math.PI * 2); ctx.fill(); }
+  }
+  if (key === 'owl') {
+    ctx.beginPath(); ctx.moveTo(x + 66, y + 112); ctx.lineTo(x + 87, y + 39); ctx.lineTo(x + 133, y + 112); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(x + 207, y + 112); ctx.lineTo(x + 253, y + 39); ctx.lineTo(x + 274, y + 112); ctx.fill();
+  }
+  if (key === 'tortoise') {
+    ctx.fillStyle = '#689258'; ctx.beginPath(); ctx.ellipse(x + 170, y + 126, 113, 106, 0, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.fillStyle = colors[key] ?? colors.neutral;
+  ctx.beginPath(); ctx.ellipse(x + 170, y + 137, 105, 85, 0, 0, Math.PI * 2); ctx.fill();
+  if (key === 'owl') {
+    ctx.fillStyle = '#fff4e4';
+    for (const offset of [132, 208]) { ctx.beginPath(); ctx.arc(x + offset, y + 137, 22, 0, Math.PI * 2); ctx.fill(); }
+  }
+  if (key === 'tortoise') {
+    ctx.strokeStyle = '#5b8752'; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(x + 170, y + 79, 61, Math.PI, 0); ctx.stroke();
+  }
+  ctx.fillStyle = '#39283d';
+  for (const offset of [132, 208]) { ctx.beginPath(); ctx.arc(x + offset, y + 135, 8, 0, Math.PI * 2); ctx.fill(); }
+  ctx.beginPath(); ctx.arc(x + 170, y + 168, 8, 0, Math.PI * 2); ctx.fill();
+  ctx.lineWidth = 5; ctx.strokeStyle = '#39283d'; ctx.beginPath(); ctx.arc(x + 170, y + 175, 23, 0.2, Math.PI - 0.2); ctx.stroke();
+}
+function drawWrapped(ctx, value, x, y, maxWidth, lineHeight, maxLines = 3) {
+  const words = value.split(/\s+/);
+  let start = 0;
+  for (let row = 0; row < maxLines && start < words.length; row++) {
+    if (row === maxLines - 1) { ctx.fillText(words.slice(start).join(' '), x, y + row * lineHeight, maxWidth); break; }
+    let end = start + 1;
+    while (end < words.length && ctx.measureText(words.slice(start, end + 1).join(' ')).width <= maxWidth) end++;
+    ctx.fillText(words.slice(start, end).join(' '), x, y + row * lineHeight, maxWidth);
+    start = end;
+  }
+}
+export function drawCard(canvas, verdict, shownName, images = []) {
+  const ctx = canvas.getContext('2d');
+  const copy = cardCopy(verdict, shownName);
+  canvas.width = 1080;
+  canvas.height = 1350;
+  ctx.fillStyle = '#171420';
+  ctx.fillRect(0, 0, 1080, 1350);
+  const paint = (value, x, y, size, color = '#faf3f7', max = 900, weight = 700) => {
+    ctx.font = `${weight} ${size}px system-ui, sans-serif`;
+    ctx.fillStyle = color;
+    ctx.textAlign = 'left';
+    ctx.fillText(value, x, y, max);
+  };
+  // No transcript or external images are loaded. This model also drives the
+  // user's explicit pre-share checklist.
+  const gradient = ctx.createLinearGradient(0, 0, 1080, 930);
+  gradient.addColorStop(0, '#4d3467'); gradient.addColorStop(1, '#204559');
+  ctx.fillStyle = gradient; ctx.beginPath(); ctx.roundRect(48, 46, 984, 1250, 48); ctx.fill();
+  ctx.strokeStyle = '#dff86f55'; ctx.lineWidth = 3;
+  for (const radius of [136, 196, 256]) { ctx.beginPath(); ctx.arc(986, 96, radius, 0, Math.PI * 2); ctx.stroke(); }
+  paint('FakeorFriend', 94, 133, 46, '#dff86f');
+  ctx.fillStyle = '#8b728d'; ctx.fillRect(94, 166, 892, 2);
+  paint(t('spotlight.animals'), 94, 226, 45, '#faf3f7');
+  copy.people.forEach((person, i) => {
+    const x = i ? 570 : 150;
+    ctx.font = '800 28px system-ui, sans-serif'; ctx.fillStyle = '#faf3f7';
+    drawWrapped(ctx, person.name, x, 275, 340, 33, 2);
+    if (images[i]?.naturalWidth > 0) {
+      ctx.fillStyle = i ? '#bde9ff20' : '#dff86f20';
+      ctx.beginPath(); ctx.roundRect(x, 330, 340, 235, 42); ctx.fill();
+      ctx.drawImage(images[i], x + 60, 337, 220, 220);
+    } else drawAnimal(ctx, x, 330, { key: person.key });
+    paint(person.animal, x, 610, 31, '#dff86f', 340);
+    ctx.font = '500 19px system-ui, sans-serif'; ctx.fillStyle = '#e1d2e3';
+    drawWrapped(ctx, person.reason, x, 641, 340, 25, 4);
+  });
+  ctx.fillStyle = '#cab9d065'; ctx.fillRect(94, 767, 892, 2);
+  paint(t('spotlight.vibe'), 94, 824, 29, '#bde9ff');
+  ctx.font = '700 32px system-ui, sans-serif'; ctx.fillStyle = '#faf3f7';
+  drawWrapped(ctx, copy.vibe, 94, 871, 870, 43, 3);
+  if (copy.moment) {
+    paint(t('spotlight.moment'), 94, 1020, 29, '#dff86f');
+    ctx.font = '600 25px system-ui, sans-serif'; ctx.fillStyle = '#faf3f7';
+    drawWrapped(ctx, copy.moment, 94, 1065, 870, 34, 3);
+  }
+  ctx.fillStyle = '#cab9d065'; ctx.fillRect(94, 1184, 892, 2);
+  paint(t('cardFooter'), 94, 1230, 22, '#e1d2e3', 880, 500);
+  if (copy.scope) {
+    ctx.font = '500 18px system-ui, sans-serif'; ctx.fillStyle = '#e1d2e3';
+    drawWrapped(ctx, copy.scope, 94, 1270, 880, 23, 2);
+  }
+}
 export function openCard(verdict) {
+  const generation = ++cardGeneration;
   const dialog = $('card-dialog');
   const canvas = $('card-canvas');
   const names = verdict.people.map((p) => p.name);
   const defaults = defaultNames(names);
   const shown = new Map(names.map((name, i) => [name, defaults[i]]));
   const shownName = (name) => shownCardName(shown, name);
+  const preview = $('card-preview-details');
   const share = $('card-share');
   const download = $('card-download');
-  const previewDetails = $('card-preview-details');
-  let requested = 0;
-  const redraw = async () => {
-    const current = ++requested;
-    share.disabled = true;
-    download.disabled = true;
-    previewDetails.replaceChildren(...cardPreviewLines(verdict, shownName).map((value) => {
-      const line = document.createElement('li');
-      line.textContent = value;
-      return line;
-    }));
-    try {
-      await drawCard(canvas, verdict, shownName);
-      if (current === requested) {
-        share.disabled = false;
-        download.disabled = false;
-      }
-    } catch (error) {
-      if (current === requested) previewDetails.replaceChildren(
-        Object.assign(document.createElement('li'), { textContent: t('cardRenderError') }),
-      );
-    }
+  let images = [];
+  const redraw = () => {
+    preview.replaceChildren(...cardPreviewLines(verdict, shownName).map((value) =>
+      Object.assign(document.createElement('li'), { textContent: value })));
+    drawCard(canvas, verdict, shownName, images);
   };
-  $('card-names').replaceChildren(
-    ...verdict.people.map(({ name }) => {
-      const input = document.createElement('input');
-      input.value = shown.get(name);
-      input.setAttribute('aria-label', name);
-      input.addEventListener('input', () => {
-        shown.set(name, input.value.trim());
-        void redraw();
-      });
-      return input;
-    }),
-  );
-
+  $('card-names').replaceChildren(...verdict.people.map(({ name }) => {
+    const input = document.createElement('input');
+    input.value = shown.get(name);
+    input.maxLength = 48;
+    input.setAttribute('aria-label', name);
+    input.addEventListener('input', () => { shown.set(name, input.value.trim()); redraw(); });
+    return input;
+  }));
   share.hidden = !navigator.canShare?.({ files: [new File([], 'x.png', { type: 'image/png' })] });
   share.onclick = async () => {
-    try {
-      await navigator.share({ files: [await asFile(canvas)], text: `${t('cardShareText')} · ${pageUrl()}` });
-    } catch (error) {
-      if (error.name !== 'AbortError') throw error;
-    }
+    try { await navigator.share({ files: [await asFile(canvas)], text: t('cardShareText') }); }
+    catch (error) { if (error.name !== 'AbortError') throw error; }
   };
   download.onclick = async () => {
-    const link = Object.assign(document.createElement('a'), {
-      href: URL.createObjectURL(await asFile(canvas)),
-      download: 'judgeyou.png',
-    });
-    link.click();
-    URL.revokeObjectURL(link.href);
+    const url = URL.createObjectURL(await asFile(canvas));
+    const link = Object.assign(document.createElement('a'), { href: url, download: 'fakeorfriend.png' });
+    link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
-
   dialog.showModal();
-  void redraw();
-}
-
-function highlightLabel({ key, median, n }) {
-  return key === 'reply'
-    ? t('cardReplyHighlight', { time: formatDuration(median), n: formatNumber(n) })
-    : t('cardCharsHighlight', { chars: formatNumber(median), n: formatNumber(n) });
-}
-
-function scoreLabel({ red, green }) {
-  return `${t('cardRed', { score: red })} · ${t('cardGreen', { score: green })}`;
-}
-
-async function asFile(canvas) {
-  const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
-  return new File([blob], 'judgeyou.png', { type: 'image/png' });
-}
-
-function pageUrl() {
-  return `${location.host}${location.pathname.replace(/index\.html$/, '')}`.replace(/\/$/, '');
-}
-
-function image(src) {
-  if (!images.has(src)) {
-    const img = new Image();
-    img.src = src;
-    images.set(src, img.decode().then(() => img));
-  }
-  return images.get(src);
-}
-
-// Waiting for fonts and images makes drawing async; typing a name starts a
-// new draw, and an older one that finishes late must not paint over it.
-let drawing = 0;
-
-async function drawCard(canvas, { mode, suspect, people, records }, shownName) {
-  const ticket = ++drawing;
-  const style = getComputedStyle(document.documentElement);
-  const token = (name) => style.getPropertyValue(name).trim();
-  const color = { paper: token('--paper'), ink: token('--ink'), soft: token('--ink-soft'), muted: token('--ink-muted'), rule: token('--rule'), accent: token('--accent') };
-  const display = (weight, size, italic = '') => `${italic} ${weight} ${size}px ${token('--font-display')}`;
-  const body = (weight, size) => `${weight} ${size}px ${token('--font-body')}`;
-  const mono = (weight, size) => `${weight} ${size}px ${token('--font-mono')}`;
-
-  const suspectType = people.find((p) => p.name === suspect).type;
-  const [mascots] = await Promise.all([
-    Promise.all(people.map((p) => image(mascotOf(p.type)))),
-    document.fonts.load(display(800, 96)),
-    document.fonts.load(display(700, 44, 'italic')),
-    document.fonts.load(body(600, 30)),
-    document.fonts.load(mono(500, 20)),
-  ]);
-  if (ticket !== drawing) return;
-
-  // Keep every person's two statistics readable even in an eight-person chat.
-  const recordsBottom = 510 + (records.length ? 176 : 0);
-  const height = Math.max(HEIGHT, recordsBottom + 10 + people.length * 140 + 110);
-  canvas.width = WIDTH;
-  canvas.height = height;
-  const ctx = canvas.getContext('2d');
-  const inner = WIDTH - 2 * MARGIN;
-  ctx.fillStyle = color.paper;
-  ctx.fillRect(0, 0, WIDTH, HEIGHT);
-  ctx.textBaseline = 'alphabetic';
-
-  const text = (value, x, y, font, fill, maxWidth, align = 'left') => {
-    ctx.font = font;
-    ctx.fillStyle = fill;
-    ctx.textAlign = align;
-    ctx.fillText(clip(ctx, value, maxWidth), x, y);
-  };
-  const rule = (y, weight = 1, fill = color.ink) => {
-    ctx.fillStyle = fill;
-    ctx.fillRect(MARGIN, y, inner, weight);
-  };
-
-  // Masthead
-  text('JudgeYou', MARGIN, 96, display(700, 44, 'italic'), color.ink, 300);
-  text((mode === 'partner' ? t('chatModes.partner') : t('tagline')).toUpperCase(), WIDTH - MARGIN, 92, mono(500, 18), color.muted, inner - 320, 'right');
-  rule(120, 3);
-  rule(127);
-
-  // Prime suspect
-  ctx.drawImage(mascots[people.findIndex((p) => p.name === suspect)], MARGIN - 20, 150, 330, 330);
-  const textX = MARGIN + 340;
-  const textWidth = WIDTH - MARGIN - textX;
-  text(t(mode === 'partner' ? 'suspectPartner' : 'suspect').toUpperCase(), textX, 250, mono(500, 22), color.accent, textWidth);
-  const suspectSize = fitSize(ctx, shownName(suspect), (s) => display(800, s), 104, textWidth);
-  text(shownName(suspect), textX, 350, display(800, suspectSize), color.ink, textWidth);
-  text(typeName(suspectType), textX, 405, body(600, 34), color.soft, textWidth);
-  stamp(ctx, t(mode === 'partner' ? 'guiltyPartner' : 'guilty').toUpperCase(), WIDTH - MARGIN - 130, 455, mono(600, 30), color);
-
-  // Records: the counted facts, next to Jev's opinions.
-  let y = 510;
-  rule(y);
-  if (records.length) {
-    const shownRecords = records.slice(0, 3);
-    const column = inner / shownRecords.length;
-    shownRecords.forEach((record, i) => {
-      const x = MARGIN + i * column;
-      const width = column - 24;
-      text(t(`records.${record.key}.title`).toUpperCase(), x, y + 44, mono(500, 17), color.muted, width);
-      text(shownName(record.name), x, y + 90, display(700, 38), color.ink, width);
-      ctx.font = body(400, 18);
-      lines(ctx, record.detail, width, 2).forEach((line, n) => text(line, x, y + 122 + n * 24, ctx.font, color.soft, width));
-    });
-    y += 176;
-    rule(y);
-  }
-
-  // Everyone else, one row each.
-  const bottom = height - 110;
-  const rowHeight = Math.min(140, (bottom - y - 10) / people.length);
-  people.forEach((person, i) => {
-    const top = y + 10 + i * rowHeight;
-    const size = rowHeight - 12;
-    ctx.drawImage(mascots[i], MARGIN - 8, top + 6, size, size);
-    const nameSize = Math.min(38, rowHeight * 0.31);
-    const lineX = MARGIN + size + 16;
-    const lineWidth = inner - size - 260;
-    text(shownName(person.name), lineX, top + 39, display(700, nameSize), color.ink, lineWidth);
-    text(typeName(person.type), lineX, top + 67, body(500, 20), color.soft, lineWidth);
-    person.highlights.slice(0, 2).forEach((highlight, j) =>
-      text(highlightLabel(highlight), lineX, top + 93 + j * 23, mono(500, 17), color.ink, lineWidth),
-    );
-    text(t('cardRed', { score: person.flags.red }), WIDTH - MARGIN, top + 44, mono(600, 20), color.accent, 240, 'right');
-    text(t('cardGreen', { score: person.flags.green }), WIDTH - MARGIN, top + 72, mono(500, 19), color.soft, 240, 'right');
-    text(t('cardGameScore').toUpperCase(), WIDTH - MARGIN, top + 98, mono(500, 15), color.muted, 240, 'right');
-    if (i < people.length - 1) rule(top + rowHeight, 1, color.rule);
+  redraw();
+  // The same original, same-origin SVGs appear on screen and in the PNG.
+  // Keep export disabled until images have finished decoding; never capture a
+  // half-drawn canvas if the user taps immediately after opening the dialog.
+  share.disabled = download.disabled = true;
+  void Promise.all(cardCopy(verdict, shownName).people.map(({ key }) => new Promise((resolve) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => resolve(null);
+    image.src = `img/animals/${key}.svg`;
+  }))).then((loaded) => {
+    if (generation !== cardGeneration || !dialog.open) return;
+    images = loaded;
+    redraw();
+    share.disabled = download.disabled = false;
   });
-
-  // Footer
-  rule(height - 86, 3);
-  text(pageUrl(), MARGIN, height - 40, mono(500, 22), color.ink, inner / 2);
-  text(t('cardGameScore').toUpperCase(), WIDTH - MARGIN, height - 40, mono(500, 18), color.muted, inner / 2, 'right');
-}
-
-/** The largest size up to `size` at which `value` fits `maxWidth`, down to half of it. */
-function fitSize(ctx, value, font, size, maxWidth) {
-  const smallest = Math.round(size / 2);
-  for (; size > smallest; size -= 4) {
-    ctx.font = font(size);
-    if (ctx.measureText(value).width <= maxWidth) return size;
-  }
-  return smallest;
-}
-
-/** Word-wrapped lines for the current font; the last one is clipped if needed. */
-function lines(ctx, value, maxWidth, maxLines) {
-  const result = [''];
-  for (const word of value.split(' ')) {
-    const candidate = result.at(-1) ? `${result.at(-1)} ${word}` : word;
-    if (ctx.measureText(candidate).width <= maxWidth || !result.at(-1)) result[result.length - 1] = candidate;
-    else if (result.length < maxLines) result.push(word);
-    else {
-      result[result.length - 1] = candidate;
-      break;
-    }
-  }
-  return result;
-}
-
-function clip(ctx, value, maxWidth) {
-  if (ctx.measureText(value).width <= maxWidth) return value;
-  let cut = value;
-  while (cut && ctx.measureText(`${cut}…`).width > maxWidth) cut = cut.slice(0, -1);
-  return `${cut.trimEnd()}…`;
-}
-
-function stamp(ctx, label, x, y, font, color) {
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.rotate((-11 * Math.PI) / 180);
-  ctx.globalAlpha = 0.88;
-  ctx.font = font;
-  const width = ctx.measureText(label).width + 44;
-  ctx.strokeStyle = color.accent;
-  ctx.lineWidth = 5;
-  ctx.strokeRect(-width / 2, -30, width, 60);
-  ctx.lineWidth = 1.5;
-  ctx.strokeRect(-width / 2 + 7, -23, width - 14, 46);
-  ctx.fillStyle = color.accent;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(label, 0, 2);
-  ctx.restore();
 }

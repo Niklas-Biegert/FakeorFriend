@@ -1,0 +1,1371 @@
+diff --git a/README.md b/README.md
+index 0f6faea..6880d58 100644
+--- a/README.md
++++ b/README.md
+@@ -48,9 +48,11 @@ still be wrong and no passages or quotes are displayed as proof.
+ 
+ ## Playful presentation and research basis
+ 
+-The result now follows the sticker duo with a short joint reading, separate
+-counted readings of each person's **writing in the submitted excerpt**, and
+-then the original four scales and local timeline. Visual inspiration came from
++The first result view has three parts: two large animal stickers with counted
++reasons, a short duo vibe from Jev's existing four scores, and one optional
++local comparison. The share action follows them. Personal readings, themes,
++mini-mission, scales, charts, outlook, numeric records, methods and data flow
++remain in three keyboard-accessible native `<details>` sections. Visual inspiration came from
+ the short check-ins on [Paired](https://www.paired.com/), the two-person
+ presentation and stickers on [Between](https://between.us/), and the light
+ conversation prompts on [Couply](https://www.couply.io/). All text, rules,
+@@ -77,11 +79,18 @@ or reply speed with feelings. The ordinal Jev scores remain pair-level only;
+ they are never assigned to either person's character. The only remote call
+ still contains the original four Jev questions and the same sender/text state.
+ 
+-The PNG includes the sticker explanations already listed in its preview,
+-along with the existing short pair score rule and curated numeric highlights.
+-The separate longer personal readings stay on the page. The preview and
+-image both derive from the same card data; the image never incorporates
+-personal readings, chat quotes or message text.
++`js/moment.js` selects at most one comparison from the same submitted parsed
++excerpt as the stickers. A starter lead requires five recognised conversations,
++both counts summing to that total, at least two more starts than the other
++speaker and a share of at least 60%. Truncated excerpts cannot claim a starter
++lead. Otherwise both speakers need at least five valid reply blocks; medians
++must differ by five minutes and a factor of 1.5 for a faster-reply comparison.
++Ties and thin samples get a neutral message. Neither rule measures interest.
++
++The PNG and preview use the same curated model: edited names, sticker names
++and counted reasons, a short cautious duo vibe, at most one chosen moment and
++the excerpt scope. Longer readings, ordinal scores, forecasts and timeline
++facts remain on the page; chat quotes never enter the card.
+ 
+ ### What stands out: recurring written cues
+ 
+@@ -120,18 +129,17 @@ The mobile-first interface presents three stages: choose a chat, explore the
+ excerpt, then preview a share card. Its dark plum surfaces, pale blue panels
+ and lime actions use text labels alongside color. Each of the four ordinal
+ scales has a short explanation and a spoken label with its 0–3 level. The
+-original card flow exports one 1080×1350 PNG; edited names and numeric local
+-highlights remain visible in its preview before sharing. This presentation
++original card flow exports one 1080×1350 PNG; edited names, animal reasons
++and the chosen moment remain visible in its preview before sharing. This presentation
+ does not change the four Jev questions or their scoring rules.
+ 
+-`css/polish.css` adds the final visual layer: a compact stage indicator,
+-clearer sans-serif headings, sticker artwork in the landing view, stronger
+-card contrast, and a horizontally scrollable timeline on narrow screens with
+-the accessible data table still available below. The four loading steps are
+-displayed once and then hold on the last stage while Jev finishes; the moving
+-signal is explicitly *not* a percentage of analysis completed. The minimum
+-display duration is 950 ms, and CSS removes ornamental movement when the user
+-prefers reduced motion. Editing the chat while a result or request is visible
++`css/polish.css` adds the visual layer: a compact stage indicator,
++three result spotlights, large stickers and a horizontally scrollable timeline
++on narrow screens with its accessible data table still available below. The
++four loading steps follow the actual request and local calculations; the
++moving signal is *not* a percentage and there is no minimum display delay.
++CSS removes ornamental movement when the user prefers reduced motion. Editing
++the chat while a result or request is visible
+ clears the old result; a response for that superseded text is not displayed.
+ No extra request, storage, or chat metadata is introduced by this styling.
+ 
+@@ -198,7 +206,7 @@ Locally calculated counts remain per person: number of messages, median words
+ and characters, length of the longest message and median reply time. A reply
+ starts when the other person's previous message block ends. Silences over six
+ hours start a new conversation. Length and reply medians need at least three
+-valid observations. Each available share highlight includes its sample size.
++valid observations. The optional share moment includes its sample size.
+ Records are awarded only on a clear lead with enough data.
+ 
+ ## Chat over time (local)
+@@ -237,9 +245,8 @@ exploratory patterns are eligible, with at most two cards:
+ 
+ These selected descriptive patterns have no significance tests or causal
+ claim. No card appears if conditions fail. All calculations remain in browser
+-memory. With complete dates, at least seven calendar days and three active
+-days, the share card can show one fact (`activeDays` of `totalDays`); its
+-visible preview and PNG use the same numbers. No local measures enter Jev's
++memory. Timeline facts stay in the expanded result view, not on the compact
++share card. No local measures enter Jev's
+ state or add a second request.
+ 
+ ## What might happen next? (local, experimental)
+@@ -294,8 +301,7 @@ plausible alternate explanation and is explicitly labelled an imaginative
+ reading of the excerpt. No probability of love, ghosting or future romance is
+ computed. Raw transcripts and small or contradictory samples have no such
+ cards. None of these interpretations, raw messages or forecast features is
+-sent to Jev or included automatically on the PNG/share card. The existing
+-single local calendar fact in the card remains unchanged.
++sent to Jev or included automatically on the PNG/share card.
+ 
+ ## Data and sharing
+ 
+@@ -309,9 +315,8 @@ The notice above the button explains both cases before any request is made.
+ This app does not log the chat, but cannot promise what external providers,
+ browser extensions or the device store.
+ 
+-The image card uses only its excerpt label, sticker IDs and their numeric
+-rules, ordinal scores, submitted message count, names you can edit, and up to two
+-local numeric highlights per person (only if `n >= 3`). By default phone
++The image card uses only its short duo vibe, sticker IDs and counted reasons,
++at most one well-supported chat moment and the excerpt scope. By default phone
+ numbers are replaced and full names shortened to their first word. The visible
+ preview lists the card contents before download or Web Share. The page does not
+ upload the card to its own server. The chosen language and a key you enter may
+@@ -319,7 +324,7 @@ be kept in browser `localStorage`; FakeorFriend uses its own storage keys
+ separate from JudgeYou. The delete button removes only your stored key. An
+ optional `js/key.js` provided by a deployment would still be available.
+ 
+-No public deployment is configured in this new repository. The 10–21 audience
++No public deployment is configured in this new repository. The 10–18 audience
+ includes children. For now, younger users should try only invented chats in
+ the local test preview, which makes no provider request. Before any public
+ launch, plan a child-appropriate experience, establish an appropriate basis
+@@ -356,6 +361,7 @@ needs a separate deployment decision and a review of its data flow.
+ - `js/verdict.js`: excerpt label rule.
+ - `js/vibes.js`: map position, factual count shares and conversation idea.
+ - `js/animals.js`: local sticker selection and bounded story from existing scores.
++- `js/moment.js`: one measured comparison with minimum observations and tie handling.
+ - `js/reading.js`, `js/highlights.js`: excerpt-specific personal readings and narrow local written-cue counts.
+ - `js/timeline.js`, `js/timeline-view.js`: local date buckets, cautious comparisons and accessible chart.
+ - `js/app.js`: input and result flow.
+diff --git a/css/polish.css b/css/polish.css
+index d61705a..592df5b 100644
+--- a/css/polish.css
++++ b/css/polish.css
+@@ -130,6 +130,73 @@ body, main, .masthead, .colophon { min-width: 0; }
+ .card-dialog { box-shadow: 0 30px 90px #0009; }
+ .card-dialog canvas { max-width: 100%; height: auto; }
+ .card-preview-details { overflow-wrap: anywhere; }
++.spotlight-shell {
++  max-width: 74rem; margin: 0 auto; padding: clamp(1.1rem, 3vw, 2.6rem);
++  background: radial-gradient(40rem 30rem at 10% 0%, #536d9480, transparent 80%),
++    radial-gradient(30rem 24rem at 100% 48%, #77549c75, transparent 78%), #292339;
++}
++.spotlight-shell::before { opacity: .45; }
++.spotlight-shell > * { position: relative; z-index: 1; }
++.spotlight-shell .duo-section { margin: 0; }
++.spotlight-index { margin: 0 0 .35rem; color: var(--accent-blue); font: 700 .78rem/1.3 var(--font-mono); letter-spacing: .06em; }
++.spotlight-shell h2 { margin: .2rem 0 1.2rem; font: 800 clamp(1.7rem, 4.6vw, 3.1rem)/1.09 var(--font-body); letter-spacing: -.052em; }
++.spotlight-shell #duo-title:focus { outline: 2px solid var(--accent); outline-offset: 5px; border-radius: .2rem; }
++.spotlight-shell .animal-duo { gap: clamp(.65rem, 2vw, 1.4rem); }
++.spotlight-shell .animal-sticker {
++  display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start;
++  min-height: 18.5rem; padding: clamp(.8rem, 2.5vw, 1.4rem); gap: .45rem;
++  border-radius: 1.45rem; border: 1px solid #e4dbff9b;
++  background: radial-gradient(circle at 50% 26%, #dff86f1c, transparent 70%), #ffffff12;
++  box-shadow: inset 0 1px #fff5, 0 12px 30px #130c2855;
++}
++.spotlight-shell .animal-sticker:nth-child(2) { background: radial-gradient(circle at 50% 26%, #bde9ff36, transparent 70%), #ffffff12; }
++.spotlight-shell .animal-sticker img {
++  display: block; align-self: center; width: clamp(7rem, 18vw, 13rem);
++  max-width: 100%; height: auto; aspect-ratio: 1;
++  border-radius: 1.3rem; object-fit: contain; filter: drop-shadow(0 12px 15px #130d2988);
++}
++.spotlight-shell .animal-sticker strong {
++  max-width: 100%; font: 800 clamp(1.05rem, 2.5vw, 1.5rem)/1.14 var(--font-body);
++  letter-spacing: -.03em; overflow-wrap: anywhere;
++}
++.animal-label { display: inline-block; padding: .17rem .55rem; border: 1px solid #e9f0569c; border-radius: 99px; color: var(--accent); font: 700 .9rem/1.3 var(--font-body); }
++.spotlight-shell .animal-sticker p { margin: .3rem 0 0; color: var(--ink-soft); font-size: clamp(.82rem, 1.65vw, .98rem); line-height: 1.48; overflow-wrap: anywhere; }
++.spotlight-shell .duo-caveat { margin: .75rem 0 0; }
++.spotlight-shell .vibe-spotlight {
++  display: grid; grid-template-columns: minmax(0, 1fr) minmax(4.8rem, 9rem);
++  align-items: center; gap: 1rem; margin-top: clamp(1.1rem, 3vw, 1.7rem);
++  padding: clamp(1.05rem, 3vw, 1.7rem); border-color: #bde9ff9b;
++  background: linear-gradient(125deg, #254b58, #30314f 65%, #4a335a);
++}
++.spotlight-shell .vibe-copy { min-width: 0; }
++.spotlight-shell .vibe-tag { display: inline-block; width: fit-content; margin: .25rem 0 .2rem; padding: .2rem .55rem; border: 1px solid #bde9ff8a; border-radius: 99px; font: 650 .79rem/1.35 var(--font-body); color: var(--accent-blue); }
++.spotlight-shell .vibe-spotlight h2 { margin: .3rem 0 .55rem; color: var(--accent); font-size: clamp(1.35rem, 3vw, 2rem); }
++.spotlight-shell .vibe-spotlight p:last-child { max-width: 55ch; font-size: 1rem; line-height: 1.57; }
++.spotlight-shell .vibe-spotlight img { width: 100%; height: auto; filter: drop-shadow(0 10px 16px #151126aa); }
++.moment-spotlight { margin-top: 1rem; padding: clamp(1.05rem, 3vw, 1.7rem); border: 1px solid #dff86f99; border-radius: 1.2rem; background: linear-gradient(118deg, #3d3f3f, #283942); }
++.moment-spotlight h2 { margin: .1rem 0 .8rem; font-size: clamp(1.3rem, 3vw, 1.75rem); }
++.moment-spotlight h3 { margin: 0 0 .3rem; font: 800 clamp(1.1rem, 2.7vw, 1.4rem)/1.2 var(--font-body); color: var(--accent); }
++.moment-spotlight p:last-child { max-width: 65ch; margin: 0; line-height: 1.55; overflow-wrap: anywhere; }
++.spotlight-share { margin-top: 1.4rem; }
++.spotlight-share .primary { width: min(100%, 22rem); min-height: 3.2rem; font-size: 1.07rem; border-radius: .9rem; }
++.spotlight-shell > .scope-note { display: block; width: fit-content; max-width: 100%; margin: 1.4rem 0 .5rem; overflow-wrap: anywhere; }
++.spotlight-shell > .spotlight-guide { margin: 0; color: var(--ink-soft); font-size: .88rem; }
++.explore-details { display: grid; gap: .85rem; max-width: 74rem; margin: 1.15rem auto 0; }
++.explore-panel { min-width: 0; border: 1px solid #9e8bb379; border-radius: 1.1rem; background: #282237; overflow: clip; }
++.explore-panel[open] { background: #2c253c; border-color: #bde9ff9b; }
++.explore-panel > summary { padding: 1rem 1.25rem; cursor: pointer; color: var(--ink); font: 750 clamp(1rem, 2.4vw, 1.2rem)/1.4 var(--font-body); }
++.explore-panel > summary::marker { color: var(--accent); }
++.explore-panel > summary:hover { background: #bde9ff14; }
++.explore-panel > summary:focus-visible { outline: 3px solid var(--accent); outline-offset: -4px; }
++.explore-body { min-width: 0; padding: 0 clamp(.95rem, 3vw, 1.55rem) 1.5rem; border-top: 1px solid #aa94ba50; }
++.explore-body > :first-child { margin-top: 1.2rem; }
++.explore-body .reading-section { margin-top: 1.4rem; }
++.explore-body .vibe-gallery { margin-top: 1.3rem; }
++.explore-body .scales-heading { margin-top: 1.2rem; }
++.explore-body #connection-note, .explore-body .duo-extra { color: var(--ink-soft); line-height: 1.55; }
++.explore-body .timeline-panel, .explore-body .outlook-panel { margin-top: 1rem; }
++.results.revealed .vibe-spotlight { animation: card-appear .4s ease-out both; animation-delay: .14s; }
++.results.revealed .moment-spotlight { animation: card-appear .4s ease-out both; animation-delay: .22s; }
+ .results.revealed .story-section, .results.revealed .reading-card { animation: card-appear .5s ease-out both; }
+ .results.revealed .reading-card:nth-child(2) { animation-delay: .1s; }
+ @keyframes card-appear { from { opacity: 0; transform: translateY(12px); } }
+@@ -155,6 +222,9 @@ body, main, .masthead, .colophon { min-width: 0; }
+   .animal-sticker:hover, .cue-card:hover, .pattern-card:hover, .outlook-card:hover { transform: none; }
+   #timeline-content { overflow-x: auto; scrollbar-color: var(--accent-blue) transparent; }
+   #timeline-content svg { min-width: 580px; }
++  .spotlight-shell .animal-sticker { min-height: 16rem; }
++  .spotlight-shell .animal-sticker img { width: min(100%, 9rem); }
++  .spotlight-shell .vibe-spotlight { grid-template-columns: minmax(0, 1fr) 5rem; gap: .6rem; }
+ }
+ @media (max-width: 390px) {
+   .hero-aside { grid-template-columns: minmax(0, 1fr) 6rem; }
+@@ -163,6 +233,13 @@ body, main, .masthead, .colophon { min-width: 0; }
+   .hero-art span { font-size: 1.2rem; }
+   .connection-summary, .timeline-panel, .outlook-panel { padding: 1rem; }
+   .outlook-grid, .cue-grid { grid-template-columns: 1fr; }
++  .spotlight-shell { padding: .9rem; }
++  .spotlight-shell .animal-duo { gap: .55rem; }
++  .spotlight-shell .animal-sticker { padding: .65rem; gap: .3rem; }
++  .spotlight-shell .animal-sticker img { width: min(100%, 7.5rem); }
++  .spotlight-shell .animal-sticker p { font-size: .78rem; }
++  .spotlight-shell .vibe-spotlight img { width: 4.3rem; }
++  .explore-body { padding-inline: .85rem; }
+ }
+ @media (max-width: 360px) {
+   .hero-aside { grid-template-columns: 1fr; }
+@@ -170,6 +247,6 @@ body, main, .masthead, .colophon { min-width: 0; }
+ }
+ @media (prefers-reduced-motion: reduce) {
+   html { scroll-behavior: auto; }
+-  .hero-art img, .lab-orbit, .lab-symbol, .lab-bubble, .lab-progress span, .results.revealed .story-section, .results.revealed .reading-card { animation: none; }
++  .hero-art img, .lab-orbit, .lab-symbol, .lab-bubble, .lab-progress span, .results.revealed .story-section, .results.revealed .reading-card, .results.revealed .moment-spotlight { animation: none; }
+   .animal-sticker, .cue-card, .pattern-card, .outlook-card, .primary, .secondary { transition: none; }
+ }
+diff --git a/index.html b/index.html
+index f408734..198891f 100644
+--- a/index.html
++++ b/index.html
+@@ -101,22 +101,30 @@
+ 
+       <section id="results" class="results" aria-live="polite" hidden>
+         <p class="step-label" data-i18n="stageResult"></p>
+-        <p id="scope-note" class="scope-note"></p>
+-        <article class="connection-summary">
+-          <div class="vibe-hero">
+-            <div>
+-              <p class="kicker" data-i18n="summaryTitle"></p>
+-              <h2 id="connection-label"></h2>
+-              <p id="connection-note"></p>
+-            </div>
+-            <img id="vibe-sticker" src="img/vibes/uncertain.svg" width="240" height="196" alt="" />
+-          </div>
++        <article class="connection-summary spotlight-shell" aria-label="Result highlights" data-i18n-attr="aria-label: spotlight.heading">
+           <div class="duo-section" aria-labelledby="duo-title">
+-            <h3 id="duo-title" data-i18n="duoTitle"></h3>
++            <p class="spotlight-index" data-i18n="spotlight.first"></p>
++            <h2 id="duo-title" tabindex="-1" data-i18n="spotlight.animals"></h2>
+             <div id="animal-duo" class="animal-duo"></div>
+             <p data-i18n="animalMeaning" class="duo-caveat"></p>
+           </div>
+-          <div class="story-section"><p class="story-kicker" data-i18n="reading.duoEyebrow"></p><h3 id="story-title"></h3><p id="story-body"></p></div>
++          <section class="story-section vibe-spotlight" aria-labelledby="story-title">
++            <div class="vibe-copy"><p class="spotlight-index" data-i18n="spotlight.second"></p><p class="vibe-tag" id="connection-label"></p><h2 id="story-title"></h2><p id="story-body"></p></div>
++            <img id="vibe-sticker" src="img/vibes/uncertain.svg" width="160" height="130" alt="" />
++          </section>
++          <section class="moment-spotlight" aria-labelledby="moment-heading">
++            <p class="spotlight-index" data-i18n="spotlight.third"></p>
++            <h2 id="moment-heading" data-i18n="spotlight.moment"></h2>
++            <h3 id="moment-title"></h3><p id="moment-detail"></p>
++          </section>
++          <div class="share-action spotlight-share"><button id="share" class="primary" type="button" data-i18n="share"></button></div>
++          <p id="scope-note" class="scope-note"></p>
++          <p class="spotlight-guide" data-i18n="spotlight.guide"></p>
++        </article>
++        <div class="explore-details">
++          <details class="explore-panel" id="detail-reading"><summary data-i18n="spotlight.moreReading"></summary><div class="explore-body">
++          <p id="connection-note"></p>
++          <p id="duo-extra" class="duo-extra" hidden></p>
+           <section class="reading-section" aria-labelledby="reading-title">
+             <div class="reading-intro"><p class="step-label" data-i18n="reading.eyebrow"></p><h3 id="reading-title" data-i18n="reading.title"></h3><p data-i18n="reading.subtitle"></p></div>
+             <div id="person-readings" class="person-readings"></div>
+@@ -135,10 +143,12 @@
+             <p class="cue-limit" data-i18n="cues.limits"></p>
+             <details class="cue-method"><summary data-i18n="cues.methodTitle"></summary><p data-i18n="cues.method"></p></details>
+           </section>
++          <section class="vibe-panel idea-panel" aria-labelledby="idea-title"><h3 id="idea-title" data-i18n="visual.ideaTitle"></h3><p id="conversation-idea"></p></section>
++          </div></details>
++          <details class="explore-panel" id="detail-charts"><summary data-i18n="spotlight.moreCharts"></summary><div class="explore-body">
+           <h3 class="scales-heading" data-i18n="reading.scalesTitle"></h3>
+           <div id="connection-scales" class="measures"></div>
+-        </article>
+-        <div class="vibe-gallery">
++          <div class="vibe-gallery">
+           <section id="map-panel" class="vibe-panel" aria-labelledby="map-title">
+             <h3 id="map-title" data-i18n="visual.mapTitle"></h3>
+             <p data-i18n="visual.mapIntro"></p>
+@@ -170,10 +180,8 @@
+           <div id="outlook-content"></div>
+           <details class="outlook-method"><summary data-i18n="outlook.methodTitle"></summary><p data-i18n="outlook.method"></p></details>
+         </section>
+-        <section class="vibe-panel idea-panel" aria-labelledby="idea-title">
+-          <h3 id="idea-title" data-i18n="visual.ideaTitle"></h3>
+-          <p id="conversation-idea"></p>
+-        </section>
++          </div></details>
++          <details class="explore-panel" id="detail-numbers"><summary data-i18n="spotlight.moreNumbers"></summary><div class="explore-body">
+         <h3 class="stats-heading" data-i18n="statsTitle"></h3>
+         <div id="records" class="records"></div>
+         <div id="plates" class="plates"></div>
+@@ -184,10 +192,9 @@
+           <p><a href="https://openstax.org/books/psychology-2e/pages/12-7-prosocial-behavior" target="_blank" rel="noreferrer" data-i18n="visual.bookLink2"></a></p>
+           <p><a href="https://pubmed.ncbi.nlm.nih.gov/36834137/" target="_blank" rel="noreferrer" data-i18n="visual.studyLink"></a></p>
+         </details>
+-        <div class="results-foot">
+-          <div class="share-action"><span class="step-label" data-i18n="stageShare"></span><button id="share" class="primary" type="button" data-i18n="share"></button></div>
+-        </div>
+         <details class="technical-details"><summary data-i18n="technicalTitle"></summary><p id="footnote" class="footnote"></p></details>
++          </div></details>
++        </div>
+       </section>
+     </main>
+ 
+diff --git a/js/app.js b/js/app.js
+index 0c75459..4cb094b 100644
+--- a/js/app.js
++++ b/js/app.js
+@@ -5,7 +5,6 @@ import { interactionLabel, normalisedScore } from './verdict.js';
+ import { chatStats, recordsOf } from './stats.js';
+ import { FileError, readChatFile } from './files.js';
+ import { openCard } from './card.js';
+-import { shareHighlights } from './card-data.js';
+ import { LANGUAGES, lang, setLanguage, t, translatePage } from './i18n.js';
+ import { formatDuration, formatNumber, percent, recordDetail, statisticNotes, textLengthPresentation } from './presentation.js';
+ import { SAMPLE_CHAT } from './sample.js';
+@@ -18,6 +17,7 @@ import { highlightCues } from './highlights.js';
+ import { outlookOf } from './outlook.js';
+ import { renderOutlook } from './outlook-view.js';
+ import { createSound } from './sound.js';
++import { chatMoment, momentVars } from './moment.js';
+ 
+ const $ = (id) => document.getElementById(id);
+ const chat = $('chat');
+@@ -230,10 +230,14 @@ function renderResults({ people, answers, rawMode, stats, stickerStats, timeline
+   $('connection-label').textContent = t(`connection.${label}`);
+   $('connection-note').textContent = t(rawMode ? 'connection.rawNote' : 'connection.note');
+   $('story-title').textContent = t(`story.${story}.title`);
++  $('story-body').textContent = t(`story.${story}.body`, storyVars);
+   const extra = story !== 'uncertain' && duoDetail(stickerStats, people, { raw: rawMode });
+-  $('story-body').textContent = [t(`story.${story}.body`, storyVars),
+-    ...(extra ? [t(`reading.duo.${extra.key}`, extra.vars)] : []),
+-  ].join(' ');
++  $('duo-extra').textContent = extra ? t(`reading.duo.${extra.key}`, extra.vars) : '';
++  $('duo-extra').hidden = !extra;
++  const moment = chatMoment(stickerStats, people, { raw: rawMode, truncated: meta.truncated });
++  $('moment-title').textContent = t(`moment.${moment?.key ?? 'empty'}.title`);
++  $('moment-detail').textContent = t(`moment.${moment?.key ?? 'empty'}.detail`,
++    momentVars(moment, (name) => name, formatDuration));
+   $('person-readings').replaceChildren(...personReadings(stickerStats, people, { raw: rawMode, truncated: meta.truncated }).map((reading) => {
+     const article = document.createElement('article');
+     article.className = 'reading-card';
+@@ -269,14 +273,17 @@ function renderResults({ people, answers, rawMode, stats, stickerStats, timeline
+   $('animal-duo').replaceChildren(...people.map((name, i) => {
+     const sticker = animals[i];
+     const box = document.createElement('div'); box.className = 'animal-sticker';
++    box.dataset.animal = sticker.key;
+     const picture = document.createElement('img');
+     picture.src = `img/animals/${sticker.key}.svg`;
+-    picture.alt = t(`animals.${sticker.key}.name`);
++    picture.alt = '';
+     const heading = document.createElement('strong');
+-    heading.textContent = `${name} · ${t(`animals.${sticker.key}.name`)}`;
++    heading.textContent = name;
++    const animalName = document.createElement('span'); animalName.className = 'animal-label';
++    animalName.textContent = t(`animals.${sticker.key}.name`);
+     const why = document.createElement('p');
+     why.textContent = t(`animals.${sticker.key}.why`, sticker);
+-    box.append(picture, heading, why);
++    box.append(picture, heading, animalName, why);
+     return box;
+   }));
+   $('vibe-sticker').src = `img/vibes/${label}.svg`;
+@@ -330,13 +337,16 @@ function renderResults({ people, answers, rawMode, stats, stickerStats, timeline
+   $('scope-note').textContent = t(rawMode ? 'scopeRaw' : meta.truncated ? 'scopePartial' : 'scopeFull', {
+     n: meta.judgedCount, total: meta.totalCount,
+   });
+-  $('share').onclick = () => openCard({ label, story, storyVars, animals, timeFact: timeline?.cardFact,
++  $('share').onclick = () => openCard({ story, animals, moment,
+     scope: rawMode ? null : { total: meta.totalCount, judged: meta.judgedCount },
+-    people: people.map((name) => ({ name, highlights: shareHighlights(stats?.get(name)) })),
+-    records: records.map((entry) => ({ key: entry.key, name: entry.name, detail: recordDetail(entry) })) });
++    people: people.map((name) => ({ name })) });
++  if (scroll) for (const detail of results.querySelectorAll('.explore-panel')) detail.open = false;
+   results.hidden = false;
+   results.classList.toggle('revealed', scroll);
+-  if (scroll) results.scrollIntoView({ behavior: 'smooth', block: 'start' });
++  if (scroll) {
++    $('duo-title').focus({ preventScroll: true });
++    results.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
++  }
+   requestAnimationFrame(() => requestAnimationFrame(() => {
+     for (const fill of results.querySelectorAll('.fill')) fill.style.width = fill.dataset.width;
+   }));
+diff --git a/js/card.js b/js/card.js
+index 560aaee..c17ef40 100644
+--- a/js/card.js
++++ b/js/card.js
+@@ -1,9 +1,12 @@
+-// One share flow for both PNG download and Web Share. The canvas and visible
+-// preview use only the interaction label, editable names and numeric counts.
++// One share flow for PNG and Web Share. The canvas and visible checklist use
++// the same curated, editable names, sticker reasons, vibe and one local fact.
+ import { t } from './i18n.js';
+-import { formatDuration, formatNumber } from './presentation.js';
++import { formatDuration } from './presentation.js';
++import { momentVars } from './moment.js';
++import { ANIMALS } from './animals.js';
+ const PHONE_NUMBER = /^[+\d][\d\s()./-]{5,}$/;
+ const $ = (id) => document.getElementById(id);
++let cardGeneration = 0;
+ export function defaultNames(names) {
+   let unknown = 0;
+   return names.map((name) => PHONE_NUMBER.test(name) ? t('unknownNumber', { n: ++unknown }) : name.split(/\s+/)[0]);
+@@ -11,19 +14,26 @@ export function defaultNames(names) {
+ export function shownCardName(shown, name) {
+   return shown.get(name)?.trim() || t('cardAnonymous');
+ }
+-function highlightLabel({ key, median, n }) {
+-  return key === 'reply'
+-    ? t('cardReplyHighlight', { time: formatDuration(median), n: formatNumber(n) })
+-    : t('cardCharsHighlight', { chars: formatNumber(median), n: formatNumber(n) });
++// Both the visible checklist and the PNG consume this one curated model.
++// Only edited names, animal rules, one selected moment and the scope enter it.
++export function cardCopy(verdict, shownName) {
++  return {
++    vibe: t(`cardVibe.${verdict.story ?? 'uncertain'}`),
++    people: verdict.people.slice(0, 2).map((person, i) => {
++      const candidate = verdict.animals?.[i] ?? { key: 'neutral' };
++      const animal = ANIMALS.includes(candidate.key) ? candidate : { key: 'neutral' };
++      return { name: shownName(person.name), animal: t(`animals.${animal.key}.name`),
++        reason: t(`animals.${animal.key}.why`, animal), key: animal.key };
++    }),
++    moment: verdict.moment ? t(`moment.${verdict.moment.key}.card`,
++      momentVars(verdict.moment, shownName, formatDuration)) : null,
++    scope: verdict.scope ? cardScope(verdict.scope) : null,
++  };
+ }
+ export function cardPreviewLines(verdict, shownName) {
+-  return [t(`connection.${verdict.label}`),
+-    ...(verdict.story ? [t(`cardStory.${verdict.story}`, verdict.storyVars)] : []),
+-    ...(verdict.scope ? [cardScope(verdict.scope)] : []),
+-    ...(verdict.timeFact ? [t('timeline.cardFact', verdict.timeFact)] : []),
+-    ...verdict.people.map((person, i) => `${shownName(person.name)}` +
+-      (verdict.animals?.[i] ? ` · ${t(`animals.${verdict.animals[i].key}.name`)} · ${t(`animals.${verdict.animals[i].key}.why`, verdict.animals[i])}` : '') +
+-      (person.highlights?.length ? ` · ${person.highlights.map(highlightLabel).join(' · ')}` : ''))];
++  const copy = cardCopy(verdict, shownName);
++  return [copy.vibe, ...copy.people.map(({ name, animal, reason }) => `${name} · ${animal} · ${reason}`),
++    ...(copy.moment ? [copy.moment] : []), ...(copy.scope ? [copy.scope] : [])];
+ }
+ function cardScope({ judged, total }) {
+   return t(judged < total ? 'cardScopePartial' : 'cardScopeFull', { n: judged, total });
+@@ -81,8 +91,9 @@ function drawWrapped(ctx, value, x, y, maxWidth, lineHeight, maxLines = 3) {
+     start = end;
+   }
+ }
+-export function drawCard(canvas, verdict, shownName) {
++export function drawCard(canvas, verdict, shownName, images = []) {
+   const ctx = canvas.getContext('2d');
++  const copy = cardCopy(verdict, shownName);
+   canvas.width = 1080;
+   canvas.height = 1350;
+   ctx.fillStyle = '#171420';
+@@ -93,8 +104,8 @@ export function drawCard(canvas, verdict, shownName) {
+     ctx.textAlign = 'left';
+     ctx.fillText(value, x, y, max);
+   };
+-  // The visible card and PNG are drawn from the same curated names, label and
+-  // local numeric highlights. No transcript or external images are loaded.
++  // No transcript or external images are loaded. This model also drives the
++  // user's explicit pre-share checklist.
+   const gradient = ctx.createLinearGradient(0, 0, 1080, 930);
+   gradient.addColorStop(0, '#4d3467'); gradient.addColorStop(1, '#204559');
+   ctx.fillStyle = gradient; ctx.beginPath(); ctx.roundRect(48, 46, 984, 1250, 48); ctx.fill();
+@@ -102,31 +113,38 @@ export function drawCard(canvas, verdict, shownName) {
+   for (const radius of [136, 196, 256]) { ctx.beginPath(); ctx.arc(986, 96, radius, 0, Math.PI * 2); ctx.stroke(); }
+   paint('FakeorFriend', 94, 133, 46, '#dff86f');
+   ctx.fillStyle = '#8b728d'; ctx.fillRect(94, 166, 892, 2);
+-  paint(t('summaryTitle'), 94, 228, 27, '#e1d2e3');
+-  paint(t(`connection.${verdict.label}`), 94, 326, 61, '#faf3f7', 875, 800);
+-  paint(t('connection.cardNote'), 94, 375, 24, '#e1d2e3', 880, 500);
+-  if (verdict.story) paint(t(`cardStory.${verdict.story}`, verdict.storyVars), 94, 420, 24, '#dff86f', 880, 600);
+-  drawAnimal(ctx, 155, 455, verdict.animals?.[0]);
+-  drawAnimal(ctx, 575, 455, verdict.animals?.[1]);
+-  verdict.animals?.slice(0, 2).forEach((animal, i) => {
+-    const x = i ? 575 : 155;
+-    paint(t(`animals.${animal.key}.name`), x, 728, 27, '#faf3f7', 340);
+-    ctx.fillStyle = '#e1d2e3'; ctx.font = '500 19px system-ui, sans-serif';
+-    drawWrapped(ctx, t(`animals.${animal.key}.why`, animal), x, 760, 340, 25);
+-  });
+-  verdict.people.forEach((person, i) => {
+-    const y = 840 + i * 195;
+-    ctx.fillStyle = '#867589'; ctx.fillRect(94, y - 8, 892, 2);
+-    paint(shownName(person.name), 94, y + 48, 46, '#faf3f7', 890, 800);
+-    person.highlights.slice(0, 2).forEach((highlight, j) =>
+-      paint(highlightLabel(highlight), 94, y + 84 + 30 * j, 22, '#e1d2e3', 890, 500));
++  paint(t('spotlight.animals'), 94, 226, 45, '#faf3f7');
++  copy.people.forEach((person, i) => {
++    const x = i ? 570 : 150;
++    ctx.font = '800 28px system-ui, sans-serif'; ctx.fillStyle = '#faf3f7';
++    drawWrapped(ctx, person.name, x, 275, 340, 33, 2);
++    if (images[i]?.naturalWidth > 0) {
++      ctx.fillStyle = i ? '#bde9ff20' : '#dff86f20';
++      ctx.beginPath(); ctx.roundRect(x, 330, 340, 235, 42); ctx.fill();
++      ctx.drawImage(images[i], x + 60, 337, 220, 220);
++    } else drawAnimal(ctx, x, 330, { key: person.key });
++    paint(person.animal, x, 610, 31, '#dff86f', 340);
++    ctx.font = '500 19px system-ui, sans-serif'; ctx.fillStyle = '#e1d2e3';
++    drawWrapped(ctx, person.reason, x, 641, 340, 25, 4);
+   });
+-  ctx.fillStyle = '#867589'; ctx.fillRect(94, 1186, 892, 2);
+-  paint(t('cardFooter'), 94, 1221, 23, '#e1d2e3', 880, 500);
+-  if (verdict.timeFact) paint(t('timeline.cardFact', verdict.timeFact), 94, 1256, 21, '#dff86f', 880, 500);
+-  if (verdict.scope) paint(cardScope(verdict.scope), 94, 1287, 18, '#e1d2e3', 880, 500);
++  ctx.fillStyle = '#cab9d065'; ctx.fillRect(94, 767, 892, 2);
++  paint(t('spotlight.vibe'), 94, 824, 29, '#bde9ff');
++  ctx.font = '700 32px system-ui, sans-serif'; ctx.fillStyle = '#faf3f7';
++  drawWrapped(ctx, copy.vibe, 94, 871, 870, 43, 3);
++  if (copy.moment) {
++    paint(t('spotlight.moment'), 94, 1020, 29, '#dff86f');
++    ctx.font = '600 25px system-ui, sans-serif'; ctx.fillStyle = '#faf3f7';
++    drawWrapped(ctx, copy.moment, 94, 1065, 870, 34, 3);
++  }
++  ctx.fillStyle = '#cab9d065'; ctx.fillRect(94, 1184, 892, 2);
++  paint(t('cardFooter'), 94, 1230, 22, '#e1d2e3', 880, 500);
++  if (copy.scope) {
++    ctx.font = '500 18px system-ui, sans-serif'; ctx.fillStyle = '#e1d2e3';
++    drawWrapped(ctx, copy.scope, 94, 1270, 880, 23, 2);
++  }
+ }
+ export function openCard(verdict) {
++  const generation = ++cardGeneration;
+   const dialog = $('card-dialog');
+   const canvas = $('card-canvas');
+   const names = verdict.people.map((p) => p.name);
+@@ -134,29 +152,47 @@ export function openCard(verdict) {
+   const shown = new Map(names.map((name, i) => [name, defaults[i]]));
+   const shownName = (name) => shownCardName(shown, name);
+   const preview = $('card-preview-details');
++  const share = $('card-share');
++  const download = $('card-download');
++  let images = [];
+   const redraw = () => {
+     preview.replaceChildren(...cardPreviewLines(verdict, shownName).map((value) =>
+       Object.assign(document.createElement('li'), { textContent: value })));
+-    drawCard(canvas, verdict, shownName);
++    drawCard(canvas, verdict, shownName, images);
+   };
+   $('card-names').replaceChildren(...verdict.people.map(({ name }) => {
+     const input = document.createElement('input');
+     input.value = shown.get(name);
++    input.maxLength = 48;
+     input.setAttribute('aria-label', name);
+     input.addEventListener('input', () => { shown.set(name, input.value.trim()); redraw(); });
+     return input;
+   }));
+-  const share = $('card-share');
+   share.hidden = !navigator.canShare?.({ files: [new File([], 'x.png', { type: 'image/png' })] });
+   share.onclick = async () => {
+     try { await navigator.share({ files: [await asFile(canvas)], text: t('cardShareText') }); }
+     catch (error) { if (error.name !== 'AbortError') throw error; }
+   };
+-  $('card-download').onclick = async () => {
++  download.onclick = async () => {
+     const url = URL.createObjectURL(await asFile(canvas));
+     const link = Object.assign(document.createElement('a'), { href: url, download: 'fakeorfriend.png' });
+     link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+   };
+   dialog.showModal();
+   redraw();
++  // The same original, same-origin SVGs appear on screen and in the PNG.
++  // Keep export disabled until images have finished decoding; never capture a
++  // half-drawn canvas if the user taps immediately after opening the dialog.
++  share.disabled = download.disabled = true;
++  void Promise.all(cardCopy(verdict, shownName).people.map(({ key }) => new Promise((resolve) => {
++    const image = new Image();
++    image.onload = () => resolve(image);
++    image.onerror = () => resolve(null);
++    image.src = `img/animals/${key}.svg`;
++  }))).then((loaded) => {
++    if (generation !== cardGeneration || !dialog.open) return;
++    images = loaded;
++    redraw();
++    share.disabled = download.disabled = false;
++  });
+ }
+diff --git a/js/locales/de.js b/js/locales/de.js
+index af7c031..a598596 100644
+--- a/js/locales/de.js
++++ b/js/locales/de.js
+@@ -1,26 +1,62 @@
+ export default {
++  "spotlight": {
++    "heading": "Dein Chat auf einen Blick",
++    "first": "01 / Euer Sticker-Duo",
++    "animals": "Welches Tier seid ihr hier?",
++    "second": "02 / Euer Vibe",
++    "vibe": "Euer Vibe",
++    "third": "03 / Ein echter Chat-Fakt",
++    "moment": "Der Chat-Moment",
++    "guide": "Neugierig? Öffne unten die Zahlen und Erklärungen.",
++    "moreReading": "Mehr über euren Austausch & Mini-Mission",
++    "moreCharts": "Vier Skalen, Zeitverlauf & Ausblick",
++    "moreNumbers": "Lokale Zahlen, Methoden & Datenfluss"
++  },
++  "moment": {
++    "starter": {
++      "title": "Wer schreibt zuerst? ✦",
++      "detail": "{name} beginnt {count} von {of} erkannten Gesprächen. Das zeigt nur, wer in diesem Chat öfter den ersten Ping schickt.",
++      "card": "{name} beginnt {count} von {of} erkannten Gesprächen."
++    },
++    "reply": {
++      "title": "Antworttempo im Vergleich ↗",
++      "detail": "{name} antwortet im Median nach {time} (n = {n}); bei der anderen Person sind es {otherTime} (n = {otherN}). Nach sechs Stunden Stille zählt ein neuer Gesprächsbeginn.",
++      "card": "{name}: Antwort-Median {time} (n = {n}); andere Person {otherTime} (n = {otherN})."
++    },
++    "empty": {
++      "title": "Noch kein klarer Vorsprung",
++      "detail": "Bei Gesprächsanfängen und Antwortzeiten gibt es hier keinen fair belegten Unterschied. Gleichstand ist auch ein Ergebnis."
++    }
++  },
++  "cardVibe": {
++    "warm": "Hier klingt der Austausch oft freundlich und gegenseitig. Das gilt nur für diesen Ausschnitt.",
++    "friction": "Hier gibt es im Ausschnitt erkennbare Reibung. Der Kontext außerhalb des Chats bleibt offen.",
++    "clarify": "Manches im Ausschnitt lässt mehrere Lesarten zu. Eine freundliche Nachfrage kann helfen.",
++    "everyday": "Der Ausschnitt zeigt einen alltäglichen Mix. Er erzählt nicht die ganze Geschichte.",
++    "uncertain": "Für eine gemeinsame Lesart fehlen überprüfbare Chatdaten."
++  },
+   "title": "FakeorFriend · Wie läuft’s zwischen euch?",
+   "tagline": "Ein Blick auf euren Zweierchat",
+   "volume": "Bd. I · 2026",
+   "language": "Sprache",
+-  "heroOverline": "Zwei Stimmen. Ein Chat. Viele Zwischentöne.",
++  "heroOverline": "Zwei Personen. Ein Chat. Ein Sticker-Duo.",
+   "flowLabel": "So läuft der Vibe-Check",
+   "flowInput": "Chat wählen",
+   "flowAnalyse": "Vibe-Check",
+   "flowResult": "Ergebnis",
+   "soundOn": "Ton an",
+   "soundOff": "Ton aus",
+-  "scopeFull": "Jev und lokale Zahlen beziehen sich auf alle {total} Nachrichten.",
+-  "scopePartial": "Jev und Sticker beziehen sich auf die neuesten {n} von {total} Nachrichten; Zeitverlauf und lokale Zahlen auf alle {total}.",
++  "scopeFull": "Jev, Sticker, Chat-Moment und lokale Zahlen beziehen sich auf alle {total} Nachrichten.",
++  "scopePartial": "Jev, Sticker und Chat-Moment beziehen sich auf die neuesten {n} von {total} Nachrichten; Zeitverlauf und lokale Zahlen auf alle {total}.",
+   "scopeRaw": "Jev sieht einen Rohtextausschnitt; lokale Werte bleiben ungeprüft.",
+-  "cardScopePartial": "Karten-Sticker aus den neuesten {n} von {total} Nachrichten; lokale Werte aus allen {total}.",
+-  "cardScopeFull": "Karten-Sticker und lokale Werte aus {total} Nachrichten.",
++  "cardScopePartial": "Sticker und Chat-Moment aus den neuesten {n} von {total} Nachrichten.",
++  "cardScopeFull": "Sticker und Chat-Moment aus {total} Nachrichten.",
+   "labTitle": "Euer Vibe kommt gleich ✦",
+   "labIntro": "Wir zählen Chatmuster lokal und fragen Jev einmal nach vier Eindrücken zum Austausch. Die Karte entsteht danach direkt im Browser.",
+-  "hero": "Wie läuft’s <em>zwischen euch</em>?",
+-  "lede": "Zwei Leute, ein Chat, jede Menge Zwischentöne. Entdeckt Sticker, echte Chatmuster und Ideen für euer nächstes Gespräch. Spielerisch, ohne Gedankenlesen.",
++  "hero": "Was sind eure <em>Chat-Tiere</em>?",
++  "lede": "Zwei Tiere, euer Vibe und ein echter Chat-Fakt. Kurz reinschauen, bei Neugier tiefer klicken.",
+   "stageInput": "01 / Chat auswählen",
+-  "stageResult": "02 / Euer Vibe auf einen Blick",
++  "stageResult": "Euer Ergebnis",
+   "stageShare": "03 / Karte ansehen & teilen",
+   "duoTitle": "Euer Sticker-Duo",
+   "reading": {
+@@ -168,14 +204,14 @@ export default {
+   "technicalTitle": "Technische Angaben zum Ausschnitt",
+   "animalMeaning": "Sticker zeigen gezählte Muster in diesem Ausschnitt, keine Charaktereigenschaften.",
+   "animals": {
+-    "mouse": { "name": "Maus", "why": "Kurz und knackig: im Median {value} Wörter je Nachricht (n = {n})." },
+-    "cat": { "name": "Katze", "why": "Zwischen kurz und ausführlich: im Median {value} Wörter je Nachricht (n = {n})." },
+-    "dog": { "name": "Hund", "why": "Startet hier öfter ein neues Gespräch: {count} von {of}; eindeutiger Vorsprung." },
+-    "hedgehog": { "name": "Igel", "why": "Nimmt sich Raum für Text: im Median {value} Wörter je Nachricht (n = {n})." },
+-    "owl": { "name": "Eule", "why": "Schreibt oft zur im Export notierten späten Stunde: {count} von {n} Nachrichten zwischen 22 und 6 Uhr." },
+-    "rabbit": { "name": "Hase", "why": "Hier folgt der nächste Antwortblock im Median nach {value} Minuten (n = {n})." },
+-    "tortoise": { "name": "Schildkröte", "why": "Zwischen den Antwortblöcken liegen im Median {value} Minuten (n = {n})." },
+-    "neutral": { "name": "Überraschungssticker", "why": "Noch zu wenig überprüfbare Nachrichten für einen passenden Sticker." }
++    "mouse": { "name": "Maus", "why": "Du schreibst hier eher kurz: Median {value} Wörter pro Nachricht (n = {n})." },
++    "cat": { "name": "Katze", "why": "Du liegst hier bei einem Median von {value} Wörtern pro Nachricht (n = {n})." },
++    "dog": { "name": "Hund", "why": "Du startest {count} von {of} erkannten Gesprächen – mehr als die andere Person." },
++    "hedgehog": { "name": "Igel", "why": "Du schreibst hier ausführlicher: Median {value} Wörter pro Nachricht (n = {n})." },
++    "owl": { "name": "Eule", "why": "Du schreibst {count} von {n} Nachrichten zwischen 22 und 6 Uhr laut Exportzeit." },
++    "rabbit": { "name": "Hase", "why": "Auf den anderen Chat-Block antwortest du im Median nach {value} Minuten (n = {n})." },
++    "tortoise": { "name": "Schildkröte", "why": "Zwischen den Antwortblöcken liegen bei dir im Median {value} Minuten (n = {n})." },
++    "neutral": { "name": "Überraschungssticker", "why": "Hier fehlen überprüfbare Nachrichten für eine Tierrolle." }
+   },
+   "story": {
+     "warm": { "title": "Da kommt was zurück ✦", "body": "Wärme {warmth}/3 und Hin und Her {reciprocity}/3: Beide greifen im Ausschnitt wiederholt etwas voneinander auf. Das könnte sich nach Nähe anfühlen – was außerhalb dieser {n} Nachrichten zwischen euch ist, bleibt offen." },
+@@ -205,8 +241,8 @@ export default {
+   "keyStorage": "Ein selbst eingegebener Schlüssel und deine gewählte Sprache können in diesem Browser gespeichert sein. Auch ein im Deployment unter js/key.js hinterlegter Schlüssel kann genutzt werden.",
+   "clearKey": "Gespeicherten eigenen Schlüssel löschen",
+   "keyCleared": "Dein gespeicherter Schlüssel wurde aus diesem Browser entfernt. Ein bereitgestellter Schlüssel in js/key.js bleibt, falls vorhanden, nutzbar.",
+-  "summaryTitle": "Der Austausch in diesem Ausschnitt",
+-  "share": "Karte ansehen",
++  "summaryTitle": "Euer Chat auf einen Blick",
++  "share": "Karte ansehen & teilen",
+   "colophon": "Eine spielerische Einordnung des eingereichten Chatabschnitts von Jev (TypeSafe) über OpenRouter. Keine Diagnose und kein Urteil über eure Beziehung.",
+   "cardNames": "Namen auf der Karte",
+   "cardShare": "Teilen",
+diff --git a/js/locales/en.js b/js/locales/en.js
+index 94fd16f..3b418c0 100644
+--- a/js/locales/en.js
++++ b/js/locales/en.js
+@@ -1,26 +1,62 @@
+ export default {
++  "spotlight": {
++    "heading": "Your chat at a glance",
++    "first": "01 / Your sticker duo",
++    "animals": "Which chat animals are you?",
++    "second": "02 / Your vibe",
++    "vibe": "Your vibe",
++    "third": "03 / One real chat fact",
++    "moment": "The chat moment",
++    "guide": "Curious? Open the numbers and explanations below.",
++    "moreReading": "More about your exchange & mini-mission",
++    "moreCharts": "Four scales, timeline & outlook",
++    "moreNumbers": "Local numbers, methods & data flow"
++  },
++  "moment": {
++    "starter": {
++      "title": "Who sends the first ping? ✦",
++      "detail": "{name} starts {count} of {of} recognised conversations. That only shows who starts more often in this chat.",
++      "card": "{name} starts {count} of {of} recognised conversations."
++    },
++    "reply": {
++      "title": "Reply pace, side by side ↗",
++      "detail": "{name} replies after a median of {time} (n = {n}); the other person after {otherTime} (n = {otherN}). After six hours of silence, a new conversation begins.",
++      "card": "{name}: median reply {time} (n = {n}); other person {otherTime} (n = {otherN})."
++    },
++    "empty": {
++      "title": "No clear lead yet",
++      "detail": "There is no well-supported difference in who starts or how fast replies arrive here. A tie is a result, too."
++    }
++  },
++  "cardVibe": {
++    "warm": "This excerpt often sounds friendly and reciprocal. It says nothing certain beyond these messages.",
++    "friction": "Some friction is visible in this excerpt. What happened outside the chat remains open.",
++    "clarify": "Some messages allow more than one reading. A friendly question might help.",
++    "everyday": "This excerpt is a mix of everyday exchanges. It is not the whole story.",
++    "uncertain": "There is not enough verifiable chat data for a joint reading."
++  },
+   "title": "FakeorFriend · How is your connection?",
+   "tagline": "A closer look at a two-person chat",
+   "volume": "Vol. I · 2026",
+   "language": "Language",
+-  "heroOverline": "Two voices. One chat. So many little signals.",
++  "heroOverline": "Two people. One chat. One sticker duo.",
+   "flowLabel": "How the vibe check works",
+   "flowInput": "Pick a chat",
+   "flowAnalyse": "Vibe check",
+   "flowResult": "Results",
+   "soundOn": "Sound on",
+   "soundOff": "Sound off",
+-  "scopeFull": "Jev and local numbers cover all {total} messages.",
+-  "scopePartial": "Jev and stickers use the newest {n} of {total} messages; timeline and local numbers use all {total}.",
++  "scopeFull": "Jev, stickers, the chat moment and local numbers cover all {total} messages.",
++  "scopePartial": "Jev, stickers and the chat moment use the newest {n} of {total} messages; timeline and local numbers use all {total}.",
+   "scopeRaw": "Jev sees a raw text excerpt; local numbers cannot be verified.",
+-  "cardScopePartial": "Card stickers from the newest {n} of {total} messages; local numbers from all {total}.",
+-  "cardScopeFull": "Card stickers and local numbers from all {total} messages.",
++  "cardScopePartial": "Stickers and chat moment from the newest {n} of {total} messages.",
++  "cardScopeFull": "Stickers and chat moment from all {total} messages.",
+   "labTitle": "Your vibe is on its way ✦",
+   "labIntro": "We count chat patterns locally and ask Jev once for four impressions of the exchange. Your card is then made in the browser.",
+-  "hero": "How is your <em>connection</em>?",
+-  "lede": "Two people, one chat, plenty between the lines. Explore stickers, real chat patterns and an idea for your next conversation. Playful, without mind reading.",
++  "hero": "Meet your <em>chat animals</em>",
++  "lede": "Two animals, one shared vibe and a real chat fact. Take a quick look; open the details when you want more.",
+   "stageInput": "01 / Pick a chat",
+-  "stageResult": "02 / Your vibe at a glance",
++  "stageResult": "Your result",
+   "stageShare": "03 / Preview & share your card",
+   "duoTitle": "Your sticker duo",
+   "reading": {
+@@ -168,14 +204,14 @@ export default {
+   "technicalTitle": "Technical excerpt details",
+   "animalMeaning": "Stickers show counted patterns in this excerpt only, not personality traits.",
+   "animals": {
+-    "mouse": { "name": "Mouse", "why": "Short and sweet: median {value} words per message (n = {n})." },
+-    "cat": { "name": "Cat", "why": "Between short and detailed: median {value} words per message (n = {n})." },
+-    "dog": { "name": "Dog", "why": "Starts more new conversations here: {count} of {of}, with a clear lead." },
+-    "hedgehog": { "name": "Hedgehog", "why": "Makes room for longer texts: median {value} words per message (n = {n})." },
+-    "owl": { "name": "Owl", "why": "Often writes late according to the export clock: {count} of {n} messages between 10 pm and 6 am." },
+-    "rabbit": { "name": "Rabbit", "why": "Next reply block arrives after a median of {value} minutes (n = {n})." },
+-    "tortoise": { "name": "Tortoise", "why": "Reply blocks are a median of {value} minutes apart (n = {n})." },
+-    "neutral": { "name": "Mystery sticker", "why": "Not enough verifiable messages for a specific sticker yet." }
++    "mouse": { "name": "Mouse", "why": "You keep it short here: median {value} words per message (n = {n})." },
++    "cat": { "name": "Cat", "why": "You land at a median of {value} words per message here (n = {n})." },
++    "dog": { "name": "Dog", "why": "You start {count} of {of} recognised conversations, more than the other person." },
++    "hedgehog": { "name": "Hedgehog", "why": "Your messages run longer here: median {value} words (n = {n})." },
++    "owl": { "name": "Owl", "why": "You write {count} of {n} messages between 10 pm and 6 am, using the export clock." },
++    "rabbit": { "name": "Rabbit", "why": "You reply after a median of {value} minutes to the previous chat block (n = {n})." },
++    "tortoise": { "name": "Tortoise", "why": "Your reply blocks are a median of {value} minutes apart (n = {n})." },
++    "neutral": { "name": "Mystery sticker", "why": "Not enough verifiable messages for a chat-animal role yet." }
+   },
+   "story": {
+     "warm": { "title": "That energy goes both ways ✦", "body": "Warmth {warmth}/3 and back-and-forth {reciprocity}/3: both build on each other in this excerpt. That might feel like closeness, but these {n} messages cannot tell us where your connection goes." },
+@@ -205,8 +241,8 @@ export default {
+   "keyStorage": "A key you enter and your chosen language can be saved in this browser. A key built into the deployment in js/key.js can also be used.",
+   "clearKey": "Delete saved personal key",
+   "keyCleared": "Saved personal key removed from this browser. A deployment key in js/key.js remains available if configured.",
+-  "summaryTitle": "The exchange in this excerpt",
+-  "share": "Preview card",
++  "summaryTitle": "Your chat at a glance",
++  "share": "Preview & share card",
+   "colophon": "An exploratory reading of the submitted chat excerpt by Jev (TypeSafe) via OpenRouter. No diagnosis or relationship verdict.",
+   "cardNames": "Names on the card",
+   "cardShare": "Share",
+diff --git a/js/locales/es.js b/js/locales/es.js
+index 1129ca3..eac4d44 100644
+--- a/js/locales/es.js
++++ b/js/locales/es.js
+@@ -1,26 +1,62 @@
+ export default {
++  "spotlight": {
++    "heading": "Vuestro chat de un vistazo",
++    "first": "01 / Vuestros stickers",
++    "animals": "¿Qué animales sois en este chat?",
++    "second": "02 / Vuestro ambiente",
++    "vibe": "Vuestro ambiente",
++    "third": "03 / Un dato del chat",
++    "moment": "El momento del chat",
++    "guide": "¿Quieres más? Abre abajo los datos y las explicaciones.",
++    "moreReading": "Más sobre el intercambio y mini-reto",
++    "moreCharts": "Cuatro escalas, evolución y pronóstico",
++    "moreNumbers": "Datos locales, método y privacidad"
++  },
++  "moment": {
++    "starter": {
++      "title": "¿Quién manda el primer mensaje? ✦",
++      "detail": "{name} inicia {count} de {of} conversaciones reconocidas. Esto solo describe los inicios visibles en este chat.",
++      "card": "{name} inicia {count} de {of} conversaciones reconocidas."
++    },
++    "reply": {
++      "title": "Ritmo de respuesta ↗",
++      "detail": "{name} responde tras una mediana de {time} (n = {n}); la otra persona tras {otherTime} (n = {otherN}). Tras seis horas de silencio empieza otra conversación.",
++      "card": "{name}: mediana de respuesta {time} (n = {n}); la otra persona {otherTime} (n = {otherN})."
++    },
++    "empty": {
++      "title": "Sin ventaja clara",
++      "detail": "Aquí no hay una diferencia bien sustentada en quién inicia o en la rapidez de respuesta. Un empate también cuenta."
++    }
++  },
++  "cardVibe": {
++    "warm": "Este fragmento suele sonar amable y recíproco. No asegura nada fuera del chat.",
++    "friction": "Se ven algunos roces en este fragmento. El contexto fuera del chat sigue abierto.",
++    "clarify": "Algunos mensajes admiten varias lecturas. Una pregunta amable puede ayudar.",
++    "everyday": "Este fragmento mezcla intercambios cotidianos. No cuenta toda la historia.",
++    "uncertain": "Faltan datos verificables para una lectura conjunta."
++  },
+   "title": "FakeorFriend · ¿Cómo os comunicáis?",
+   "tagline": "Una mirada a un chat entre dos personas",
+   "volume": "Vol. I · 2026",
+   "language": "Idioma",
+-  "heroOverline": "Dos voces. Un chat. Muchos matices.",
++  "heroOverline": "Dos personas. Un chat. Dos stickers.",
+   "flowLabel": "Cómo funciona el vistazo al chat",
+   "flowInput": "Elegir chat",
+   "flowAnalyse": "Explorar",
+   "flowResult": "Resultado",
+   "soundOn": "Sonido activado",
+   "soundOff": "Sonido desactivado",
+-  "scopeFull": "Jev y los datos locales abarcan los {total} mensajes.",
+-  "scopePartial": "Jev y los stickers usan los {n} mensajes más recientes de {total}; la gráfica y los datos locales usan los {total}.",
++  "scopeFull": "Jev, los stickers, el momento del chat y los datos locales abarcan los {total} mensajes.",
++  "scopePartial": "Jev, los stickers y el momento del chat usan los {n} mensajes más recientes de {total}; la gráfica y los datos locales usan los {total}.",
+   "scopeRaw": "Jev ve un extracto sin analizar; no se pueden verificar los datos locales.",
+-  "cardScopePartial": "Stickers de los {n} mensajes más recientes de {total}; datos locales de los {total}.",
+-  "cardScopeFull": "Stickers y datos locales de los {total} mensajes.",
++  "cardScopePartial": "Stickers y momento del chat de los {n} mensajes más recientes de {total}.",
++  "cardScopeFull": "Stickers y momento del chat de los {total} mensajes.",
+   "labTitle": "Ya llega vuestro resultado ✦",
+   "labIntro": "Contamos patrones del chat en el navegador y preguntamos una sola vez a Jev por cuatro impresiones del intercambio. Después la tarjeta se crea aquí mismo.",
+-  "hero": "¿Cómo va vuestra <em>conexión</em>?",
+-  "lede": "Dos personas, un chat y un montón de matices. Explorad stickers, patrones reales y una idea para vuestra próxima charla. Un juego, sin leer la mente.",
++  "hero": "¿Qué <em>animales del chat</em> sois?",
++  "lede": "Dos animales, vuestro ambiente y un dato real del chat. Echad un vistazo y abrid los detalles si os interesa.",
+   "stageInput": "01 / Elegir un chat",
+-  "stageResult": "02 / Vuestro chat de un vistazo",
++  "stageResult": "Vuestro resultado",
+   "stageShare": "03 / Ver y compartir la tarjeta",
+   "duoTitle": "Vuestro dúo de stickers",
+   "reading": {
+@@ -168,14 +204,14 @@ export default {
+   "technicalTitle": "Detalles técnicos del fragmento",
+   "animalMeaning": "Los stickers muestran patrones contados en este fragmento, no rasgos de personalidad.",
+   "animals": {
+-    "mouse": { "name": "Ratón", "why": "Corto y claro: mediana de {value} palabras por mensaje (n = {n})." },
+-    "cat": { "name": "Gato", "why": "Entre breve y detallado: mediana de {value} palabras por mensaje (n = {n})." },
+-    "dog": { "name": "Perro", "why": "Inicia más conversaciones aquí: {count} de {of}, con ventaja clara." },
+-    "hedgehog": { "name": "Erizo", "why": "Se extiende al escribir: mediana de {value} palabras por mensaje (n = {n})." },
+-    "owl": { "name": "Búho", "why": "Escribe a menudo tarde según la hora del chat exportado: {count} de {n} mensajes entre las 22:00 y las 06:00." },
+-    "rabbit": { "name": "Conejo", "why": "El siguiente bloque de respuesta llega tras una mediana de {value} minutos (n = {n})." },
+-    "tortoise": { "name": "Tortuga", "why": "Los bloques de respuesta tienen una separación mediana de {value} minutos (n = {n})." },
+-    "neutral": { "name": "Sticker sorpresa", "why": "Aún faltan mensajes verificables para elegir un sticker concreto." }
++    "mouse": { "name": "Ratón", "why": "Aquí escribes corto: mediana de {value} palabras por mensaje (n = {n})." },
++    "cat": { "name": "Gato", "why": "Aquí escribes una mediana de {value} palabras por mensaje (n = {n})." },
++    "dog": { "name": "Perro", "why": "Inicias {count} de {of} conversaciones reconocidas, más que la otra persona." },
++    "hedgehog": { "name": "Erizo", "why": "Aquí escribes más largo: mediana de {value} palabras por mensaje (n = {n})." },
++    "owl": { "name": "Búho", "why": "Escribes {count} de {n} mensajes entre las 22:00 y las 06:00 según la hora del chat exportado." },
++    "rabbit": { "name": "Conejo", "why": "Respondes al bloque anterior tras una mediana de {value} minutos (n = {n})." },
++    "tortoise": { "name": "Tortuga", "why": "Tus bloques de respuesta se separan por una mediana de {value} minutos (n = {n})." },
++    "neutral": { "name": "Sticker sorpresa", "why": "Faltan mensajes verificables para asignar un animal." }
+   },
+   "story": {
+     "warm": { "title": "Hay respuesta por los dos lados ✦", "body": "Calidez {warmth}/3 y diálogo {reciprocity}/3: ambos retoman lo que dice el otro en este fragmento. Podría sentirse como cercanía, pero estos {n} mensajes no dicen hacia dónde va vuestra relación." },
+@@ -205,8 +241,8 @@ export default {
+   "keyStorage": "Una clave introducida por ti y el idioma elegido pueden guardarse en este navegador. También puede usarse una clave incluida en el despliegue en js/key.js.",
+   "clearKey": "Borrar mi clave guardada",
+   "keyCleared": "Tu clave guardada se eliminó de este navegador. Una clave de despliegue en js/key.js sigue disponible si existe.",
+-  "summaryTitle": "El intercambio en este fragmento",
+-  "share": "Ver tarjeta",
++  "summaryTitle": "Vuestro chat de un vistazo",
++  "share": "Ver y compartir tarjeta",
+   "colophon": "Lectura exploratoria de este fragmento por Jev (TypeSafe) mediante OpenRouter. No es un diagnóstico ni un veredicto sobre vuestra relación.",
+   "cardNames": "Nombres en la tarjeta",
+   "cardShare": "Compartir",
+diff --git a/js/locales/fr.js b/js/locales/fr.js
+index 890699e..86b686a 100644
+--- a/js/locales/fr.js
++++ b/js/locales/fr.js
+@@ -1,26 +1,62 @@
+ export default {
++  "spotlight": {
++    "heading": "Votre chat en un coup d’œil",
++    "first": "01 / Votre duo de stickers",
++    "animals": "Quels animaux du chat êtes-vous ?",
++    "second": "02 / Votre ambiance",
++    "vibe": "Votre ambiance",
++    "third": "03 / Un fait du chat",
++    "moment": "Le moment du chat",
++    "guide": "Envie d’en voir plus ? Ouvrez les chiffres et explications ci-dessous.",
++    "moreReading": "Votre échange & mini-défi",
++    "moreCharts": "Quatre échelles, évolution & aperçu",
++    "moreNumbers": "Chiffres locaux, méthode & données"
++  },
++  "moment": {
++    "starter": {
++      "title": "Qui lance la conversation ? ✦",
++      "detail": "{name} lance {count} des {of} conversations reconnues. Cela décrit uniquement les débuts visibles dans ce chat.",
++      "card": "{name} lance {count} des {of} conversations reconnues."
++    },
++    "reply": {
++      "title": "Les réponses en comparaison ↗",
++      "detail": "{name} répond après une médiane de {time} (n = {n}) ; l’autre personne après {otherTime} (n = {otherN}). Après six heures de silence, une nouvelle conversation commence.",
++      "card": "{name} : réponse médiane {time} (n = {n}) ; autre personne {otherTime} (n = {otherN})."
++    },
++    "empty": {
++      "title": "Pas d’avance claire",
++      "detail": "Aucune différence suffisamment étayée ici pour les débuts ou les délais de réponse. Une égalité compte aussi."
++    }
++  },
++  "cardVibe": {
++    "warm": "Cet extrait paraît souvent cordial et réciproque. Il ne permet aucune certitude au-delà du chat.",
++    "friction": "Des frictions sont visibles dans cet extrait. Le contexte hors du chat reste inconnu.",
++    "clarify": "Certains messages ont plusieurs sens possibles. Une question aimable pourrait aider.",
++    "everyday": "Cet extrait mélange des échanges ordinaires. Il ne raconte pas toute l’histoire.",
++    "uncertain": "Les données vérifiables manquent pour une lecture commune."
++  },
+   "title": "FakeorFriend · Comment échangez-vous ?",
+   "tagline": "Un regard sur une conversation à deux",
+   "volume": "Vol. I · 2026",
+   "language": "Langue",
+-  "heroOverline": "Deux voix. Un chat. Mille nuances.",
++  "heroOverline": "Deux personnes. Un chat. Un duo de stickers.",
+   "flowLabel": "Les étapes du regard sur le chat",
+   "flowInput": "Choisir un chat",
+   "flowAnalyse": "Explorer",
+   "flowResult": "Résultat",
+   "soundOn": "Son activé",
+   "soundOff": "Son coupé",
+-  "scopeFull": "Jev et les chiffres locaux portent sur les {total} messages.",
+-  "scopePartial": "Jev et les autocollants utilisent les {n} derniers messages sur {total} ; courbe et chiffres locaux utilisent les {total}.",
++  "scopeFull": "Jev, les stickers, le moment du chat et les chiffres locaux portent sur les {total} messages.",
++  "scopePartial": "Jev, les stickers et le moment du chat utilisent les {n} derniers messages sur {total} ; courbe et chiffres locaux utilisent les {total}.",
+   "scopeRaw": "Jev voit un extrait brut ; les chiffres locaux ne sont pas vérifiables.",
+-  "cardScopePartial": "Autocollants des {n} derniers messages sur {total} ; chiffres locaux sur les {total}.",
+-  "cardScopeFull": "Autocollants et chiffres locaux sur les {total} messages.",
++  "cardScopePartial": "Stickers et moment du chat issus des {n} derniers messages sur {total}.",
++  "cardScopeFull": "Stickers et moment du chat issus des {total} messages.",
+   "labTitle": "Votre résultat arrive ✦",
+   "labIntro": "Nous comptons les motifs du chat localement et demandons une seule fois à Jev quatre impressions sur l'échange. La carte est ensuite créée dans le navigateur.",
+-  "hero": "Comment se passe votre <em>échange</em> ?",
+-  "lede": "Deux personnes, un chat et plein de nuances. Découvrez des stickers, des motifs mesurés et une idée pour votre prochaine discussion. Un jeu, sans lire dans les pensées.",
++  "hero": "Vos <em>animaux du chat</em> ?",
++  "lede": "Deux animaux, votre ambiance et un fait du chat. Un coup d’œil, puis les détails si vous voulez.",
+   "stageInput": "01 / Choisir un chat",
+-  "stageResult": "02 / Votre échange en bref",
++  "stageResult": "Votre résultat",
+   "stageShare": "03 / Voir et partager la carte",
+   "duoTitle": "Votre duo de stickers",
+   "reading": {
+@@ -168,14 +204,14 @@ export default {
+   "technicalTitle": "Détails techniques de l'extrait",
+   "animalMeaning": "Les stickers montrent seulement des habitudes comptées dans cet extrait, pas des traits de caractère.",
+   "animals": {
+-    "mouse": { "name": "Souris", "why": "Court et direct : médiane de {value} mots par message (n = {n})." },
+-    "cat": { "name": "Chat", "why": "Entre bref et détaillé : médiane de {value} mots par message (n = {n})." },
+-    "dog": { "name": "Chien", "why": "Lance plus souvent un nouvel échange ici : {count} sur {of}, avec une avance nette." },
+-    "hedgehog": { "name": "Hérisson", "why": "Prend de la place pour écrire : médiane de {value} mots par message (n = {n})." },
+-    "owl": { "name": "Chouette", "why": "Écrit souvent tard selon l’heure de l’export : {count} messages sur {n} entre 22 h et 6 h." },
+-    "rabbit": { "name": "Lapin", "why": "Le bloc de réponse suivant arrive après une médiane de {value} minutes (n = {n})." },
+-    "tortoise": { "name": "Tortue", "why": "Les blocs de réponse sont espacés d’une médiane de {value} minutes (n = {n})." },
+-    "neutral": { "name": "Sticker surprise", "why": "Pas assez de messages vérifiables pour choisir un sticker précis." }
++    "mouse": { "name": "Souris", "why": "Tu écris plutôt court ici : médiane de {value} mots par message (n = {n})." },
++    "cat": { "name": "Chat", "why": "Tu écris ici une médiane de {value} mots par message (n = {n})." },
++    "dog": { "name": "Chien", "why": "Tu lances {count} des {of} conversations reconnues, plus que l’autre personne." },
++    "hedgehog": { "name": "Hérisson", "why": "Tu écris plus long ici : médiane de {value} mots par message (n = {n})." },
++    "owl": { "name": "Chouette", "why": "Tu écris {count} des {n} messages entre 22 h et 6 h selon l’heure de l’export." },
++    "rabbit": { "name": "Lapin", "why": "Tu réponds après une médiane de {value} minutes au bloc précédent (n = {n})." },
++    "tortoise": { "name": "Tortue", "why": "Tes blocs de réponse sont espacés d’une médiane de {value} minutes (n = {n})." },
++    "neutral": { "name": "Sticker surprise", "why": "Pas assez de messages vérifiables pour attribuer un animal." }
+   },
+   "story": {
+     "warm": { "title": "Ça se répond ✦", "body": "Chaleur {warmth}/3 et échanges {reciprocity}/3 : chacun rebondit sur l'autre dans cet extrait. Cela pourrait évoquer de la proximité, mais ces {n} messages ne disent pas où va votre lien." },
+@@ -205,8 +241,8 @@ export default {
+   "keyStorage": "Une clé saisie par vous et la langue choisie peuvent être enregistrées dans ce navigateur. Une clé intégrée au déploiement dans js/key.js peut aussi être utilisée.",
+   "clearKey": "Effacer ma clé enregistrée",
+   "keyCleared": "Votre clé enregistrée a été effacée de ce navigateur. Une clé déployée dans js/key.js reste utilisable si elle existe.",
+-  "summaryTitle": "L’échange dans cet extrait",
+-  "share": "Voir la carte",
++  "summaryTitle": "Votre chat en un coup d’œil",
++  "share": "Voir et partager la carte",
+   "colophon": "Lecture exploratoire de cet extrait par Jev (TypeSafe) via OpenRouter. Ni diagnostic ni verdict sur votre relation.",
+   "cardNames": "Noms sur la carte",
+   "cardShare": "Partager",
+diff --git a/js/moment.js b/js/moment.js
+new file mode 100644
+index 0000000..ff2ec25
+--- /dev/null
++++ b/js/moment.js
+@@ -0,0 +1,42 @@
++// One measured comparison, selected from local metadata only. The input
++// belongs to the same submitted excerpt as the stickers, so their n matches.
++export function chatMoment(stats, people, { raw = false, truncated = false } = {}) {
++  if (raw || !stats || people?.length !== 2 || people[0] === people[1]) return null;
++  const [a, b] = people.map((name) => stats.get(name));
++  if (!a || !b) return null;
++
++  // A truncated excerpt may start mid-conversation and invent a starter.
++  const left = a.starts;
++  const right = b.starts;
++  if (!truncated && left && right && Number.isInteger(left.of) && left.of >= 5 &&
++      left.of === right.of && Number.isInteger(left.count) && Number.isInteger(right.count) &&
++      left.count >= 0 && right.count >= 0 && left.count + right.count === left.of) {
++    const winner = left.count > right.count ? 0 : 1;
++    const count = winner === 0 ? left.count : right.count;
++    const other = winner === 0 ? right.count : left.count;
++    if (count - other >= 2 && count / left.of >= .6) {
++      return { key: 'starter', winner: people[winner], count, of: left.of };
++    }
++  }
++
++  const replies = [a.reply, b.reply];
++  if (replies.every((item) => Number.isInteger(item?.n) && item.n >= 5 &&
++      Number.isFinite(item.median) && item.median >= 0)) {
++    const winner = replies[0].median < replies[1].median ? 0 : 1;
++    const fast = replies[winner];
++    const slow = replies[1 - winner];
++    if (slow.median - fast.median >= 5 * 60_000 && slow.median >= fast.median * 1.5) {
++      return { key: 'reply', winner: people[winner], median: fast.median, n: fast.n,
++        otherMedian: slow.median, otherN: slow.n };
++    }
++  }
++  return null;
++}
++
++export function momentVars(moment, nameOf, timeOf) {
++  if (!moment) return {};
++  const vars = { name: nameOf(moment.winner) };
++  return moment.key === 'starter' ? { ...vars, count: moment.count, of: moment.of }
++    : { ...vars, time: timeOf(moment.median), n: moment.n,
++      otherTime: timeOf(moment.otherMedian), otherN: moment.otherN };
++}
+diff --git a/test/card.test.js b/test/card.test.js
+index 563260c..c9e1d7c 100644
+--- a/test/card.test.js
++++ b/test/card.test.js
+@@ -1,97 +1,103 @@
+ import { test } from 'node:test';
+ import assert from 'node:assert/strict';
+-import { shareHighlights } from '../js/card-data.js';
++import { readFile } from 'node:fs/promises';
+ globalThis.localStorage = { getItem: () => null, setItem: () => {} };
+ Object.defineProperty(globalThis, 'navigator', { configurable: true, value: { languages: ['de-DE'] } });
+-const { cardPreviewLines, defaultNames, shownCardName, drawCard } = await import('../js/card.js');
++const { cardCopy, cardPreviewLines, defaultNames, shownCardName, drawCard } = await import('../js/card.js');
+ 
+-test('only locally counted highlights with adequate samples are shared', () => {
+-  const counts = { reply: { median: 12 * 60_000, n: 5 }, textLength: { medianChars: 24, n: 8 }, text: 'private chat message' };
+-  assert.deepEqual(shareHighlights(counts), [ { key: 'reply', median: 12 * 60_000, n: 5 }, { key: 'chars', median: 24, n: 8 } ]);
+-  assert.deepEqual(shareHighlights({ reply: { median: 12, n: 2 }, textLength: null }), []);
+-});
++function painted(verdict, name) {
++  const lines = [];
++  const ctx = new Proxy({
++    createLinearGradient: () => ({ addColorStop() {} }),
++    measureText: (value) => ({ width: [...value].length * 11 }),
++    fillText: (value) => lines.push(value),
++  }, { get: (target, key) => key in target ? target[key] : () => {} });
++  drawCard({ getContext: () => ctx }, verdict, name);
++  return lines.join(' ');
++}
+ 
+-test('preview includes exact card content, editable names and no original phone numbers or quotes', () => {
+-  const number = '+49 151 12345678';
+-  const names = ['Ana Very Long Family Name', number];
++test('phone numbers and unedited family names do not enter a minimal share preview', () => {
++  const names = ['Ana Very Long Family Name', '+49 151 12345678'];
+   const defaults = defaultNames(names);
+   assert.deepEqual(defaults, ['Ana', 'Unbekannte Nummer 1']);
+   const shown = new Map(names.map((name, i) => [name, defaults[i]]));
+-  const verdict = { label: 'friendly', people: [
+-    { name: names[0], highlights: [{ key: 'reply', median: 12 * 60_000, n: 5 }] },
+-    { name: names[1], highlights: [] },
+-  ], text: 'private chat message' };
+-  const lines = cardPreviewLines(verdict, (name) => shownCardName(shown, name));
++  const verdict = { story: 'uncertain', people: names.map((name) => ({ name,
++    highlights: [{ key: 'chars', median: 900, n: 12 }] })), transcript: 'private chat quote' };
++  const name = (original) => shownCardName(shown, original);
++  const lines = cardPreviewLines(verdict, name);
+   assert.equal(lines.length, 3);
+-  assert.match(lines[1], /Ana.*12.*n = 5/);
++  assert.match(lines[1], /Ana.*Überraschungssticker/);
+   assert.match(lines[2], /Unbekannte Nummer 1/);
+-  assert.doesNotMatch(lines.join(' '), /151|Family|private chat|%/);
+-  shown.set(number, '   ');
+-  assert.equal(shownCardName(shown, number), 'Anonym');
++  assert.doesNotMatch(lines.join(' '), /151|Family|private chat|900/);
++  assert.doesNotMatch(painted(verdict, name), /151|Family|private chat|900/);
++  shown.set(names[1], '   ');
++  assert.equal(shownCardName(shown, names[1]), 'Anonym');
+ });
+ 
+-test('duo preview updates edited names and includes the score rule and each sticker reason', () => {
+-  const shown = new Map([['A Very Long Name', 'A'], ['+49 151 12345678', 'Unbekannte Nummer 1']]);
+-  const verdict = { label: 'friendly', story: 'warm', storyVars: { warmth: 2, reciprocity: 3, n: 40 },
+-    animals: [{ key: 'mouse', value: 4, n: 20 }, { key: 'dog', count: 2, of: 3 }],
+-    people: [{ name: 'A Very Long Name', highlights: [] }, { name: '+49 151 12345678', highlights: [] }],
+-    transcript: 'this is a private chat' };
+-  let lines = cardPreviewLines(verdict, (name) => shownCardName(shown, name));
+-  assert.match(lines[1], /2\/3.*3\/3.*40/);
+-  assert.match(lines[2], /A · Maus.*4.*20/);
+-  assert.match(lines[3], /Unbekannte Nummer 1 · Hund.*2.*3/);
+-  shown.set('A Very Long Name', ' Neuer Name ');
+-  lines = cardPreviewLines(verdict, (name) => shownCardName(shown, name));
+-  assert.match(lines[2], /Neuer Name/);
+-  assert.doesNotMatch(lines.join(' '), /151|private chat|Very Long/);
++test('card shares two animals, an edited-name vibe and exactly one local moment', () => {
++  const names = ['A Very Long Original Name', '+49 151 12345678'];
++  const shown = new Map([[names[0], 'Mara'], [names[1], 'Geheimer Igel']]);
++  const verdict = { story: 'warm', animals: [{ key: 'mouse', value: 4, n: 20 }, { key: 'mouse', value: 5, n: 24 }],
++    moment: { key: 'starter', winner: names[0], count: 7, of: 10 },
++    people: names.map((name) => ({ name, highlights: [{ key: 'chars', median: 999, n: 20 }] })),
++    timeFact: { activeDays: 8, totalDays: 14 }, storyVars: { warmth: 3, reciprocity: 2, n: 44 },
++    transcript: '[01.09.2026] private conversation' };
++  const name = (original) => shownCardName(shown, original);
++  const copy = cardCopy(verdict, name);
++  const preview = cardPreviewLines(verdict, name);
++  assert.equal(copy.people.length, 2);
++  assert.equal(preview.length, 4);
++  assert.match(preview[0], /freundlich/);
++  assert.match(preview[1], /Mara.*Maus.*4.*20/);
++  assert.match(preview[2], /Geheimer Igel.*Maus.*5.*24/);
++  assert.match(preview[3], /Mara.*7.*10/);
++  const png = painted(verdict, name);
++  for (const text of ['Mara', 'Geheimer Igel', 'Maus', '4', '20', '5', '24', '7', '10', 'freundlich'])
++    assert.ok(preview.join(' ').includes(text) && png.includes(text), text);
++  assert.doesNotMatch(preview.join(' ') + png, /151|Original|private conversation|01\.09|999|8.*14|3\/3/);
++  shown.set(names[0], 'Neuer Spitzname');
++  assert.match(cardPreviewLines(verdict, name)[3], /Neuer Spitzname/);
++  assert.match(painted(verdict, name), /Neuer Spitzname/);
+ });
+ 
+-test('share preview uses exactly one local calendar fact and never a raw timestamp', () => {
+-  const verdict = { label: 'mixed', story: 'everyday', storyVars: { n: 18, warmth: 1, reciprocity: 1 },
+-    timeFact: { activeDays: 8, totalDays: 14 },
+-    people: [{ name: 'Mara', highlights: [] }, { name: 'Leo', highlights: [] }],
+-    transcript: '[01.09.2026] private chat' };
+-  const lines = cardPreviewLines(verdict, (name) => name);
+-  assert.equal(lines.length, 5);
+-  assert.match(lines[2], /8.*14/);
+-  assert.doesNotMatch(lines.join(' '), /01\.09|private chat/);
++test('edited long display names wrap on PNG without replacing their full text', () => {
++  const edited = 'Alexandra Sonnenschein Wunderbar';
++  const verdict = { story: 'everyday', people: [{ name: 'Original', highlights: [] }, { name: 'Friend', highlights: [] }] };
++  const name = (original) => original === 'Original' ? edited : original;
++  const copy = cardCopy(verdict, name);
++  assert.equal(copy.people[0].name, edited);
++  assert.match(cardPreviewLines(verdict, name)[1], /Alexandra Sonnenschein Wunderbar/);
++  const png = painted(verdict, name);
++  for (const word of edited.split(' ')) assert.match(png, new RegExp(word));
+ });
+ 
+-test('PNG renders the same curated sticker reasons, changed names and local numbers as its preview', () => {
+-  const painted = [];
+-  const ctx = new Proxy({
+-    createLinearGradient: () => ({ addColorStop() {} }),
+-    measureText: (value) => ({ width: value.length * 10 }),
+-    fillText: (value) => painted.push(value),
+-  }, { get: (target, property) => property in target ? target[property] : () => {} });
+-  const canvas = { getContext: () => ctx };
+-  const shown = new Map([['Mara Original', 'Edited Name'], ['Leo', 'Leo']]);
+-  const verdict = { label: 'friendly', story: 'warm', storyVars: { warmth: 2, reciprocity: 3, n: 40 },
+-    animals: [{ key: 'mouse', value: 4, n: 20 }, { key: 'dog', count: 2, of: 3 }],
+-    people: [
+-      { name: 'Mara Original', highlights: [{ key: 'chars', median: 42, n: 20 }] },
+-      { name: 'Leo', highlights: [] },
+-    ],
+-    timeFact: { activeDays: 8, totalDays: 14 }, transcript: 'private text to keep away from card' };
+-  const name = (original) => shownCardName(shown, original);
+-  const preview = cardPreviewLines(verdict, name).join(' ');
+-  drawCard(canvas, verdict, name);
+-  const png = painted.join(' ');
+-  for (const important of ['Edited Name', 'Maus', 'Hund', '20', '8', '14', '42', '4', '2']) {
+-    assert.ok(preview.includes(important) && png.includes(important), important);
+-  }
+-  assert.doesNotMatch(png, /private text|Mara Original/);
++test('only a chosen reply comparison appears; no raw dates, extra statistics or speculative future card', () => {
++  const verdict = { story: 'uncertain', scope: { judged: 210, total: 800 },
++    people: [{ name: 'Mara', highlights: [] }, { name: 'Leo', highlights: [] }],
++    moment: { key: 'reply', winner: 'Mara', median: 4 * 60_000, n: 7, otherMedian: 14 * 60_000, otherN: 8 },
++    timeFact: { activeDays: 8, totalDays: 14 }, transcript: '[01.09.2026] private chat' };
++  const preview = cardPreviewLines(verdict, (name) => name);
++  const png = painted(verdict, (name) => name);
++  assert.equal(preview.length, 5);
++  assert.match(preview[3], /Mara.*4.*7.*14.*8/);
++  assert.match(preview[4], /210.*800/);
++  assert.match(png, /210.*800/);
++  for (const text of ['Mara', '4 Min.', '14 Min.']) assert.ok(preview.join(' ').includes(text) && png.includes(text));
++  assert.doesNotMatch(preview.join(' ') + png, /01\.09|private chat|Aktiv an 8|forecast|Zukunft/);
+ });
+ 
+-test('truncated Jev scope and local scope match between preview and painted card', () => {
+-  const painted = [];
+-  const ctx = new Proxy({ createLinearGradient: () => ({ addColorStop() {} }), fillText: (value) => painted.push(value),
+-    measureText: (value) => ({ width: value.length * 8 }) }, { get: (target, key) => key in target ? target[key] : () => {} });
+-  const verdict = { label: 'mixed', scope: { judged: 210, total: 800 },
+-    people: [{ name: 'Mara', highlights: [] }, { name: 'Leo', highlights: [] }] };
+-  const preview = cardPreviewLines(verdict, (name) => name);
+-  drawCard({ getContext: () => ctx }, verdict, (name) => name);
+-  assert.ok(preview.some((line) => line.includes('210') && line.includes('800')));
+-  assert.ok(painted.some((line) => line.includes('210') && line.includes('800')));
+-  assert.doesNotMatch(painted.join(' '), /private chat|\+49/);
++test('decoded local animal artwork can be drawn into PNG instead of substitute glyphs', async () => {
++  const verdict = { story: 'warm', people: [{ name: 'Mara' }, { name: 'Leo' }],
++    animals: [{ key: 'mouse', value: 4, n: 10 }, { key: 'mouse', value: 4, n: 10 }] };
++  const pictures = [{ naturalWidth: 240 }, { naturalWidth: 240 }];
++  const drawn = [];
++  const ctx = new Proxy({ createLinearGradient: () => ({ addColorStop() {} }),
++    measureText: (value) => ({ width: value.length * 10 }), drawImage: (...values) => drawn.push(values),
++    fillText() {} }, { get: (obj, property) => property in obj ? obj[property] : () => {} });
++  drawCard({ getContext: () => ctx }, verdict, (name) => name, pictures);
++  assert.equal(drawn.length, 2);
++  assert.equal(drawn[0][0], pictures[0]);
++  assert.equal(drawn[1][0], pictures[1]);
++  const svg = await readFile(new URL('../img/animals/mouse.svg', import.meta.url), 'utf8');
++  assert.match(svg, /viewBox="0 0 240 240"/);
+ });
+diff --git a/test/moment.test.js b/test/moment.test.js
+new file mode 100644
+index 0000000..1a6c30b
+--- /dev/null
++++ b/test/moment.test.js
+@@ -0,0 +1,32 @@
++import { test } from 'node:test';
++import assert from 'node:assert/strict';
++import { chatMoment, momentVars } from '../js/moment.js';
++
++const people = ['Mara', 'Leo'];
++const pair = (a, b) => new Map(people.map((name, i) => [name, i ? b : a]));
++const data = (starts, of, median, n = 7) => ({ starts: { count: starts, of }, reply: { median, n } });
++const min = 60_000;
++
++test('one clear starter lead wins; tied and tiny conversations do not', () => {
++  assert.deepEqual(chatMoment(pair(data(7, 10, 5 * min), data(3, 10, 5 * min)), people),
++    { key: 'starter', winner: 'Mara', count: 7, of: 10 });
++  assert.equal(chatMoment(pair(data(3, 6, 5 * min), data(3, 6, 5 * min)), people), null);
++  assert.equal(chatMoment(pair(data(3, 4, 5 * min), data(1, 4, 5 * min)), people), null);
++  assert.equal(chatMoment(pair(data(3, 5, 5 * min), data(2, 5, 5 * min)), people), null);
++  assert.equal(chatMoment(pair(data(7, 10, 5 * min), data(3, 10, 5 * min)), people, { truncated: true }), null);
++});
++
++test('replies require five valid blocks for each person and a substantial gap', () => {
++  const stats = pair(data(3, 6, 4 * min), data(3, 6, 14 * min));
++  assert.deepEqual(chatMoment(stats, people), { key: 'reply', winner: 'Mara', median: 4 * min, n: 7,
++    otherMedian: 14 * min, otherN: 7 });
++  stats.get('Leo').reply.n = 4;
++  assert.equal(chatMoment(stats, people), null);
++  stats.get('Leo').reply.n = 7;
++  stats.get('Leo').reply.median = 8 * min;
++  assert.equal(chatMoment(stats, people), null);
++  assert.equal(chatMoment(stats, people, { raw: true }), null);
++  assert.equal(chatMoment(null, people), null);
++  assert.deepEqual(momentVars({ key: 'starter', winner: 'Mara', count: 7, of: 10 },
++    (name) => `Edited ${name}`, String), { name: 'Edited Mara', count: 7, of: 10 });
++});
+diff --git a/test/spotlight.test.js b/test/spotlight.test.js
+new file mode 100644
+index 0000000..35fd4f9
+--- /dev/null
++++ b/test/spotlight.test.js
+@@ -0,0 +1,57 @@
++import { test } from 'node:test';
++import assert from 'node:assert/strict';
++import { readFile } from 'node:fs/promises';
++import { SAMPLE_CHAT } from '../js/sample.js';
++import { parseChat } from '../js/parse.js';
++import { chatStats } from '../js/stats.js';
++import { chatMoment } from '../js/moment.js';
++import de from '../js/locales/de.js';
++import en from '../js/locales/en.js';
++import fr from '../js/locales/fr.js';
++import es from '../js/locales/es.js';
++
++test('three top-level result highlights precede three closed, labelled native details panels', async () => {
++  const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
++  const first = html.slice(html.indexOf('<section id="results"'), html.indexOf('<div class="explore-details"'));
++  const markers = ['id="animal-duo"', 'id="story-body"', 'id="moment-detail"', 'id="share"'];
++  for (let i = 1; i < markers.length; i++) assert.ok(first.indexOf(markers[i - 1]) < first.indexOf(markers[i]));
++  assert.doesNotMatch(first, /id="connection-scales"|id="timeline-content"|id="person-readings"/);
++  for (const id of ['detail-reading', 'detail-charts', 'detail-numbers']) {
++    const opening = html.match(new RegExp(`<details[^>]+id="${id}"[^>]*>`))?.[0];
++    assert.ok(opening && !/\bopen\b/.test(opening), `${id} starts closed`);
++    assert.match(html.slice(html.indexOf(opening), html.indexOf(opening) + 130), /<summary data-i18n="spotlight\./);
++  }
++  assert.match(html, /id="scope-note"/);
++  assert.match(html, /id="card-preview-details"/);
++});
++
++test('every language explains the moment, no-data fallback and curated card without identity claims', () => {
++  for (const locale of [de, en, fr, es]) {
++    for (const key of ['animals', 'vibe', 'moment', 'moreReading', 'moreCharts', 'moreNumbers'])
++      assert.ok(locale.spotlight[key]?.trim());
++    for (const key of ['starter', 'reply']) {
++      assert.match(locale.moment[key].detail, /\{name\}/);
++      assert.match(locale.moment[key].card, /\{name\}/);
++    }
++    assert.ok(locale.moment.empty.detail.length > 35);
++    for (const key of ['warm', 'friction', 'clarify', 'everyday', 'uncertain'])
++      assert.ok(locale.cardVibe[key]?.trim());
++    assert.doesNotMatch(JSON.stringify(locale.spotlight), /fotzig|toxisch|toxic|sexual/i);
++  }
++});
++
++test('400-message fictional sample produces a counted single moment from locally parsed data', () => {
++  const parsed = parseChat(SAMPLE_CHAT);
++  assert.equal(parsed.length, 400);
++  assert.deepEqual(chatMoment(chatStats(parsed), ['Mara', 'Leo']),
++    { key: 'starter', winner: 'Leo', count: 13, of: 20 });
++});
++
++test('main flow retains exactly one Jev call and CSS keeps keyboard and reduced-motion rules', async () => {
++  const app = await readFile(new URL('../js/app.js', import.meta.url), 'utf8');
++  const css = await readFile(new URL('../css/polish.css', import.meta.url), 'utf8');
++  assert.equal([...app.matchAll(/\baskJev\(/g)].length, 1);
++  assert.match(css, /\.explore-panel > summary:focus-visible/);
++  assert.match(css, /@media \(max-width: 390px\)/);
++  assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
++});

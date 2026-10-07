@@ -5,7 +5,7 @@ import es from './locales/es.js';
 
 const LOCALES = { en, de, fr, es };
 export const LANGUAGES = { en: 'English', de: 'Deutsch', fr: 'Français', es: 'Español' };
-const STORAGE_KEY = 'judgeyou.language';
+const STORAGE_KEY = 'fakeorfriend.language';
 
 // The browser's language is the visitor's own choice; an IP lookup would ask
 // a third party and still guess wrong for travellers and multilingual countries.

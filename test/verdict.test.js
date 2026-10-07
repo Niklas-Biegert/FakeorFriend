@@ -1,26 +1,18 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { assignTypes } from '../js/verdict.js';
-
-const answer = (probabilities) => ({ probabilities });
-
-test('weakly typed people move to a plausible free type instead of sharing', () => {
-  const types = assignTypes([
-    answer({ mother_hen: 0.47, giga_chad: 0.23, npc: 0.22 }),
-    answer({ mother_hen: 1.0, npc: 0 }),
-    answer({ mother_hen: 0.36, npc: 0.39, giga_chad: 0.12 }),
-  ]);
-  assert.deepEqual(
-    types.map((t) => t.type),
-    ['giga_chad', 'mother_hen', 'npc'],
-  );
-  assert.equal(types[0].probability, 0.23);
+import { interactionLabel } from '../js/verdict.js';
+const sample = (warmth, reciprocity, tension, clarity = 2) => Object.fromEntries(
+  Object.entries({ warmth, reciprocity, tension, clarity }).map(([key, score]) => [key, { score }]),
+);
+test('peaceful chat gets no forced suspect or conflict', () => {
+  assert.equal(interactionLabel(sample(3, 3, 0)), 'friendly');
+  assert.equal(interactionLabel(sample(0, 2, 0)), 'mixed');
 });
-
-test('confident verdicts are kept even when they repeat', () => {
-  const types = assignTypes([answer({ sloth: 0.95, npc: 0.05 }), answer({ sloth: 0.9, cat: 0.1 })]);
-  assert.deepEqual(
-    types.map((t) => t.type),
-    ['sloth', 'sloth'],
-  );
+test('explicit repeated friction may be described in this excerpt only', () => {
+  assert.equal(interactionLabel(sample(1, 1, 2)), 'strained');
+  assert.equal(interactionLabel(sample(2, 2, 2)), 'mixed');
+});
+test('raw transcripts and missing scores receive no overall label', () => {
+  assert.equal(interactionLabel(sample(3, 3, 0), { raw: true }), 'uncertain');
+  assert.equal(interactionLabel({ warmth: { score: 3 } }), 'uncertain');
 });

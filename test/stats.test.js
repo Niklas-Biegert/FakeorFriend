@@ -26,7 +26,7 @@ test('a night’s silence starts a new conversation instead of counting as a slo
 
 test('without timestamps only counts are known, never times', () => {
   const stats = chatStats([say('Ana', null, 'one two three'), say('Ben', null), say('Ana', null, 'x')]);
-  assert.deepEqual(stats.get('Ana'), { messages: 2, medianWords: 2, textLength: null, reply: null, starts: null });
+  assert.deepEqual(stats.get('Ana'), { messages: 2, medianWords: 2, textLength: null, reply: null, starts: null, clock: null });
 });
 
 test('text length counts Unicode code points and includes whitespace, without storing text', () => {

@@ -1,7 +1,7 @@
 // OpenRouter serves Jev through its (alpha) Decisions endpoint rather than
 // chat completions; the request and response use TypeSafe's own format.
 const ENDPOINT = 'https://openrouter.ai/api/alpha/decisions';
-const STORAGE_KEY = 'judgeyou.openrouterKey';
+const STORAGE_KEY = 'fakeorfriend.openrouterKey';
 
 // Anything else would end up in a request header, which only accepts ASCII;
 // pasting a chat into the key field used to make fetch throw.
@@ -40,7 +40,7 @@ export async function askJev(apiKey, body) {
     headers: {
       Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
-      'X-Title': 'JudgeYou',
+      'X-Title': 'FakeorFriend',
     },
     body: JSON.stringify(body),
   });

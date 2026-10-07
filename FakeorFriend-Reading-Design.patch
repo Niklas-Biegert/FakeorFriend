@@ -1,0 +1,547 @@
+diff --git a/README.md b/README.md
+--- a/README.md
++++ b/README.md
+@@ -42,6 +42,41 @@
+ still be wrong and no passages or quotes are displayed as proof.
+ 
+ ## Playful presentation and research basis
++
++The result now follows the sticker duo with a short joint reading, separate
++counted readings of each person's **writing in the submitted excerpt**, and
++then the original four scales and local timeline. Visual inspiration came from
++the short check-ins on [Paired](https://www.paired.com/), the two-person
++presentation and stickers on [Between](https://between.us/), and the light
++conversation prompts on [Couply](https://www.couply.io/). All text, rules,
++artwork and layout here are original; those products are visual references,
++not research that validates this analysis. Display headings use Fraunces
++(Georgia offline fallback); the body uses IBM Plex Sans (system sans offline).
++
++`js/reading.js` builds personal reading descriptors from `stickerStats`, the
++**same parsed excerpt sent to Jev**, and never handles message text or
++timestamps. It needs at least three text messages per person, or supplies a
++neutral reading for both; raw transcripts also remain neutral. A start lead
++needs at least five recognisable conversations, comparable denominators and
++a strict lead. Truncated excerpts cannot produce start comparisons because
++their first message may cut into a conversation. A word-length lead needs a
++strict advantage of at least three median words and 25% over the other
++person, with at least three messages from each. Without a lead, each person
++gets their own median word and character count. Reply times require three
++valid timed turns; pauses of six hours already start new conversations in
++`stats.js`. Each sentence includes its own observation count. With five
++messages per person, the duo adds one observation on message counts: similar
++when the larger is at most 1.25 times the smaller, different when it is at
++least twice as large, otherwise varied. It explicitly does not equate counts
++or reply speed with feelings. The ordinal Jev scores remain pair-level only;
++they are never assigned to either person's character. The only remote call
++still contains the original four Jev questions and the same sender/text state.
++
++The PNG includes the sticker explanations already listed in its preview,
++along with the existing short pair score rule and curated numeric highlights.
++The separate longer personal readings stay on the page. The preview and
++image both derive from the same card data; the image never incorporates
++personal readings, chat quotes or message text.
+ 
+ The mobile-first interface presents three stages: choose a chat, explore the
+ excerpt, then preview a share card. Its dark plum surfaces, pale blue panels
+diff --git a/css/style.css b/css/style.css
+--- a/css/style.css
++++ b/css/style.css
+@@ -1263,3 +1263,51 @@
+ .pattern-bar:nth-child(2) { background: var(--accent); }
+ .pattern-gauge { height: .55rem; align-self: center; border-radius: 1rem; background: var(--accent); }
+ @media (max-width: 390px) { .timeline-panel { padding: .8rem; } .timeline-panel svg text { font-size: 13px; } }
++
++/* The editorial reading uses the same visual language as the sticker reveal. */
++body { background: radial-gradient(ellipse 80% 36rem at 82% -8%, #513450 0%, transparent 75%), var(--paper); }
++.masthead { min-height: 5rem; }
++.masthead strong { font: 800 1.35rem/1 var(--font-display); letter-spacing: -.045em; }
++.hero { padding-top: clamp(3rem, 8vw, 6rem); }
++.hero h1 { max-width: 12ch; line-height: 1.02; letter-spacing: -.052em; text-wrap: balance; }
++.hero h1 em { color: var(--accent-blue); }
++.hero-aside .lede { max-width: 34ch; line-height: 1.55; }
++.intake { box-shadow: 0 35px 90px #130b1b66, inset 0 1px #ffffff13; }
++.intake textarea { background: #241b29; }
++.intake-bar .primary { padding-inline: clamp(1.2rem, 3vw, 2rem); box-shadow: 0 7px 0 #747c2e; }
++.intake-bar .primary:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 3px 0 #747c2e; }
++.connection-summary { position: relative; overflow: hidden; padding: clamp(1.2rem, 3vw, 2.8rem); }
++.connection-summary::before { content: ''; position: absolute; width: 17rem; height: 17rem; right: -8rem; top: -8rem; border: 1px solid #ffffff2c; border-radius: 50%; pointer-events: none; }
++.vibe-hero { position: relative; }
++.vibe-hero h2 { max-width: 18ch; text-wrap: balance; }
++.duo-section { margin-top: clamp(1.6rem, 4vw, 3rem); }
++.animal-sticker { padding: 1rem; background: #ffffff0d; border-color: #a38b9b65; }
++.story-section { margin-top: clamp(1.3rem, 3vw, 2rem); background: linear-gradient(115deg, #253b46, #29303f 75%); }
++.story-kicker { font: 700 .78rem var(--font-mono); color: var(--accent-blue); text-transform: uppercase; letter-spacing: .07em; margin: 0 0 .65rem !important; }
++.story-section h3 { max-width: 26ch; text-wrap: balance; }
++.story-section p:last-child { max-width: 70ch; font-size: clamp(.98rem, 2vw, 1.13rem); }
++.reading-section { margin-top: clamp(2rem, 5vw, 3.5rem); }
++.reading-intro { margin-bottom: 1rem; }
++.reading-intro h3, .scales-heading { margin: 0; font: 750 clamp(1.7rem, 3.5vw, 2.5rem)/1.1 var(--font-display); letter-spacing: -.025em; }
++.reading-intro > p:last-child { max-width: 55ch; color: var(--ink-soft); margin: .55rem 0 0; }
++.person-readings { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
++.reading-card { min-width: 0; padding: clamp(1.1rem, 2.5vw, 1.55rem); border: 1px solid var(--rule); border-radius: 1.15rem; background: #ffffff0c; box-shadow: inset 0 1px #ffffff12; }
++.reading-card:nth-child(2) { background: #d7efff0b; }
++.reading-name { margin: 0 0 .9rem; font: 700 .8rem var(--font-mono); color: var(--accent); overflow-wrap: anywhere; }
++.reading-card:nth-child(2) .reading-name { color: var(--accent-blue); }
++.reading-card h4 { margin: 0 0 .85rem; font: 730 clamp(1.5rem, 3vw, 2rem)/1.13 var(--font-display); text-wrap: balance; }
++.reading-card > p:last-child { margin: 0; line-height: 1.65; color: var(--ink-soft); overflow-wrap: anywhere; }
++.scales-heading { margin: clamp(2rem, 5vw, 3rem) 0 1rem; }
++.connection-summary .measures { margin-top: 0; }
++.idea-panel { border-color: var(--accent-blue); }
++.stats-heading { border-top: 1px solid var(--rule); padding-top: 1.7rem; }
++@media (max-width: 690px) {
++  .person-readings { grid-template-columns: 1fr; }
++  .hero h1 { font-size: clamp(2.6rem, 11vw, 4.1rem); }
++  .connection-summary { padding: 1.05rem; }
++  .reading-card { padding: 1.15rem; }
++}
++@media (prefers-reduced-motion: reduce) {
++  .intake-bar .primary:active:not(:disabled) { transform: none; }
++  *, *::before, *::after { scroll-behavior: auto !important; }
++}
+diff --git a/css/theme.css b/css/theme.css
+--- a/css/theme.css
++++ b/css/theme.css
+@@ -16,7 +16,7 @@
+   /* Fine paper grain, tinted by whatever sits beneath it. */
+   --grain: linear-gradient(145deg, #352133 0%, transparent 46%, #231a2c 100%);
+ 
+-  --font-display: 'IBM Plex Sans', system-ui, sans-serif;
++  --font-display: 'Fraunces', Georgia, serif;
+   --font-body: 'IBM Plex Sans', system-ui, sans-serif;
+   --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+ }
+diff --git a/index.html b/index.html
+--- a/index.html
++++ b/index.html
+@@ -9,7 +9,7 @@
+     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+     <link
+       rel="stylesheet"
+-      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,400..900,0..100;1,9..144,400..900,0..100&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
++      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,400..900,0..100;1,9..144,400..900,0..100&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
+     />
+     <link rel="stylesheet" href="css/theme.css" />
+     <link rel="stylesheet" href="css/style.css" />
+@@ -100,7 +100,12 @@
+             <div id="animal-duo" class="animal-duo"></div>
+             <p data-i18n="animalMeaning" class="duo-caveat"></p>
+           </div>
+-          <div class="story-section"><h3 id="story-title"></h3><p id="story-body"></p></div>
++          <div class="story-section"><p class="story-kicker" data-i18n="reading.duoEyebrow"></p><h3 id="story-title"></h3><p id="story-body"></p></div>
++          <section class="reading-section" aria-labelledby="reading-title">
++            <div class="reading-intro"><p class="step-label" data-i18n="reading.eyebrow"></p><h3 id="reading-title" data-i18n="reading.title"></h3><p data-i18n="reading.subtitle"></p></div>
++            <div id="person-readings" class="person-readings"></div>
++          </section>
++          <h3 class="scales-heading" data-i18n="reading.scalesTitle"></h3>
+           <div id="connection-scales" class="measures"></div>
+         </article>
+         <div class="vibe-gallery">
+diff --git a/js/app.js b/js/app.js
+--- a/js/app.js
++++ b/js/app.js
+@@ -13,6 +13,7 @@
+ import { animalDuo, duoStory } from './animals.js';
+ import { timelineOf } from './timeline.js';
+ import { renderTimeline } from './timeline-view.js';
++import { duoDetail, personReadings } from './reading.js';
+ 
+ const MIN_LAB_MS = 1800;
+ const $ = (id) => document.getElementById(id);
+@@ -192,7 +193,23 @@
+   $('connection-label').textContent = t(`connection.${label}`);
+   $('connection-note').textContent = t(rawMode ? 'connection.rawNote' : 'connection.note');
+   $('story-title').textContent = t(`story.${story}.title`);
+-  $('story-body').textContent = t(`story.${story}.body`, storyVars);
++  const extra = story !== 'uncertain' && duoDetail(stickerStats, people, { raw: rawMode });
++  $('story-body').textContent = [t(`story.${story}.body`, storyVars),
++    ...(extra ? [t(`reading.duo.${extra.key}`, extra.vars)] : []),
++  ].join(' ');
++  $('person-readings').replaceChildren(...personReadings(stickerStats, people, { raw: rawMode, truncated: meta.truncated }).map((reading) => {
++    const article = document.createElement('article');
++    article.className = 'reading-card';
++    const name = document.createElement('p'); name.className = 'reading-name'; name.textContent = reading.name;
++    const heading = document.createElement('h4'); heading.textContent = t(`reading.headings.${reading.title}`);
++    const body = document.createElement('p');
++    body.textContent = reading.lines.map(({ key, vars }) => t(`reading.lines.${key}`, {
++      ...vars,
++      ...(key === 'reply' ? { time: formatDuration(vars.duration) } : {}),
++    })).join(' ');
++    article.append(name, heading, body);
++    return article;
++  }));
+   $('animal-duo').replaceChildren(...people.map((name, i) => {
+     const sticker = animals[i];
+     const box = document.createElement('div'); box.className = 'animal-sticker';
+diff --git a/js/card.js b/js/card.js
+--- a/js/card.js
++++ b/js/card.js
+@@ -49,11 +49,22 @@
+   ctx.beginPath(); ctx.arc(x + 170, y + 168, 8, 0, Math.PI * 2); ctx.fill();
+   ctx.lineWidth = 5; ctx.strokeStyle = '#39283d'; ctx.beginPath(); ctx.arc(x + 170, y + 175, 23, 0.2, Math.PI - 0.2); ctx.stroke();
+ }
+-function drawCard(canvas, verdict, shownName) {
++function drawWrapped(ctx, value, x, y, maxWidth, lineHeight, maxLines = 3) {
++  const words = value.split(/\s+/);
++  let start = 0;
++  for (let row = 0; row < maxLines && start < words.length; row++) {
++    if (row === maxLines - 1) { ctx.fillText(words.slice(start).join(' '), x, y + row * lineHeight, maxWidth); break; }
++    let end = start + 1;
++    while (end < words.length && ctx.measureText(words.slice(start, end + 1).join(' ')).width <= maxWidth) end++;
++    ctx.fillText(words.slice(start, end).join(' '), x, y + row * lineHeight, maxWidth);
++    start = end;
++  }
++}
++export function drawCard(canvas, verdict, shownName) {
+   const ctx = canvas.getContext('2d');
+   canvas.width = 1080;
+   canvas.height = 1350;
+-  ctx.fillStyle = '#251823';
++  ctx.fillStyle = '#241822';
+   ctx.fillRect(0, 0, 1080, 1350);
+   const paint = (value, x, y, size, color = '#faf3f7', max = 900, weight = 700) => {
+     ctx.font = `${weight} ${size}px system-ui, sans-serif`;
+@@ -66,6 +77,8 @@
+   const gradient = ctx.createLinearGradient(0, 0, 1080, 930);
+   gradient.addColorStop(0, '#493052'); gradient.addColorStop(1, '#263746');
+   ctx.fillStyle = gradient; ctx.beginPath(); ctx.roundRect(48, 46, 984, 1250, 48); ctx.fill();
++  ctx.strokeStyle = '#e9f05638'; ctx.lineWidth = 3;
++  for (const radius of [136, 196, 256]) { ctx.beginPath(); ctx.arc(986, 96, radius, 0, Math.PI * 2); ctx.stroke(); }
+   paint('FakeorFriend', 94, 133, 46, '#e9f056');
+   ctx.fillStyle = '#8b728d'; ctx.fillRect(94, 166, 892, 2);
+   paint(t('summaryTitle'), 94, 228, 27, '#e1d2e3');
+@@ -74,14 +87,18 @@
+   if (verdict.story) paint(t(`cardStory.${verdict.story}`, verdict.storyVars), 94, 420, 24, '#e9f056', 880, 600);
+   drawAnimal(ctx, 155, 455, verdict.animals?.[0]);
+   drawAnimal(ctx, 575, 455, verdict.animals?.[1]);
+-  verdict.animals?.slice(0, 2).forEach((animal, i) =>
+-    paint(t(`animals.${animal.key}.name`), i ? 575 : 155, 738, 26, '#faf3f7', 340));
++  verdict.animals?.slice(0, 2).forEach((animal, i) => {
++    const x = i ? 575 : 155;
++    paint(t(`animals.${animal.key}.name`), x, 728, 27, '#faf3f7', 340);
++    ctx.fillStyle = '#e1d2e3'; ctx.font = '500 19px system-ui, sans-serif';
++    drawWrapped(ctx, t(`animals.${animal.key}.why`, animal), x, 760, 340, 25);
++  });
+   verdict.people.forEach((person, i) => {
+     const y = 840 + i * 195;
+-    ctx.fillStyle = '#867589'; ctx.fillRect(94, y - 36, 892, 2);
+-    paint(shownName(person.name), 94, y + 22, 51, '#faf3f7', 890, 800);
++    ctx.fillStyle = '#867589'; ctx.fillRect(94, y - 8, 892, 2);
++    paint(shownName(person.name), 94, y + 48, 46, '#faf3f7', 890, 800);
+     person.highlights.slice(0, 2).forEach((highlight, j) =>
+-      paint(highlightLabel(highlight), 94, y + 65 + 34 * j, 24, '#e1d2e3', 890, 500));
++      paint(highlightLabel(highlight), 94, y + 84 + 30 * j, 22, '#e1d2e3', 890, 500));
+   });
+   ctx.fillStyle = '#867589'; ctx.fillRect(94, 1186, 892, 2);
+   paint(t('cardFooter'), 94, 1230, 23, '#e1d2e3', 880, 500);
+diff --git a/js/locales/de.js b/js/locales/de.js
+--- a/js/locales/de.js
++++ b/js/locales/de.js
+@@ -9,6 +9,32 @@
+   "stageResult": "02 / Euer Vibe auf einen Blick",
+   "stageShare": "03 / Karte ansehen & teilen",
+   "duoTitle": "Euer Sticker-Duo",
++  "reading": {
++    "duoEyebrow": "Zwei Stimmen · ein Ausschnitt",
++    "eyebrow": "Zwei Perspektiven",
++    "title": "So schreiben die beiden hier",
++    "subtitle": "Gezählte Rollen in diesem Ausschnitt. Was jemand denkt oder außerhalb des Chats tut, bleibt offen.",
++    "scalesTitle": "Vier Blicke auf euren Austausch",
++    "duo": {"similar": "Im geprüften Ausschnitt schreiben beide ähnlich oft ({first} zu {second} Nachrichten). Das zeigt Beteiligung im Chat, nicht wie wichtig ihnen der Kontakt ist.", "different": "Die Nachrichten verteilen sich hier ungleich ({first} zu {second}). Das kann schlicht daran liegen, wer gerade Fragen, Termine oder Themen einbringt.", "varied": "Hier verteilen sich {first} und {second} Nachrichten auf die beiden Seiten. Ein Zahlenverhältnis allein erzählt noch nicht, wer wem nähersteht."},
++    "headings": {
++      "starter": "Der erste Ping",
++      "detailed": "Mehr Platz für Worte",
++      "brief": "Wenig Worte, klarer Rhythmus",
++      "exchange": "Der eigene Schreibrhythmus",
++      "unknown": "Hier bleibt es offen"
++    },
++    "lines": {
++      "startsLead": "Beginnt {count} von {of} Gesprächen im Ausschnitt und liegt damit eindeutig vorne. Das kann nach Initiative aussehen; vielleicht ergibt sich der erste Ping hier auch einfach aus dem Tagesablauf.",
++      "starts": "Beginnt {count} von {of} erfassten Gesprächen; einen alleinigen Startrekord gibt es hier nicht.",
++      "startsUnknown": "Für einen fairen Vergleich der Gesprächsanfänge liegen noch keine fünf erkennbaren Gespräche vor.",
++      "startsTruncated": "Der Ausschnitt beginnt mitten im Chat; wer Gespräche beginnt, lässt sich damit nicht fair vergleichen.",
++      "lengthLead": "Schreibt hier im Median {words} Wörter und {chars} Zeichen pro Nachricht (n = {n}); die Wortlänge liegt deutlich über der anderen Person. Mehr Text kann erklären oder organisieren bedeuten, nicht automatisch mehr Nähe.",
++      "length": "Schreibt im Median {words} Wörter und {chars} Zeichen je Nachricht (n = {n}). Ob eine knappe oder lange Nachricht viel bedeutet, verrät ihre Länge allein nicht.",
++      "reply": "Antwortet nach einer anderen Person im Median nach {time} (n = {n} gültige Wechsel). Schlaf, Schule oder Termine sind im Chat nicht erkennbar; diese Zeit misst kein Interesse.",
++      "limits": "Das ist eine Lesart dieser Nachrichten, keine feste Eigenschaft oder ein Blick in den Kopf.",
++      "unknown": "Die Sprechenden oder mindestens drei Textnachrichten je Person sind hier nicht sicher überprüfbar. Darum gibt es keine persönliche Deutung."
++    }
++  },
+   "timeline": {
+     "title": "Euer Chat im Zeitverlauf ↗", "intro": "Wann war viel los, wann Funkstille? Gezählt wird lokal – keine Gefühlsmessung.",
+     "scope": "{n} aktive von {total} Kalendertagen im erkannten Chat.",
+diff --git a/js/locales/en.js b/js/locales/en.js
+--- a/js/locales/en.js
++++ b/js/locales/en.js
+@@ -9,6 +9,32 @@
+   "stageResult": "02 / Your vibe at a glance",
+   "stageShare": "03 / Preview & share your card",
+   "duoTitle": "Your sticker duo",
++  "reading": {
++    "duoEyebrow": "Two voices · one excerpt",
++    "eyebrow": "Two perspectives",
++    "title": "How each writes here",
++    "subtitle": "Counted roles in this excerpt. Thoughts and life outside the chat are unknown.",
++    "scalesTitle": "Four angles on your exchange",
++    "duo": {"similar": "Both write at a similar rate in the checked excerpt ({first} versus {second} messages). That counts participation here, not how much the connection matters to either person.", "different": "The message counts differ here ({first} versus {second}). Who asked questions, planned things or had time could explain that without any difference in feelings.", "varied": "This excerpt has {first} and {second} messages from the two sides. A ratio alone cannot tell us who feels closer."},
++    "headings": {
++      "starter": "The first ping",
++      "detailed": "Room for more words",
++      "brief": "Few words, a clear rhythm",
++      "exchange": "Their writing rhythm",
++      "unknown": "An open question"
++    },
++    "lines": {
++      "startsLead": "Starts {count} of {of} conversations in this excerpt, with an unambiguous lead. That might look like initiative; it could also reflect whose day made the first ping easier.",
++      "starts": "Starts {count} of {of} observed conversations; there is no sole leader here.",
++      "startsUnknown": "There are fewer than five identifiable conversations, so a fair comparison of who starts them is not possible.",
++      "startsTruncated": "The excerpt begins partway through a chat, so who starts conversations cannot be compared fairly.",
++      "lengthLead": "Writes a median of {words} words and {chars} characters per message (n = {n}), clearly longer in words than the other person. Extra words might be explanation or planning, not necessarily greater closeness.",
++      "length": "Writes a median of {words} words and {chars} characters per message (n = {n}). Message length alone cannot tell us how much a message means.",
++      "reply": "Replies after the other person in a median of {time} (n = {n} valid turns). Sleep, school and plans are invisible here; this is not a measure of interest.",
++      "limits": "This describes these messages, not a lasting trait or a window into anyone’s thoughts.",
++      "unknown": "The speakers or at least three text messages from each cannot be verified here. There is no personal reading."
++    }
++  },
+   "timeline": {
+     "title": "Your chat over time ↗", "intro": "When was it busy, when was it quiet? Counted locally, without measuring feelings.",
+     "scope": "{n} active out of {total} calendar days in the recognised chat.",
+diff --git a/js/locales/fr.js b/js/locales/fr.js
+--- a/js/locales/fr.js
++++ b/js/locales/fr.js
+@@ -9,6 +9,32 @@
+   "stageResult": "02 / Votre échange en bref",
+   "stageShare": "03 / Voir et partager la carte",
+   "duoTitle": "Votre duo de stickers",
++  "reading": {
++    "duoEyebrow": "Deux voix · un extrait",
++    "eyebrow": "Deux regards",
++    "title": "Leur façon d’écrire ici",
++    "subtitle": "Des rôles comptés dans cet extrait ; les pensées et la vie hors du chat restent inconnues.",
++    "scalesTitle": "Quatre regards sur cet échange",
++    "duo": {"similar": "Dans cet extrait, les deux écrivent presque autant ({first} contre {second} messages). Cela compte une participation ici, pas l’importance du lien pour chacun.", "different": "Les nombres diffèrent ici ({first} contre {second}). Questions, organisation ou disponibilité peuvent l’expliquer sans différence de sentiments.", "varied": "Cet extrait compte {first} et {second} messages de part et d’autre. Un rapport de nombres ne révèle pas qui se sent le plus proche."},
++    "headings": {
++      "starter": "Le premier message",
++      "detailed": "Plus de place pour les mots",
++      "brief": "Peu de mots, un rythme net",
++      "exchange": "Un rythme à soi",
++      "unknown": "La question reste ouverte"
++    },
++    "lines": {
++      "startsLead": "Lance {count} des {of} conversations de cet extrait, avec une avance nette. Cela peut ressembler à une initiative ; son emploi du temps explique peut-être aussi ces premiers messages.",
++      "starts": "Lance {count} des {of} conversations observées ; personne ne prend seul la tête.",
++      "startsUnknown": "Moins de cinq conversations sont identifiables : impossible de comparer équitablement qui les lance.",
++      "startsTruncated": "L’extrait commence au milieu du chat : impossible de comparer équitablement qui lance les conversations.",
++      "lengthLead": "Écrit une médiane de {words} mots et {chars} caractères par message (n = {n}), nettement plus de mots que l’autre personne. Développer peut servir à expliquer ou à organiser, sans prouver davantage de proximité.",
++      "length": "Écrit une médiane de {words} mots et {chars} caractères par message (n = {n}). La longueur seule ne dit pas ce qu’un message représente.",
++      "reply": "Répond après l’autre personne en une médiane de {time} (n = {n} échanges valides). Sommeil, cours et activités échappent au chat : ce délai ne mesure pas l’intérêt.",
++      "limits": "Cette lecture concerne ces messages, pas un trait durable ni les pensées de quelqu’un.",
++      "unknown": "Impossible de vérifier les personnes ou trois messages texte au moins par personne. Aucune lecture personnelle n’est proposée."
++    }
++  },
+   "timeline": {
+     "title": "Votre chat dans le temps ↗", "intro": "Quand les messages affluent-ils ? Comptage local, sans mesurer les sentiments.",
+     "scope": "{n} jours actifs sur {total} jours du chat reconnu.",
+diff --git a/js/locales/es.js b/js/locales/es.js
+--- a/js/locales/es.js
++++ b/js/locales/es.js
+@@ -9,6 +9,32 @@
+   "stageResult": "02 / Vuestro chat de un vistazo",
+   "stageShare": "03 / Ver y compartir la tarjeta",
+   "duoTitle": "Vuestro dúo de stickers",
++  "reading": {
++    "duoEyebrow": "Dos voces · un fragmento",
++    "eyebrow": "Dos perspectivas",
++    "title": "Cómo escribe cada quien aquí",
++    "subtitle": "Papeles observados en este fragmento. No sabemos qué piensan ni qué ocurre fuera del chat.",
++    "scalesTitle": "Cuatro miradas al intercambio",
++    "duo": {"similar": "En este fragmento, ambos escriben casi lo mismo ({first} frente a {second} mensajes). Eso cuenta participación aquí, no cuánto les importa el vínculo.", "different": "Las cantidades difieren aquí ({first} frente a {second}). Preguntas, planes u horarios pueden explicarlo sin que cambie lo que sienten.", "varied": "Este fragmento tiene {first} y {second} mensajes de cada lado. La proporción no dice quién siente más cercanía."},
++    "headings": {
++      "starter": "El primer mensaje",
++      "detailed": "Más espacio para las palabras",
++      "brief": "Pocas palabras, ritmo claro",
++      "exchange": "Su ritmo al escribir",
++      "unknown": "Queda abierto"
++    },
++    "lines": {
++      "startsLead": "Inicia {count} de {of} conversaciones de este fragmento, con una ventaja clara. Podría indicar iniciativa, aunque quizá su rutina simplemente facilite escribir primero.",
++      "starts": "Inicia {count} de {of} conversaciones observadas; aquí nadie lleva una ventaja exclusiva.",
++      "startsUnknown": "Hay menos de cinco conversaciones identificables, así que todavía no se puede comparar quién las inicia.",
++      "startsTruncated": "El fragmento comienza a mitad del chat, así que no se puede comparar quién inicia las conversaciones.",
++      "lengthLead": "Escribe una mediana de {words} palabras y {chars} caracteres por mensaje (n = {n}), claramente más palabras que la otra persona. Extenderse puede servir para explicar u organizar, sin probar más cercanía.",
++      "length": "Escribe una mediana de {words} palabras y {chars} caracteres por mensaje (n = {n}). La longitud por sí sola no revela cuánto significa un mensaje.",
++      "reply": "Responde después de la otra persona en una mediana de {time} (n = {n} turnos válidos). Sueño, clases y planes no aparecen aquí: el tiempo no mide el interés.",
++      "limits": "Es una lectura de estos mensajes, no un rasgo permanente ni una ventana a sus pensamientos.",
++      "unknown": "No se pueden verificar los participantes o al menos tres mensajes de cada uno. No hay lectura personal."
++    }
++  },
+   "timeline": {
+     "title": "Vuestro chat a lo largo del tiempo ↗", "intro": "¿Cuándo hubo más mensajes? Cifras locales, sin medir sentimientos.",
+     "scope": "{n} días activos de {total} días del chat reconocido.",
+diff --git a/js/reading.js b/js/reading.js
+new file mode 100644
+--- /dev/null
++++ b/js/reading.js
+@@ -0,0 +1,50 @@
++import { MIN_SAMPLE } from './stats.js';
++
++// A reading describes the counted, submitted excerpt. It never sees message
++// text, and the four Jev scores describe the pair rather than either person.
++// Each returned key has a fixed, reviewed translation in every language.
++export function personReadings(stats, people, { raw = false, truncated = false } = {}) {
++  if (people.length !== 2) return [];
++  const [a, b] = people.map((name) => stats?.get(name));
++  if (raw || !a || !b || ![a, b].every((s) => s.textLength?.n >= MIN_SAMPLE)) {
++    return people.map((name) => ({ name, title: 'unknown', lines: [{ key: 'unknown', vars: {} }] }));
++  }
++  return people.map((name, index) => {
++    const own = index ? b : a;
++    const other = index ? a : b;
++    const lines = [];
++    // Starts are only compared across the same conversations. A tie or fewer
++    // than five conversations cannot produce a leader.
++    const starts = own.starts;
++    const leads = !truncated && starts?.of >= 5 && other.starts?.of === starts.of && starts.count > other.starts.count;
++    if (truncated) lines.push({ key: 'startsTruncated', vars: {} });
++    else if (leads) lines.push({ key: 'startsLead', vars: { count: starts.count, of: starts.of } });
++    else if (starts?.of >= 5) lines.push({ key: 'starts', vars: { count: starts.count, of: starts.of } });
++    else lines.push({ key: 'startsUnknown', vars: {} });
++
++    const words = own.textLength.medianWords;
++    const othersWords = other.textLength.medianWords;
++    // Ignore small differences that can be described as a "winner" by luck.
++    const wordLead = words > othersWords && words - othersWords >= 3 && words >= othersWords * 1.25;
++    const title = leads ? 'starter' : wordLead ? 'detailed' : words <= 6 ? 'brief' : 'exchange';
++    lines.push({ key: wordLead ? 'lengthLead' : 'length', vars: {
++      words, chars: own.textLength.medianChars, n: own.textLength.n,
++    } });
++    if (own.reply?.n >= MIN_SAMPLE) {
++      lines.push({ key: 'reply', vars: { duration: own.reply.median, n: own.reply.n } });
++    }
++    lines.push({ key: 'limits', vars: {} });
++    return { name, title, lines };
++  });
++}
++
++/** Count balance is an observation, not a measure of investment or affection. */
++export function duoDetail(stats, people, { raw = false } = {}) {
++  if (raw || people.length !== 2) return null;
++  if (!people.every((name) => stats?.get(name)?.textLength?.n >= MIN_SAMPLE)) return null;
++  const counts = people.map((name) => stats?.get(name)?.messages);
++  if (!counts.every((n) => Number.isInteger(n) && n >= 5)) return null;
++  const [low, high] = [...counts].sort((a, b) => a - b);
++  const key = high <= low * 1.25 ? 'similar' : high >= low * 2 ? 'different' : 'varied';
++  return { key, vars: { first: counts[0], second: counts[1] } };
++}
+diff --git a/test/card.test.js b/test/card.test.js
+--- a/test/card.test.js
++++ b/test/card.test.js
+@@ -3,7 +3,7 @@
+ import { shareHighlights } from '../js/card-data.js';
+ globalThis.localStorage = { getItem: () => null, setItem: () => {} };
+ Object.defineProperty(globalThis, 'navigator', { configurable: true, value: { languages: ['de-DE'] } });
+-const { cardPreviewLines, defaultNames, shownCardName } = await import('../js/card.js');
++const { cardPreviewLines, defaultNames, shownCardName, drawCard } = await import('../js/card.js');
+ 
+ test('only locally counted highlights with adequate samples are shared', () => {
+   const counts = { reply: { median: 12 * 60_000, n: 5 }, textLength: { medianChars: 24, n: 8 }, text: 'private chat message' };
+@@ -56,3 +56,29 @@
+   assert.match(lines[2], /8.*14/);
+   assert.doesNotMatch(lines.join(' '), /01\.09|private chat/);
+ });
++
++test('PNG renders the same curated sticker reasons, changed names and local numbers as its preview', () => {
++  const painted = [];
++  const ctx = new Proxy({
++    createLinearGradient: () => ({ addColorStop() {} }),
++    measureText: (value) => ({ width: value.length * 10 }),
++    fillText: (value) => painted.push(value),
++  }, { get: (target, property) => property in target ? target[property] : () => {} });
++  const canvas = { getContext: () => ctx };
++  const shown = new Map([['Mara Original', 'Edited Name'], ['Leo', 'Leo']]);
++  const verdict = { label: 'friendly', story: 'warm', storyVars: { warmth: 2, reciprocity: 3, n: 40 },
++    animals: [{ key: 'mouse', value: 4, n: 20 }, { key: 'dog', count: 2, of: 3 }],
++    people: [
++      { name: 'Mara Original', highlights: [{ key: 'chars', median: 42, n: 20 }] },
++      { name: 'Leo', highlights: [] },
++    ],
++    timeFact: { activeDays: 8, totalDays: 14 }, transcript: 'private text to keep away from card' };
++  const name = (original) => shownCardName(shown, original);
++  const preview = cardPreviewLines(verdict, name).join(' ');
++  drawCard(canvas, verdict, name);
++  const png = painted.join(' ');
++  for (const important of ['Edited Name', 'Maus', 'Hund', '20', '8', '14', '42', '4', '2']) {
++    assert.ok(preview.includes(important) && png.includes(important), important);
++  }
++  assert.doesNotMatch(png, /private text|Mara Original/);
++});
+diff --git a/test/reading.test.js b/test/reading.test.js
+new file mode 100644
+--- /dev/null
++++ b/test/reading.test.js
+@@ -0,0 +1,66 @@
++import { test } from 'node:test';
++import assert from 'node:assert/strict';
++import { readFile } from 'node:fs/promises';
++import { duoDetail, personReadings } from '../js/reading.js';
++import { parseChat } from '../js/parse.js';
++import { chatStats } from '../js/stats.js';
++import { SAMPLE_CHAT } from '../js/sample.js';
++import de from '../js/locales/de.js';
++import en from '../js/locales/en.js';
++import fr from '../js/locales/fr.js';
++import es from '../js/locales/es.js';
++
++const people = ['Mara', 'Leo'];
++function sample({ first = 12, second = 6, starts = [3, 2], of = 5, replies = 4 } = {}) {
++  const make = (messages, wordCount, startCount) => ({
++    messages, textLength: { medianWords: wordCount, medianChars: wordCount * 7, n: messages },
++    starts: { count: startCount, of }, reply: replies >= 3 ? { median: 120000, n: replies } : null,
++    text: 'sensitive message that should not enter the reading',
++  });
++  return new Map([['Mara', make(20, first, starts[0])], ['Leo', make(16, second, starts[1])]]);
++}
++
++test('clear starts and length lead yield a contextual, counted reading without chat text', () => {
++  const [a, b] = personReadings(sample(), people);
++  assert.equal(a.title, 'starter');
++  assert.deepEqual(a.lines.map(({ key }) => key), ['startsLead', 'lengthLead', 'reply', 'limits']);
++  assert.equal(b.lines[0].key, 'starts');
++  assert.equal(a.lines[1].vars.n, 20);
++  assert.doesNotMatch(JSON.stringify([a, b]), /sensitive message/);
++  assert.deepEqual(duoDetail(sample(), people), { key: 'similar', vars: { first: 20, second: 16 } });
++});
++
++test('tied starts, near ties in words, and too few replies cannot imply a winner', () => {
++  const [a, b] = personReadings(sample({ first: 9, second: 8, starts: [2, 2], replies: 2 }), people);
++  assert.ok([a, b].every((reading) => reading.lines[0].key === 'starts'));
++  assert.ok([a, b].every((reading) => !reading.lines.some((line) => line.key === 'lengthLead' || line.key === 'reply')));
++  assert.equal(a.title, 'exchange');
++  const short = sample({ of: 2 });
++  assert.ok(personReadings(short, people).every((reading) => reading.lines[0].key === 'startsUnknown'));
++  assert.ok(personReadings(sample(), people, { truncated: true }).every((reading) => reading.lines[0].key === 'startsTruncated' && reading.title !== 'starter'));
++});
++
++test('missing speakers, insufficient messages and raw text remain neutral', () => {
++  const stats = sample(); stats.get('Mara').textLength.n = 2;
++  assert.ok(personReadings(stats, people).every((reading) => reading.title === 'unknown'));
++  assert.equal(duoDetail(stats, people, { raw: true }), null);
++  assert.ok(personReadings(sample(), people, { raw: true }).every((reading) => reading.title === 'unknown'));
++  assert.deepEqual(personReadings(null, people).map((reading) => reading.title), ['unknown', 'unknown']);
++  assert.equal(duoDetail(stats, people), null);
++});
++
++test('real fictional sample supports two readings; translations and visible reading section are complete', async () => {
++  const readings = personReadings(chatStats(parseChat(SAMPLE_CHAT)), people);
++  assert.equal(readings.length, 2);
++  assert.ok(readings.every((reading) => reading.lines.length >= 3));
++  for (const locale of [de, en, fr, es]) {
++    assert.ok(locale.reading.title && locale.reading.subtitle && locale.reading.scalesTitle);
++    for (const key of ['starter', 'detailed', 'brief', 'exchange', 'unknown']) assert.ok(locale.reading.headings[key]);
++    for (const key of ['startsLead', 'starts', 'startsUnknown', 'startsTruncated', 'lengthLead', 'length', 'reply', 'limits', 'unknown']) assert.ok(locale.reading.lines[key]);
++    for (const key of ['similar', 'different', 'varied']) assert.ok(locale.reading.duo[key]);
++  }
++  const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
++  assert.ok(html.indexOf('id="animal-duo"') < html.indexOf('id="person-readings"'));
++  assert.ok(html.indexOf('id="person-readings"') < html.indexOf('id="connection-scales"'));
++  assert.ok(html.indexOf('id="connection-scales"') < html.indexOf('id="timeline-content"'));
++});

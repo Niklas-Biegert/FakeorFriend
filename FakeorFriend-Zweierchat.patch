@@ -1,0 +1,3501 @@
+diff --git a/.github/workflows/pages.yml b/.github/workflows/pages.yml
+deleted file mode 100644
+index d21786c..0000000
+--- a/.github/workflows/pages.yml
++++ /dev/null
+@@ -1,49 +0,0 @@
+-name: Deploy to GitHub Pages
+-
+-on:
+-  push:
+-    branches: [main]
+-  workflow_dispatch:
+-
+-permissions:
+-  contents: read
+-  pages: write
+-  id-token: write
+-
+-concurrency:
+-  group: pages
+-  cancel-in-progress: true
+-
+-jobs:
+-  deploy:
+-    runs-on: ubuntu-latest
+-    environment:
+-      name: github-pages
+-      url: ${{ steps.deployment.outputs.page_url }}
+-    steps:
+-      - uses: actions/checkout@v7
+-      - uses: actions/setup-node@v7
+-        with:
+-          node-version: 22
+-      - run: npm test
+-
+-      - name: Assemble the site
+-        run: mkdir _site && cp -r index.html css js img _site/
+-
+-      # With an OPENROUTER_KEY secret, the site works out of the box; the key
+-      # is then readable by every visitor, so use a dedicated, credit-capped
+-      # one. Without it, visitors are asked for their own key.
+-      - name: Embed the OpenRouter key, if configured
+-        env:
+-          OPENROUTER_KEY: ${{ secrets.OPENROUTER_KEY }}
+-        run: |
+-          if [ -n "$OPENROUTER_KEY" ]; then
+-            printf "export const OPENROUTER_KEY = '%s';\n" "$OPENROUTER_KEY" > _site/js/key.js
+-          fi
+-
+-      - uses: actions/configure-pages@v6
+-      - uses: actions/upload-pages-artifact@v5
+-        with:
+-          path: _site
+-      - id: deployment
+-        uses: actions/deploy-pages@v5
+diff --git a/README.md b/README.md
+index caf32cc..e7a770e 100644
+--- a/README.md
++++ b/README.md
+@@ -1,176 +1,101 @@
+ # FakeorFriend
+ 
+-This repository starts as a separate copy of the working JudgeYou prototype.
+-Its current interface and questions still say JudgeYou until the planned
+-two-person conversation redesign is implemented. The JudgeYou repository is
+-independent and remains untouched by changes made here.
+-
+-A one-page field guide that judges the people in a group chat, pseudo-scientifically.
+-It sends the chat to [Jev](https://docs.typesafe.ai/), TypeSafe's decision model,
+-through OpenRouter's Decisions endpoint, and gets calibrated probabilities back
+-instead of prose. Each person is classified as one of twelve types, each with an
+-engraved mascot. Everything runs in the browser; there is no backend.
+-
+-Chats can be pasted, dropped or opened as exports from WhatsApp (also the ZIP
+-"with media"), Telegram (JSON, HTML, copy-paste), Messenger and Instagram,
+-Discord, Slack, Teams, iMessage exporters, IRC, LINE, KakaoTalk, CSV, or plain
+-`Name: message` text. If the format isn't recognised, the page asks who is in
+-the chat and Jev reads the raw text.
+-
+-Next to Jev's verdicts, the page shows numbers it counts itself, without any
+-request: messages, median words per message and median reply time. A reply is
+-the gap between someone else's last message and a person's next one; after 6
+-hours of silence the next message starts a new conversation instead. Medians
+-need at least 3 observations, and a record ("Slowest thumbs") needs a clear
+-winner.
+-
+-`js/stats.js` also computes `textLength` for each person when there are at least
+-3 text messages: median and maximum word count, median and maximum character
+-count, and the number of messages (`n`). Characters mean Unicode code points;
+-spaces and line breaks count. Only numeric lengths are retained by this
+-statistic, never the longest message's contents. The older `medianWords` field
+-remains available for the existing results page. Untimed messages at the end
+-of a sender's block cannot be used to time the next person's reply.
+-
+-The results can be shared as an image. It shows names, types and counts, never
+-chat text; names default to first names, phone numbers are hidden, and all of
+-them can be edited first.
+-
+-The card also shows up to two locally counted numbers per person: median reply
+-time (at least 3 measured replies) and median text length in Unicode code
+-points (at least 3 text messages). Each number shows its sample size. The
+-preview lists the displayed names and values before sharing. Empty edited
+-names become "Anonymous" rather than revealing the original name.
+-
+-The Green/Red percentages are **play scores**, not probabilities of real
+-personality traits. Red is the rounded Menace Index: 35% normalized passive
+-aggression score + 30% normalized drama score + 25% normalized main-character
+-score + 10% "started it" value. Green = 100 − Red. Other themes such as
+-cat/dog or fluffy/thorny are deferred until each has a distinct explainable
+-rule; no chat text or media is sent to make the image.
+-
+-The page speaks English, German, French and Spanish, picked from the browser's
+-language and switchable in the header.
+-
+-## Chat context
+-
+-The default **Group chat** mode uses the original Jev questions unchanged.
+-**Partner chat** is a first experiment for a conversation between two people:
+-both speakers must be recognised and selected. Merely picking two people in a
+-larger group does not qualify, since the request would still include everyone
+-else's messages. For an unrecognised transcript the user supplies exactly two
+-names, but the page cannot verify whether the raw text contains other people.
+-The selected mode is kept with the verdict in memory so changing the dropdown
+-or language does not relabel an older verdict. It is shown on the result and
+-the partner share card. The same local statistics, share flow, answer keys and
+-Menace Index apply; no mode is sent as extra chat data. Exactly one Jev
+-request is made per judgment. A rare token-limit error now displays an error
+-instead of retrying with less chat text.
+-
+-The twelve playful Jev type keys stay the same. Partner criteria replace group
+-examples with two-person evidence:
+-
+-| Type | Partner criterion focuses on |
+-| --- | --- |
+-| Giga Chad | unusually blunt, self-assured replies to the other person |
+-| Golden Retriever | repeated warmth and encouragement |
+-| Cat | selective distance and unanswered direct questions |
+-| Chaos Goblin | recurring abrupt jokes and tangents |
+-| Dragon | controlling the exchange or the other person's decisions |
+-| Owl | repeated correction and unsolicited explanations |
+-| Sloth | little participation, leaving the other person to carry the chat |
+-| Mother Hen | excessive check-ins, reminders or planning for one person |
+-| Troll | baiting the other person rather than shared joking |
+-| Drama Llama | escalating small misunderstandings and guilt trips |
+-| Mosquito | repeated indirect digs at the other person |
+-| NPC | repeated empty agreement or filler |
+-
+-The culprit choice asks about tension *in the messages shown*. Personal type,
+-passive aggression, effort and drama questions likewise name the exchange,
+-while "started it" and "secretly right" require an actual disagreement;
+-"dodges questions" does not infer read receipts from elapsed time. The
+-main-character scale uses a two-person legend on both the request and the
+-results. Other score levels and the score formula remain the same. Partner
+-results use a neutral type note instead of group-oriented comic biographies.
+-
+-Jev still has to pick one person for the culprit and one type per person, even
+-in a friendly chat with no disagreement. A partner-mode verdict is not an
+-assessment of the relationship or anyone's real personality. Friends and
+-family modes have not been added.
+-
+-## Data flow and public use
+-
+-- Before judging, an imported file or pasted transcript is read into the page
+-  and parsed in the browser. Counts, lengths, records and reply times are
+-  calculated there. The raw transcript and parsed messages remain in memory
+-  while the page is open; the app does not write them to browser storage.
+-- Clicking "Judge them" uses one OpenRouter Decisions request for Jev by
+-  TypeSafe. For recognised formats, `js/questions.js` sends the newest
+-  messages that fit the limit as `{ from, text }`; parsed timestamps and local
+-  statistics are excluded from the request state. Selected names also occur
+-  in the questions. If fewer than two speakers are recognised (including an
+-  unrecognised format), it sends the selected names and
+-  the newest fitting excerpt of the *raw transcript*, which may include
+-  timestamps or other details present in that raw text.
+-- `js/jev.js` sends the OpenRouter key as an Authorization header. A personal
+-  key entered in the form is saved in this browser's `localStorage`; the
+-  "Delete saved personal key" button removes only that saved key. If present,
+-  `js/key.js` still supplies a key after deletion. The selected language is
+-  also saved in `localStorage`. The app has no backend and does not log chat
+-  content, but these statements do not describe retention by OpenRouter,
+-  TypeSafe, browser extensions or the device.
+-- The share card is drawn locally from verdicts, names and numeric highlights.
+-  No chat text is passed to its drawing code. The preview shows the names and
+-  numbers before PNG download or Web Share; a share action can hand the image
+-  to the device's share destination. Neither action uploads the card to this
+-  site's server.
+-
+-For public operation, determine how chat participants are informed, the
+-applicable lawful basis and provider retention/processing terms, the safety of
+-handling third-party messages, and who can use or spend the API key. The
+-current Pages workflow publishes a configured `OPENROUTER_KEY` in readable
+-`js/key.js`, even when it is set as a deployment secret; a credit cap alone is
+-not access control. These questions need review before a public launch; this
+-README does not claim legal clearance.
+-
+-## Run locally
+-
+-```sh
+-echo "export const OPENROUTER_KEY = 'sk-or-…';" > js/key.js   # git-ignored
+-npm start        # serves http://localhost:8000
+-npm test
++FakeorFriend is an independent repository based on the JudgeYou prototype.
++JudgeYou's repository is unaffected. The page examines **one chat between exactly
++two people**. It does not guess whether they are a couple, friends or family,
++diagnose anybody, or identify a person who is "at fault".
++
++Paste a chat or open a WhatsApp (including ZIP), Telegram, Messenger, Instagram,
++Discord, Slack, Teams, iMessage, IRC, LINE, KakaoTalk, CSV or plain transcript.
++Existing import parsers remain in place. With a recognised format the browser
++requires exactly two recognised speakers with at least three text messages each.
++A three-person chat cannot be made eligible by hiding or excluding one person.
++A long chat can be truncated to the newest messages that fit Jev's state
++limit; if that excerpt has fewer than three messages from either speaker, no
++request is made.
++
++For an unrecognised format you can enter exactly two names manually, but the
++browser **cannot verify** who spoke or how many people appear in the raw text.
++The results explicitly lack a global label in this case; use a recognised
++format for a verifiable two-person comparison.
++
++## What the result means
++
++One Jev Decisions request returns four structured scores from 0 to 3 for the
++messages in the submitted excerpt: mutual warmth, back-and-forth, visible
++tension, and clarity. Brief replies or long pauses alone do not imply tension.
++The displayed levels translate the four ordinal score levels; they are not
++personality probabilities. No Jev prose, suspect, animal type, Menace Index,
++Green/Red percentage, or "toxic" diagnosis is produced.
++
++For recognised chats, the overall *excerpt label* follows this rule, in order:
++
++1. **Noticeable friction:** tension >= 2 and warmth <= 1.
++2. **Mostly warm:** warmth >= 2, reciprocity >= 2 and tension <= 1.
++3. Otherwise **mixed or everyday**.
++
++If the scores are unavailable or the format is unrecognised, the label is
++**not enough verifiable context**. These labels describe only the messages
++that Jev sees, not a real relationship outside the excerpt. Jev's scores can
++still be wrong and no passages or quotes are displayed as proof.
++
++Locally calculated counts remain per person: number of messages, median words
++and characters, length of the longest message and median reply time. A reply
++starts when the other person's previous message block ends. Silences over six
++hours start a new conversation. Length and reply medians need at least three
++valid observations. Each available share highlight includes its sample size.
++Records are awarded only on a clear lead with enough data.
++
++## Data and sharing
++
++Parsed chat text and imported files are held in page memory, not stored by the
++app. For recognised formats the **single** Jev request sends the newest
++messages that fit the limit as `{ from, text }` via OpenRouter to TypeSafe;
++local timestamps, local statistics and media files are excluded. For an
++unrecognised format it sends a recent raw text excerpt and the two manually
++entered names instead; the raw excerpt can include dates and other details.
++The notice above the button explains both cases before any request is made.
++This app does not log the chat, but cannot promise what external providers,
++browser extensions or the device store.
++
++The image card uses only its excerpt label, names you can edit, and up to two
++local numeric highlights per person (only if `n >= 3`). By default phone
++numbers are replaced and full names shortened to their first word. The visible
++preview lists the card contents before download or Web Share. The page does not
++upload the card to its own server. The chosen language and a key you enter may
++be kept in browser `localStorage`; FakeorFriend uses its own storage keys
++separate from JudgeYou. The delete button removes only your stored key. An
++optional `js/key.js` provided by a deployment would still be available.
++
++No public deployment is configured in this new repository. Before a public
++launch, plan server-side key handling rather than publishing a key inside
++readable `js/key.js`. Provider processing and retention, third-party chat
++participants and lawful basis also need assessment. This document does not
++claim legal clearance.
++
++## Local preview (no API key)
++
++On Windows, from the FakeorFriend folder:
++
++```powershell
++npm.cmd test
++node .\scripts\preview-server.mjs
+ ```
+ 
+-Without `js/key.js`, the page asks for a key and keeps it in `localStorage`.
+-
+-## Local browser preview without an API key
+-
+-From the repo folder, run `node scripts/preview-server.mjs` and open the
+-`http://127.0.0.1:...` address it prints in Edge or Chrome. This separate
+-preview replaces `js/jev.js` only in the response with deterministic test
+-answers. It does not read or save an API key, and its Content Security Policy
+-blocks outgoing browser connections. It listens only on the loopback interface
+-and uses a random port; stop it with Ctrl+C. The yellowish banner counts
+-simulated verdict calls. Use made-up chats: the results are fixtures, not real
+-Jev judgments. Remote fonts do not load in this preview, so inspect fine
+-typography later in the normal app. A downloaded PNG stays on your device;
+-choose a share destination only if you intend to share the test image.
+-
+-## Deploy
+-
+-Pushing to `main` deploys to GitHub Pages (Settings → Pages → Source: GitHub Actions).
+-If the repository has an `OPENROUTER_KEY` secret, the workflow bakes it into the
+-deployed `js/key.js`. Anyone can read it from there, so use a separate key with a
+-low credit limit.
+-
+-## Where things live
+-
+-- `js/parse.js`, `js/parse-structured.js`: chat formats. `js/stamps.js`: their timestamps.
+-- `js/files.js`: opening files, including WhatsApp ZIPs.
+-- `js/stats.js`: the counted numbers and records.
+-- `js/card.js`: the share image.
+-- `js/questions.js`: what Jev is asked. One request judges everyone at once.
+-- `js/verdict.js`: how answers combine into the Menace Index (weights are ours).
+-- `js/presentation.js`: the twelve types, mascots (`img/types/`) and number formats.
+-- `js/locales/`: every visible string, one file per language; `js/i18n.js` picks one.
+-- `css/theme.css`: every raw color value.
++Open the printed `http://127.0.0.1:...` URL in Edge or Chrome. This localhost
++preview serves deterministic mock answers and blocks outgoing browser network
++connections. It does not read a real key or send a Jev request. Use invented
++chats. Stop it with Ctrl+C. Fonts are local fallbacks in this preview.
++
++The normal page instead requires an OpenRouter key. Publishing this project
++needs a separate deployment decision and a review of its data flow.
++
++## Code
++
++- `js/parse.js`, `js/parse-structured.js`, `js/stamps.js`, `js/files.js`: imports.
++- `js/stats.js`: locally counted statistics.
++- `js/questions.js`: bounded state and four Jev questions.
++- `js/verdict.js`: excerpt label rule.
++- `js/app.js`: input and result flow.
++- `js/card.js`: the single image preview, download and Web Share flow.
++- `js/locales/`: English, German, French and Spanish strings.
+diff --git a/css/style.css b/css/style.css
+index 7a80254..c47d7f4 100644
+--- a/css/style.css
++++ b/css/style.css
+@@ -989,3 +989,34 @@ button {
+     overflow-x: auto;
+   }
+ }
++
++/* FakeorFriend: readable two-person summary without the former suspect layout. */
++.connection-summary {
++  padding: clamp(1.4rem, 4vw, 2.5rem);
++  border-block: 3px double var(--ink);
++  background: var(--paper-raised);
++}
++.connection-summary h2 {
++  margin: 0.4rem 0;
++  font: 800 clamp(2rem, 6vw, 4rem)/1.1 var(--font-display);
++  overflow-wrap: anywhere;
++}
++.connection-summary > p:not(.kicker) {
++  max-width: 50rem;
++  color: var(--ink-soft);
++}
++.connection-summary .measures {
++  grid-template-columns: repeat(2, minmax(0, 1fr));
++  gap: 1.25rem;
++}
++.plate .counted {
++  margin-top: 1rem;
++}
++.subjects .chip {
++  max-width: 100%;
++  overflow-wrap: anywhere;
++  cursor: default;
++}
++@media (max-width: 620px) {
++  .connection-summary .measures { grid-template-columns: 1fr; }
++}
+diff --git a/index.html b/index.html
+index eb77c59..0d65222 100644
+--- a/index.html
++++ b/index.html
+@@ -3,9 +3,8 @@
+   <head>
+     <meta charset="utf-8" />
+     <meta name="viewport" content="width=device-width, initial-scale=1" />
+-    <title>JudgeYou · A field guide to the people in your group chat</title>
+-    <meta name="description" content="Paste a group chat. Jev classifies everyone in it into one of twelve species." />
+-    <link rel="icon" href="img/types/drama_llama.webp" />
++    <title>FakeorFriend · How is your connection?</title>
++    <meta name="description" content="Explore how two people communicate in a chat excerpt." />
+     <link rel="preconnect" href="https://fonts.googleapis.com" />
+     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+     <link
+@@ -18,33 +17,22 @@
+   </head>
+   <body>
+     <header class="masthead">
+-      <strong>JudgeYou</strong>
+-      <span data-i18n="tagline">A field guide to the people in your group chat</span>
++      <strong>FakeorFriend</strong>
++      <span data-i18n="tagline">A closer look at a two-person chat</span>
+       <span data-i18n="volume">Vol. I · 2026</span>
+       <select id="language" data-i18n-attr="aria-label: language"></select>
+     </header>
+ 
+     <main>
+       <section class="hero">
+-        <h1 data-i18n-html="hero">Who is the <em>problem</em> in your group chat?</h1>
++        <h1 data-i18n-html="hero">How is your <em>connection</em>?</h1>
+         <p class="lede" data-i18n="lede"></p>
+       </section>
+ 
+-      <div class="species-strip" aria-hidden="true">
+-        <div id="species-track" class="species-track"></div>
+-      </div>
+-
+       <section class="intake">
+-        <div class="intake-label"><b data-i18n="exhibit">Exhibit A</b><span data-i18n="evidence">The evidence</span></div>
++        <div class="intake-label"><b data-i18n="exhibit">Your chat</b><span data-i18n="evidence">Two people</span></div>
+         <div>
+-          <div class="chat-mode-picker">
+-            <label for="chat-mode" data-i18n="chatModeLabel"></label>
+-            <select id="chat-mode">
+-              <option value="group" data-i18n="chatModes.group">Group chat</option>
+-              <option value="partner" data-i18n="chatModes.partner">Partner chat</option>
+-            </select>
+-            <p id="partner-hint" data-i18n="partnerHint" hidden></p>
+-          </div>
++          <p id="pair-hint" class="partner-caveat" data-i18n="pairHint"></p>
+           <textarea
+             id="chat"
+             spellcheck="false"
+@@ -94,17 +82,11 @@
+       </section>
+ 
+       <section id="results" class="results" aria-live="polite" hidden>
+-        <p id="result-mode" class="result-mode"></p>
+-        <p id="partner-caveat" class="partner-caveat" data-i18n="partnerCaveat" hidden></p>
+-        <article class="suspect">
+-          <img id="suspect-mascot" alt="" width="192" height="192" />
+-          <div>
+-            <p class="kicker" data-i18n="suspect"></p>
+-            <p id="suspect-name" class="suspect-name"></p>
+-            <p id="suspect-stat" class="suspect-stat"></p>
+-          </div>
+-          <div id="suspect-bars" class="bars"></div>
+-          <div class="stamp" data-i18n="guilty"></div>
++        <article class="connection-summary">
++          <p class="kicker" data-i18n="summaryTitle"></p>
++          <h2 id="connection-label"></h2>
++          <p id="connection-note"></p>
++          <div id="connection-scales" class="measures"></div>
+         </article>
+         <div id="records" class="records"></div>
+         <div id="plates" class="plates"></div>
+@@ -134,29 +116,11 @@
+       </form>
+     </dialog>
+ 
+-    <template id="bar-row">
+-      <div class="bar-row">
+-        <span class="who"></span>
+-        <div class="track"><div class="fill"></div></div>
+-        <span class="value"></span>
+-      </div>
+-    </template>
+-
+     <template id="plate">
+       <article class="plate">
+-        <div class="plate-head">
+-          <span class="plate-no"></span>
+-          <span class="menace"><span class="menace-value">0</span><span class="menace-label"></span></span>
+-        </div>
+-        <div class="plate-figure"><img alt="" width="240" height="240" /><div class="stamp"></div></div>
+         <h2 class="plate-name"></h2>
+-        <p class="plate-type"></p>
+-        <p class="plate-species"></p>
+-        <p class="plate-note"></p>
+         <div class="stats-caption" hidden></div>
+-        <div class="measures"></div>
+         <dl class="counted"></dl>
+-        <dl class="findings"></dl>
+       </article>
+     </template>
+ 
+diff --git a/js/app.js b/js/app.js
+index 9549fbd..3de6560 100644
+--- a/js/app.js
++++ b/js/app.js
+@@ -1,37 +1,16 @@
+ import { parseChat, participantsOf } from './parse.js';
+-import { buildRequest, canJudgeSubjects, CHAT_MODES, readVerdicts, MAX_SUBJECTS, STATE_TOKEN_BUDGET } from './questions.js';
++import { buildRequest, canJudgeSubjects, hasEnoughMessages, readVerdicts, DIMENSIONS, STATE_TOKEN_BUDGET } from './questions.js';
+ import { askJev, findApiKey, forgetApiKey, isApiKey, rememberApiKey } from './jev.js';
+-import { assignTypes, flagScores, menaceIndex, normalisedScore, severityOf } from './verdict.js';
++import { interactionLabel, normalisedScore } from './verdict.js';
+ import { chatStats, recordsOf } from './stats.js';
+ import { FileError, readChatFile } from './files.js';
+ import { openCard } from './card.js';
+ import { shareHighlights } from './card-data.js';
+ import { LANGUAGES, lang, setLanguage, t, translatePage } from './i18n.js';
+-import {
+-  FINDING_KEYS,
+-  TRAIT_KEYS,
+-  TYPE_KEYS,
+-  SPECIES,
+-  formatDuration,
+-  formatNumber,
+-  mascotOf,
+-  percent,
+-  recordDetail,
+-  severityLabel,
+-  statisticNotes,
+-  textLengthPresentation,
+-  typeName,
+-  typeNote,
+-} from './presentation.js';
++import { formatDuration, formatNumber, percent, recordDetail, statisticNotes, textLengthPresentation } from './presentation.js';
+ import { SAMPLE_CHAT } from './sample.js';
+ 
+-const LAB_LINE_MS = 340;
+-const LAB_FLICKER_MS = 110;
+-
+-// Jev answers in well under a second; a short minimum lets the verdict land
+-// with some ceremony instead of flickering past.
+ const MIN_LAB_MS = 1800;
+-
+ const $ = (id) => document.getElementById(id);
+ const chat = $('chat');
+ const judgeButton = $('judge');
+@@ -40,41 +19,15 @@ const keyForm = $('key-form');
+ const errorBox = $('error');
+ const lab = $('lab');
+ const results = $('results');
+-const chatMode = $('chat-mode');
+-
+-// When the format isn't recognised, the user names the people and Jev reads
+-// the raw text instead of parsed messages.
+ let messages = [];
+ let detected = [];
+ let typedNames = [];
+-const spared = new Set();
+-
+-// Kept so a language switch can redraw the results without asking Jev again.
+ let lastVerdict = null;
+ let judging = false;
+-
+ const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+-
+-function fromTemplate(id) {
+-  return $(id).content.firstElementChild.cloneNode(true);
+-}
+-
+-function renderSpeciesStrip() {
+-  const specimen = (key) => {
+-    const item = document.createElement('div');
+-    item.className = 'species';
+-    const img = new Image(104, 104);
+-    img.src = mascotOf(key);
+-    img.alt = '';
+-    img.loading = 'lazy';
+-    const name = document.createElement('span');
+-    name.textContent = typeName(key);
+-    item.append(img, name);
+-    return item;
+-  };
+-  // Two copies so the drifting strip loops without a seam.
+-  $('species-track').replaceChildren(...TYPE_KEYS.map(specimen), ...TYPE_KEYS.map(specimen));
+-}
++const fromTemplate = (id) => $(id).content.firstElementChild.cloneNode(true);
++const isRawMode = () => detected.length < 2;
++const candidates = () => isRawMode() ? typedNames : detected;
+ 
+ function renderLanguagePicker() {
+   const picker = $('language');
+@@ -82,44 +35,29 @@ function renderLanguagePicker() {
+   picker.addEventListener('change', () => {
+     setLanguage(picker.value);
+     translatePage();
+-    updateRawNotice();
+-    renderSpeciesStrip();
+     renderSubjects();
+     if (lastVerdict) renderResults(lastVerdict, { scroll: false });
+   });
+ }
+-
+-function isRawMode() {
+-  return detected.length < 2;
+-}
+-
+-function updateRawNotice() {
+-  $('raw-notice').hidden = !chat.value.trim() || !isRawMode();
+-}
+-
+-function candidates() {
+-  return isRawMode() ? typedNames : detected;
+-}
+-
+-function subjects() {
+-  return candidates().filter((name) => !spared.has(name)).slice(0, MAX_SUBJECTS);
+-}
+-
+-function updateModeEligibility() {
+-  const mode = chatMode.value;
+-  $('partner-hint').hidden = mode !== CHAT_MODES.PARTNER || (subjects().length === 2 && candidates().length === 2);
+-  judgeButton.disabled = judging || !canJudgeSubjects(mode, subjects().length, candidates().length);
++function renderSubjects() {
++  const people = candidates();
++  const box = $('subjects');
++  box.replaceChildren(...people.map((name) => Object.assign(document.createElement('span'), { className: 'chip', textContent: name })));
++  $('pair-hint').hidden = people.length === 2 && (isRawMode() || hasEnoughMessages(messages.map(({ author, text }) => ({ from: author, text })), people));
++  judgeButton.disabled = judging || !canJudgeSubjects(people.length, people.length) || (!isRawMode() && !hasEnoughMessages(messages.map(({ author, text }) => ({ from: author, text })), people));
+ }
+-
+ function onChatChanged() {
+   messages = parseChat(chat.value);
+   detected = participantsOf(messages).map((p) => p.name);
+-  spared.clear();
++  typedNames = [];
+   namesForm.hidden = !chat.value.trim() || !isRawMode();
+-  updateRawNotice();
++  $('raw-notice').hidden = !chat.value.trim() || !isRawMode();
+   renderSubjects();
+ }
+-
++function showError(message) {
++  errorBox.textContent = message;
++  errorBox.hidden = false;
++}
+ async function loadFile(file) {
+   errorBox.hidden = true;
+   try {
+@@ -129,369 +67,153 @@ async function loadFile(file) {
+     showError(error instanceof FileError ? t(`errors.${error.message}`) : error.message);
+   }
+ }
+-
+-function renderSubjects() {
+-  const box = $('subjects');
+-  box.replaceChildren(
+-    ...candidates().map((name) => {
+-      const chip = document.createElement('button');
+-      chip.type = 'button';
+-      chip.className = 'chip';
+-      chip.textContent = name;
+-      chip.setAttribute('aria-pressed', String(!spared.has(name)));
+-      chip.title = spared.has(name) ? t('unspare') : t('spare');
+-      chip.addEventListener('click', () => {
+-        spared.has(name) ? spared.delete(name) : spared.add(name);
+-        renderSubjects();
+-      });
+-      return chip;
+-    }),
+-  );
+-
+-  const unjudged = candidates().length - spared.size - subjects().length;
+-  if (unjudged > 0) box.append(t('spared', { n: unjudged }));
+-  updateModeEligibility();
+-}
+-
+-function showError(message) {
+-  errorBox.textContent = message;
+-  errorBox.hidden = false;
+-}
+-
+ function runLab() {
+   const log = $('lab-log');
+-  const specimen = $('lab-specimen');
+-  const lines = t('lab');
+   log.replaceChildren();
+   lab.hidden = false;
+-
++  $('lab-specimen').hidden = true;
+   let line = 0;
+   const addLine = () => {
+-    const p = document.createElement('p');
+-    p.textContent = lines[line++ % lines.length];
+-    log.append(p);
++    log.append(Object.assign(document.createElement('p'), { textContent: t('lab')[line++ % t('lab').length] }));
+     if (log.children.length > 4) log.firstElementChild.remove();
+   };
+-  let frame = 0;
+-  const flicker = () => {
+-    specimen.src = mascotOf(TYPE_KEYS[frame++ % TYPE_KEYS.length]);
+-  };
+-
+   addLine();
+-  flicker();
+-  const timers = [setInterval(addLine, LAB_LINE_MS), setInterval(flicker, LAB_FLICKER_MS)];
+-  return () => {
+-    timers.forEach(clearInterval);
+-    lab.hidden = true;
+-  };
++  const interval = setInterval(addLine, 340);
++  return () => { clearInterval(interval); lab.hidden = true; };
+ }
+-
+ async function judgeChat() {
+-  if (judging || !canJudgeSubjects(chatMode.value, subjects().length, candidates().length)) return;
++  if (judging || judgeButton.disabled) return;
+   judging = true;
+-  updateModeEligibility();
++  renderSubjects();
+   errorBox.hidden = true;
+   try {
+     const apiKey = await findApiKey();
+-    if (!apiKey) {
+-      keyForm.hidden = false;
+-      $('key').focus();
+-      return;
+-    }
+-    // A chat or mode can change while the key is being looked up.
+-    if (!canJudgeSubjects(chatMode.value, subjects().length, candidates().length)) return;
+-
+-    const judged = subjects();
+-    const mode = chatMode.value;
++    if (!apiKey) { keyForm.hidden = false; $('key').focus(); return; }
++    // Freeze the chat and speakers after the asynchronous key lookup.
++    const people = candidates().slice();
+     const rawMode = isRawMode();
+-    const parsedMessages = messages;
+-    const evidence = rawMode ? chat.value : parsedMessages;
++    const evidence = rawMode ? chat.value : messages.slice();
++    if (!canJudgeSubjects(people.length, people.length)) return;
++    const request = buildRequest(evidence, people, STATE_TOKEN_BUDGET);
++    if (!rawMode && !hasEnoughMessages(request.body.state.messages, people)) {
++      showError(t('errors.tooFew')); return;
++    }
+     keyForm.hidden = true;
+     lastVerdict = null;
+     results.hidden = true;
+     const stopLab = runLab();
+-
+     try {
+-      const timedAsk = async () => {
+-        const started = performance.now();
+-        const request = buildRequest(evidence, judged, STATE_TOKEN_BUDGET, mode);
+-        const response = await askJev(apiKey, request.body);
+-        return { request, response, ms: Math.round(performance.now() - started) };
+-      };
+-      const [{ request, response, ms }] = await Promise.all([timedAsk(), wait(MIN_LAB_MS)]);
+-      stopLab();
++      const started = performance.now();
++      const [response] = await Promise.all([askJev(apiKey, request.body), wait(MIN_LAB_MS)]);
+       lastVerdict = {
+-        judged,
+-        mode,
+-        ...readVerdicts(response.answers, judged),
+-        // Counted over the chat captured when this request started.
+-        stats: rawMode ? null : chatStats(parsedMessages),
+-        meta: {
+-          judgedCount: request.judgedCount,
+-          totalCount: rawMode ? null : parsedMessages.length,
+-          truncated: request.truncated,
+-          ms,
+-          model: response.model,
+-          cost: response.usage?.cost,
+-        },
++        people,
++        answers: readVerdicts(response.answers),
++        rawMode,
++        stats: rawMode ? null : chatStats(evidence),
++        meta: { judgedCount: request.judgedCount, totalCount: rawMode ? null : evidence.length,
++          truncated: request.truncated, ms: Math.round(performance.now() - started), model: response.model, cost: response.usage?.cost },
+       };
+       renderResults(lastVerdict);
+     } catch (error) {
+-      if (error.status === 401) {
+-        forgetApiKey();
+-        keyForm.hidden = false;
+-      }
++      if (error.status === 401) { forgetApiKey(); keyForm.hidden = false; }
+       showError(error.status ? t('errors.jev', { status: error.status, reason: error.reason }) : error.message);
+-    } finally {
+-      stopLab();
+-    }
+-  } finally {
+-    judging = false;
+-    updateModeEligibility();
+-  }
++    } finally { stopLab(); }
++  } finally { judging = false; renderSubjects(); }
+ }
+-
+-function barRow(label, probability) {
+-  const row = fromTemplate('bar-row');
+-  row.querySelector('.who').textContent = label;
+-  row.querySelector('.value').textContent = percent(probability);
+-  row.querySelector('.fill').dataset.width = percent(probability);
+-  return row;
+-}
+-
+-function renderResults({ judged, culprit, people, stats, meta, mode = CHAT_MODES.GROUP }, { scroll = true } = {}) {
+-  $('result-mode').textContent = t('chatModeResult', { mode: t(`chatModes.${mode}`) });
+-  $('partner-caveat').hidden = mode !== CHAT_MODES.PARTNER;
+-  results.querySelector('.suspect .kicker').textContent = t(mode === CHAT_MODES.PARTNER ? 'suspectPartner' : 'suspect');
+-  results.querySelector('.suspect .stamp').textContent = t(mode === CHAT_MODES.PARTNER ? 'guiltyPartner' : 'guilty');
+-  const types = assignTypes(people.map((p) => p.answers.type));
+-  const suspectType = types[people.findIndex((p) => p.name === culprit.choice)].type;
+-  $('suspect-mascot').src = mascotOf(suspectType);
+-  $('suspect-name').textContent = culprit.choice;
+-  $('suspect-stat').textContent = t('suspectStat', {
+-    type: typeName(suspectType),
+-    p: culprit.probabilities[culprit.choice].toFixed(2),
+-    confidence: culprit.confidence.toFixed(2),
+-  });
+-  $('suspect-bars').replaceChildren(...judged.map((name) => barRow(name, culprit.probabilities[name] ?? 0)));
+-
+-  const records = stats ? recordsOf(stats, judged) : [];
+-  $('records').replaceChildren(...records.map(record));
+-  $('records').hidden = !records.length;
+-
+-  $('plates').replaceChildren(...people.map((person, i) => plate(person, i, types[i], stats?.get(person.name), stats, judged, mode)));
+-
+-  const evidence =
+-    meta.judgedCount === null
+-      ? t(meta.truncated ? 'evidenceRawTruncated' : 'evidenceRaw')
+-      : meta.truncated
+-        ? t('evidenceTruncated', { n: meta.judgedCount, total: meta.totalCount })
+-        : t('evidenceAll', { n: meta.judgedCount });
+-  const cost = meta.cost === undefined ? '' : ` · $${meta.cost.toFixed(6)}`;
+-  $('footnote').textContent = `${evidence} · ${meta.model} · ${meta.ms} ms${cost}`;
+-
+-  $('share').onclick = () =>
+-    openCard({
+-      mode,
+-      suspect: culprit.choice,
+-      people: people.map(({ name, answers }, i) => {
+-        const menace = menaceIndex(answers);
+-        return { name, type: types[i].type, menace, flags: flagScores(menace),
+-          severity: severityOf(menace), highlights: shareHighlights(stats?.get(name)) };
+-      }),
+-      records: records.map((r) => ({ key: r.key, name: r.name, detail: recordDetail(r) })),
+-    });
+-
+-  results.hidden = false;
+-  if (scroll) results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+-  animateIn();
++function fact(label, value, definition, detail) {
++  const item = fromTemplate('finding');
++  item.querySelector('dt').textContent = label;
++  item.querySelector('dd').textContent = value;
++  if (definition) item.title = definition;
++  if (detail) item.prepend(Object.assign(document.createElement('small'), { textContent: detail }));
++  return item;
+ }
+-
+-function record(entry) {
+-  const box = document.createElement('div');
+-  box.className = 'record';
+-  const title = Object.assign(document.createElement('span'), { textContent: t(`records.${entry.key}.title`) });
+-  const name = Object.assign(document.createElement('strong'), { textContent: entry.name });
+-  const detail = Object.assign(document.createElement('small'), { textContent: recordDetail(entry) });
+-  box.append(title, name, detail);
+-  return box;
++function scale(key, answer) {
++  const levels = t(`levels.${key}`);
++  const meter = fromTemplate('scale');
++  meter.style.setProperty('--segments', levels.length - 1);
++  meter.querySelector('.scale-name').textContent = t(`traits.${key}`);
++  meter.querySelector('.scale-confidence').textContent = '';
++  meter.querySelector('.fill').dataset.width = percent(normalisedScore(answer));
++  meter.querySelector('.scale-level').textContent = levels[Math.max(0, Math.min(3, Math.round(answer.score)))];
++  return meter;
+ }
+-
+-function plate({ name, answers }, index, assigned, counts, stats, judged, mode) {
++function plate(name, stats, people) {
+   const card = fromTemplate('plate');
+-  card.style.setProperty('--delay', `${index * 120}ms`);
+-
+-  const img = card.querySelector('.plate-figure img');
+-  img.src = mascotOf(assigned.type);
+-  img.alt = typeName(assigned.type);
+-
+-  card.querySelector('.plate-no').textContent = t('plate', { n: String(index + 1).padStart(2, '0') });
+-  card.querySelector('.menace-label').textContent = t('menace');
+   card.querySelector('.plate-name').textContent = name;
+-  card.querySelector('.plate-type').append(
+-    typeName(assigned.type),
+-    Object.assign(document.createElement('small'), {
+-      textContent: `p = ${assigned.probability.toFixed(2)}`,
+-    }),
+-  );
+-  card.querySelector('.plate-species').textContent = SPECIES[assigned.type];
+-  card.querySelector('.plate-note').textContent = mode === CHAT_MODES.PARTNER ? t('partnerTypeNote') : typeNote(assigned.type);
+-  const notes = statisticNotes(stats, judged, name);
++  const notes = statisticNotes(stats, people, name);
+   const caption = card.querySelector('.stats-caption');
+   if (notes.length) {
+-    caption.replaceChildren(...notes.map((sentence) => Object.assign(document.createElement('p'), { textContent: sentence })));
++    caption.replaceChildren(...notes.map((text) => Object.assign(document.createElement('p'), { textContent: text })));
+     caption.hidden = false;
+   }
+-
+-  const menace = menaceIndex(answers);
+-  card.querySelector('.menace-value').dataset.target = menace;
+-  card.querySelector('.stamp').textContent = severityLabel(severityOf(menace));
+-
+-  card.querySelector('.measures').append(...TRAIT_KEYS.map((key) => scale(key, answers[key], mode)));
+-
++  const counts = stats?.get(name);
+   const counted = card.querySelector('.counted');
+   if (counts) {
+     const length = textLengthPresentation(counts);
+     counted.append(
+       fact(t('counted.messages'), formatNumber(counts.messages)),
+       fact(t('counted.words'), formatNumber(counts.medianWords), t('counted.wordsDefinition')),
+-      fact(
+-        t('counted.medianChars'),
+-        length.median,
+-        t('counted.medianCharsDefinition'),
+-        length.sample,
+-      ),
+-      fact(
+-        t('counted.longest'),
+-        length.longest,
+-        t('counted.longestDefinition'),
+-        length.sample,
+-      ),
+-      fact(
+-        t('counted.reply'),
+-        counts.reply ? formatDuration(counts.reply.median) : '–',
+-        `${t('counted.replyDefinition')}${counts.reply ? ` (n = ${counts.reply.n})` : ''}`,
+-      ),
++      fact(t('counted.medianChars'), length.median, t('counted.medianCharsDefinition'), length.sample),
++      fact(t('counted.longest'), length.longest, t('counted.longestDefinition'), length.sample),
++      fact(t('counted.reply'), counts.reply ? formatDuration(counts.reply.median) : '–',
++        `${t('counted.replyDefinition')}${counts.reply ? ` (n = ${counts.reply.n})` : ''}`),
+     );
+-    if (length.note) {
+-      const note = document.createElement('p');
+-      note.className = 'counted-note';
+-      note.textContent = length.note;
+-      counted.after(note);
+-    }
+-  } else {
+-    counted.remove();
+-  }
+-  card.querySelector('.findings').append(...FINDING_KEYS.map((key) => fact(t(`findings.${key}`), percent(answers[key].noul))));
++    if (length.note) counted.after(Object.assign(document.createElement('p'), { className: 'counted-note', textContent: length.note }));
++  } else counted.remove();
+   return card;
+ }
+-
+-function fact(label, value, definition, detail) {
+-  const item = fromTemplate('finding');
+-  item.querySelector('dt').textContent = label;
+-  item.querySelector('dd').textContent = value;
+-  if (definition) item.title = definition;
+-  if (detail) item.prepend(Object.assign(document.createElement('small'), { textContent: detail }));
+-  return item;
+-}
+-
+-function scale(key, answer, mode) {
+-  const levels = mode === CHAT_MODES.PARTNER && key === 'main_character'
+-    ? t('partnerLevels.main_character') : t(`levels.${key}`);
+-  const meter = fromTemplate('scale');
+-  meter.style.setProperty('--segments', levels.length - 1);
+-  meter.querySelector('.scale-name').textContent = t(`traits.${key}`);
+-  meter.querySelector('.scale-confidence').textContent = t('confidence', { c: answer.confidence.toFixed(2) });
+-  meter.querySelector('.fill').dataset.width = percent(normalisedScore(answer));
+-  meter.querySelector('.scale-level').textContent = levels[Math.round(answer.score)];
+-
+-  if (answer.probabilities) {
+-    // Jev's legend is in English; its levels are in the same order as ours.
+-    meter.querySelector('.track').dataset.tip = Object.keys(answer.legend)
+-      .map((level, i) => `${percent(answer.probabilities[level] ?? 0).padStart(4)}  ${levels[i]}`)
+-      .join('\n');
+-  }
+-  return meter;
+-}
+-
+-function animateIn() {
+-  // Widths are applied a frame after insertion so the CSS transition runs.
+-  requestAnimationFrame(() =>
+-    requestAnimationFrame(() => {
+-      for (const fill of results.querySelectorAll('.fill')) fill.style.width = fill.dataset.width;
+-    }),
++function record(entry) {
++  const box = document.createElement('div');
++  box.className = 'record';
++  box.append(
++    Object.assign(document.createElement('span'), { textContent: t(`records.${entry.key}.title`) }),
++    Object.assign(document.createElement('strong'), { textContent: entry.name }),
++    Object.assign(document.createElement('small'), { textContent: recordDetail(entry) }),
+   );
+-
+-  for (const counter of results.querySelectorAll('.menace-value')) {
+-    const target = Number(counter.dataset.target);
+-    const started = performance.now();
+-    const tick = (now) => {
+-      const progress = Math.min((now - started) / 1200, 1);
+-      counter.textContent = Math.round(target * (1 - (1 - progress) ** 3));
+-      if (progress < 1) requestAnimationFrame(tick);
+-    };
+-    requestAnimationFrame(tick);
+-  }
++  return box;
++}
++function renderResults({ people, answers, rawMode, stats, meta }, { scroll = true } = {}) {
++  const label = interactionLabel(answers, { raw: rawMode });
++  $('connection-label').textContent = t(`connection.${label}`);
++  $('connection-note').textContent = t(rawMode ? 'connection.rawNote' : 'connection.note');
++  $('connection-scales').replaceChildren(...DIMENSIONS.map((key) => scale(key, answers[key])));
++  const records = stats ? recordsOf(stats, people) : [];
++  $('records').replaceChildren(...records.map(record));
++  $('records').hidden = !records.length;
++  $('plates').replaceChildren(...people.map((name) => plate(name, stats, people)));
++  const evidence = meta.judgedCount === null ? t(meta.truncated ? 'evidenceRawTruncated' : 'evidenceRaw')
++    : meta.truncated ? t('evidenceTruncated', { n: meta.judgedCount, total: meta.totalCount })
++      : t('evidenceAll', { n: meta.judgedCount });
++  const cost = meta.cost === undefined ? '' : ` · $${meta.cost.toFixed(6)}`;
++  $('footnote').textContent = `${evidence} · ${meta.model} · ${meta.ms} ms${cost}`;
++  $('share').onclick = () => openCard({ label, people: people.map((name) => ({ name, highlights: shareHighlights(stats?.get(name)) })),
++    records: records.map((entry) => ({ key: entry.key, name: entry.name, detail: recordDetail(entry) })) });
++  results.hidden = false;
++  if (scroll) results.scrollIntoView({ behavior: 'smooth', block: 'start' });
++  requestAnimationFrame(() => requestAnimationFrame(() => {
++    for (const fill of results.querySelectorAll('.fill')) fill.style.width = fill.dataset.width;
++  }));
+ }
+-
+ translatePage();
+ renderLanguagePicker();
+-renderSpeciesStrip();
+-
+ chat.addEventListener('input', onChatChanged);
+-chatMode.addEventListener('change', renderSubjects);
+-
+-chat.addEventListener('dragover', (event) => {
+-  event.preventDefault();
+-  chat.classList.add('dragging');
+-});
++chat.addEventListener('dragover', (event) => { event.preventDefault(); chat.classList.add('dragging'); });
+ chat.addEventListener('dragleave', () => chat.classList.remove('dragging'));
+-chat.addEventListener('drop', (event) => {
+-  event.preventDefault();
+-  chat.classList.remove('dragging');
+-  const file = event.dataTransfer.files[0];
+-  if (file) loadFile(file);
+-});
+-
++chat.addEventListener('drop', (event) => { event.preventDefault(); chat.classList.remove('dragging'); const file = event.dataTransfer.files[0]; if (file) loadFile(file); });
+ $('open-file').addEventListener('click', () => $('file').click());
+-$('file').addEventListener('change', () => {
+-  const file = $('file').files[0];
+-  $('file').value = '';
+-  if (file) loadFile(file);
+-});
+-
+-$('sample').addEventListener('click', () => {
+-  chat.value = SAMPLE_CHAT;
+-  onChatChanged();
+-});
+-
++$('file').addEventListener('change', () => { const file = $('file').files[0]; $('file').value = ''; if (file) loadFile(file); });
++$('sample').addEventListener('click', () => { chat.value = SAMPLE_CHAT; onChatChanged(); });
+ judgeButton.addEventListener('click', judgeChat);
+-
+ $('clear-key').addEventListener('click', () => {
+-  forgetApiKey();
+-  $('key').value = '';
+-  const status = $('key-status');
+-  status.dataset.i18n = 'keyCleared';
+-  status.textContent = t('keyCleared');
+-  status.hidden = false;
++  forgetApiKey(); $('key').value = '';
++  const status = $('key-status'); status.dataset.i18n = 'keyCleared'; status.textContent = t('keyCleared'); status.hidden = false;
+ });
+-
+ namesForm.addEventListener('submit', (event) => {
+-  event.preventDefault();
+-  typedNames = [...new Set($('names').value.split(',').map((n) => n.trim()).filter(Boolean))];
+-  spared.clear();
+-  renderSubjects();
++  event.preventDefault(); typedNames = [...new Set($('names').value.split(',').map((n) => n.trim()).filter(Boolean))]; renderSubjects();
+ });
+-
+ keyForm.addEventListener('submit', (event) => {
+-  event.preventDefault();
+-  const key = $('key').value.trim();
+-  if (!isApiKey(key)) {
+-    showError(t('errors.badKey'));
+-    return;
+-  }
+-  rememberApiKey(key);
+-  $('key').value = '';
+-  $('key-status').hidden = true;
+-  judgeChat();
++  event.preventDefault(); const key = $('key').value.trim();
++  if (!isApiKey(key)) { showError(t('errors.badKey')); return; }
++  rememberApiKey(key); $('key').value = ''; $('key-status').hidden = true; renderSubjects(); judgeChat();
+ });
+diff --git a/js/card.js b/js/card.js
+index cc448d8..2537b72 100644
+--- a/js/card.js
++++ b/js/card.js
+@@ -1,40 +1,57 @@
+-// The shareable verdict: one portrait image, drawn on a canvas so it can be
+-// downloaded or handed to the phone's share sheet. It shows names, types and
+-// counts, never chat text, and names can be changed before anything leaves.
++// One share flow for both PNG download and Web Share. The canvas and visible
++// preview use only the interaction label, editable names and numeric counts.
+ import { t } from './i18n.js';
+-import { formatDuration, formatNumber, mascotOf, typeName } from './presentation.js';
+-
+-const WIDTH = 1080;
+-const HEIGHT = 1350;
+-const MARGIN = 72;
++import { formatDuration, formatNumber } from './presentation.js';
+ const PHONE_NUMBER = /^[+\d][\d\s()./-]{5,}$/;
+-
+ const $ = (id) => document.getElementById(id);
+-const images = new Map();
+-
+-/** First names only, and no phone numbers, unless the user types them in. */
+ export function defaultNames(names) {
+   let unknown = 0;
+-  return names.map((name) =>
+-    PHONE_NUMBER.test(name) ? t('unknownNumber', { n: ++unknown }) : name.split(/\s+/)[0],
+-  );
++  return names.map((name) => PHONE_NUMBER.test(name) ? t('unknownNumber', { n: ++unknown }) : name.split(/\s+/)[0]);
+ }
+-
+-/** An emptied display field must never fall back to the original full name. */
+ export function shownCardName(shown, name) {
+   return shown.get(name)?.trim() || t('cardAnonymous');
+ }
+-
++function highlightLabel({ key, median, n }) {
++  return key === 'reply'
++    ? t('cardReplyHighlight', { time: formatDuration(median), n: formatNumber(n) })
++    : t('cardCharsHighlight', { chars: formatNumber(median), n: formatNumber(n) });
++}
+ export function cardPreviewLines(verdict, shownName) {
+-  const people = verdict.people.map((person) => `${shownName(person.name)} · ${scoreLabel(person.flags)}${person.highlights.length
+-    ? ` · ${person.highlights.map(highlightLabel).join(' · ')}` : ''}`);
+-  return verdict.mode === 'partner' ? [t('chatModeResult', { mode: t('chatModes.partner') }), ...people] : people;
++  return [t(`connection.${verdict.label}`), ...verdict.people.map((person) =>
++    `${shownName(person.name)}${person.highlights?.length ? ` · ${person.highlights.map(highlightLabel).join(' · ')}` : ''}`)];
++}
++async function asFile(canvas) {
++  const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
++  if (!blob) throw new Error('PNG unavailable');
++  return new File([blob], 'fakeorfriend.png', { type: 'image/png' });
++}
++function drawCard(canvas, verdict, shownName) {
++  const ctx = canvas.getContext('2d');
++  canvas.width = 1080;
++  canvas.height = 1020;
++  ctx.fillStyle = '#f8f4e9';
++  ctx.fillRect(0, 0, 1080, 1020);
++  const paint = (value, x, y, size, color = '#252421', max = 900) => {
++    ctx.font = `600 ${size}px system-ui, sans-serif`;
++    ctx.fillStyle = color;
++    ctx.textAlign = 'left';
++    ctx.fillText(value, x, y, max);
++  };
++  paint('FakeorFriend', 72, 100, 50);
++  ctx.fillStyle = '#272421'; ctx.fillRect(72, 130, 936, 3);
++  paint(t('summaryTitle'), 72, 205, 28, '#67635d');
++  paint(t(`connection.${verdict.label}`), 72, 280, 65);
++  paint(t('connection.cardNote'), 72, 325, 22, '#67635d');
++  verdict.people.forEach((person, i) => {
++    const y = 430 + i * 235;
++    ctx.fillStyle = '#a8a39a'; ctx.fillRect(72, y - 30, 936, 1);
++    paint(shownName(person.name), 72, y + 25, 48);
++    person.highlights.slice(0, 2).forEach((highlight, j) =>
++      paint(highlightLabel(highlight), 72, y + 77 + 35 * j, 25, '#67635d'));
++  });
++  ctx.fillStyle = '#272421'; ctx.fillRect(72, 918, 936, 3);
++  paint(t('cardFooter'), 72, 965, 21, '#67635d');
+ }
+-
+-/**
+- * `verdict` holds `suspect` (a name), `people` ({ name, type, flags, highlights })
+- * and `records` ({ key, name, detail }), all with real names.
+- */
+ export function openCard(verdict) {
+   const dialog = $('card-dialog');
+   const canvas = $('card-canvas');
+@@ -42,246 +59,30 @@ export function openCard(verdict) {
+   const defaults = defaultNames(names);
+   const shown = new Map(names.map((name, i) => [name, defaults[i]]));
+   const shownName = (name) => shownCardName(shown, name);
+-  const share = $('card-share');
+-  const download = $('card-download');
+-  const previewDetails = $('card-preview-details');
+-  let requested = 0;
+-  const redraw = async () => {
+-    const current = ++requested;
+-    share.disabled = true;
+-    download.disabled = true;
+-    previewDetails.replaceChildren(...cardPreviewLines(verdict, shownName).map((value) => {
+-      const line = document.createElement('li');
+-      line.textContent = value;
+-      return line;
+-    }));
+-    try {
+-      await drawCard(canvas, verdict, shownName);
+-      if (current === requested) {
+-        share.disabled = false;
+-        download.disabled = false;
+-      }
+-    } catch (error) {
+-      if (current === requested) previewDetails.replaceChildren(
+-        Object.assign(document.createElement('li'), { textContent: t('cardRenderError') }),
+-      );
+-    }
++  const preview = $('card-preview-details');
++  const redraw = () => {
++    preview.replaceChildren(...cardPreviewLines(verdict, shownName).map((value) =>
++      Object.assign(document.createElement('li'), { textContent: value })));
++    drawCard(canvas, verdict, shownName);
+   };
+-  $('card-names').replaceChildren(
+-    ...verdict.people.map(({ name }) => {
+-      const input = document.createElement('input');
+-      input.value = shown.get(name);
+-      input.setAttribute('aria-label', name);
+-      input.addEventListener('input', () => {
+-        shown.set(name, input.value.trim());
+-        void redraw();
+-      });
+-      return input;
+-    }),
+-  );
+-
++  $('card-names').replaceChildren(...verdict.people.map(({ name }) => {
++    const input = document.createElement('input');
++    input.value = shown.get(name);
++    input.setAttribute('aria-label', name);
++    input.addEventListener('input', () => { shown.set(name, input.value.trim()); redraw(); });
++    return input;
++  }));
++  const share = $('card-share');
+   share.hidden = !navigator.canShare?.({ files: [new File([], 'x.png', { type: 'image/png' })] });
+   share.onclick = async () => {
+-    try {
+-      await navigator.share({ files: [await asFile(canvas)], text: `${t('cardShareText')} · ${pageUrl()}` });
+-    } catch (error) {
+-      if (error.name !== 'AbortError') throw error;
+-    }
++    try { await navigator.share({ files: [await asFile(canvas)], text: t('cardShareText') }); }
++    catch (error) { if (error.name !== 'AbortError') throw error; }
+   };
+-  download.onclick = async () => {
+-    const link = Object.assign(document.createElement('a'), {
+-      href: URL.createObjectURL(await asFile(canvas)),
+-      download: 'judgeyou.png',
+-    });
+-    link.click();
+-    URL.revokeObjectURL(link.href);
++  $('card-download').onclick = async () => {
++    const url = URL.createObjectURL(await asFile(canvas));
++    const link = Object.assign(document.createElement('a'), { href: url, download: 'fakeorfriend.png' });
++    link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+   };
+-
+   dialog.showModal();
+-  void redraw();
+-}
+-
+-function highlightLabel({ key, median, n }) {
+-  return key === 'reply'
+-    ? t('cardReplyHighlight', { time: formatDuration(median), n: formatNumber(n) })
+-    : t('cardCharsHighlight', { chars: formatNumber(median), n: formatNumber(n) });
+-}
+-
+-function scoreLabel({ red, green }) {
+-  return `${t('cardRed', { score: red })} · ${t('cardGreen', { score: green })}`;
+-}
+-
+-async function asFile(canvas) {
+-  const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+-  return new File([blob], 'judgeyou.png', { type: 'image/png' });
+-}
+-
+-function pageUrl() {
+-  return `${location.host}${location.pathname.replace(/index\.html$/, '')}`.replace(/\/$/, '');
+-}
+-
+-function image(src) {
+-  if (!images.has(src)) {
+-    const img = new Image();
+-    img.src = src;
+-    images.set(src, img.decode().then(() => img));
+-  }
+-  return images.get(src);
+-}
+-
+-// Waiting for fonts and images makes drawing async; typing a name starts a
+-// new draw, and an older one that finishes late must not paint over it.
+-let drawing = 0;
+-
+-async function drawCard(canvas, { mode, suspect, people, records }, shownName) {
+-  const ticket = ++drawing;
+-  const style = getComputedStyle(document.documentElement);
+-  const token = (name) => style.getPropertyValue(name).trim();
+-  const color = { paper: token('--paper'), ink: token('--ink'), soft: token('--ink-soft'), muted: token('--ink-muted'), rule: token('--rule'), accent: token('--accent') };
+-  const display = (weight, size, italic = '') => `${italic} ${weight} ${size}px ${token('--font-display')}`;
+-  const body = (weight, size) => `${weight} ${size}px ${token('--font-body')}`;
+-  const mono = (weight, size) => `${weight} ${size}px ${token('--font-mono')}`;
+-
+-  const suspectType = people.find((p) => p.name === suspect).type;
+-  const [mascots] = await Promise.all([
+-    Promise.all(people.map((p) => image(mascotOf(p.type)))),
+-    document.fonts.load(display(800, 96)),
+-    document.fonts.load(display(700, 44, 'italic')),
+-    document.fonts.load(body(600, 30)),
+-    document.fonts.load(mono(500, 20)),
+-  ]);
+-  if (ticket !== drawing) return;
+-
+-  // Keep every person's two statistics readable even in an eight-person chat.
+-  const recordsBottom = 510 + (records.length ? 176 : 0);
+-  const height = Math.max(HEIGHT, recordsBottom + 10 + people.length * 140 + 110);
+-  canvas.width = WIDTH;
+-  canvas.height = height;
+-  const ctx = canvas.getContext('2d');
+-  const inner = WIDTH - 2 * MARGIN;
+-  ctx.fillStyle = color.paper;
+-  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+-  ctx.textBaseline = 'alphabetic';
+-
+-  const text = (value, x, y, font, fill, maxWidth, align = 'left') => {
+-    ctx.font = font;
+-    ctx.fillStyle = fill;
+-    ctx.textAlign = align;
+-    ctx.fillText(clip(ctx, value, maxWidth), x, y);
+-  };
+-  const rule = (y, weight = 1, fill = color.ink) => {
+-    ctx.fillStyle = fill;
+-    ctx.fillRect(MARGIN, y, inner, weight);
+-  };
+-
+-  // Masthead
+-  text('JudgeYou', MARGIN, 96, display(700, 44, 'italic'), color.ink, 300);
+-  text((mode === 'partner' ? t('chatModes.partner') : t('tagline')).toUpperCase(), WIDTH - MARGIN, 92, mono(500, 18), color.muted, inner - 320, 'right');
+-  rule(120, 3);
+-  rule(127);
+-
+-  // Prime suspect
+-  ctx.drawImage(mascots[people.findIndex((p) => p.name === suspect)], MARGIN - 20, 150, 330, 330);
+-  const textX = MARGIN + 340;
+-  const textWidth = WIDTH - MARGIN - textX;
+-  text(t(mode === 'partner' ? 'suspectPartner' : 'suspect').toUpperCase(), textX, 250, mono(500, 22), color.accent, textWidth);
+-  const suspectSize = fitSize(ctx, shownName(suspect), (s) => display(800, s), 104, textWidth);
+-  text(shownName(suspect), textX, 350, display(800, suspectSize), color.ink, textWidth);
+-  text(typeName(suspectType), textX, 405, body(600, 34), color.soft, textWidth);
+-  stamp(ctx, t(mode === 'partner' ? 'guiltyPartner' : 'guilty').toUpperCase(), WIDTH - MARGIN - 130, 455, mono(600, 30), color);
+-
+-  // Records: the counted facts, next to Jev's opinions.
+-  let y = 510;
+-  rule(y);
+-  if (records.length) {
+-    const shownRecords = records.slice(0, 3);
+-    const column = inner / shownRecords.length;
+-    shownRecords.forEach((record, i) => {
+-      const x = MARGIN + i * column;
+-      const width = column - 24;
+-      text(t(`records.${record.key}.title`).toUpperCase(), x, y + 44, mono(500, 17), color.muted, width);
+-      text(shownName(record.name), x, y + 90, display(700, 38), color.ink, width);
+-      ctx.font = body(400, 18);
+-      lines(ctx, record.detail, width, 2).forEach((line, n) => text(line, x, y + 122 + n * 24, ctx.font, color.soft, width));
+-    });
+-    y += 176;
+-    rule(y);
+-  }
+-
+-  // Everyone else, one row each.
+-  const bottom = height - 110;
+-  const rowHeight = Math.min(140, (bottom - y - 10) / people.length);
+-  people.forEach((person, i) => {
+-    const top = y + 10 + i * rowHeight;
+-    const size = rowHeight - 12;
+-    ctx.drawImage(mascots[i], MARGIN - 8, top + 6, size, size);
+-    const nameSize = Math.min(38, rowHeight * 0.31);
+-    const lineX = MARGIN + size + 16;
+-    const lineWidth = inner - size - 260;
+-    text(shownName(person.name), lineX, top + 39, display(700, nameSize), color.ink, lineWidth);
+-    text(typeName(person.type), lineX, top + 67, body(500, 20), color.soft, lineWidth);
+-    person.highlights.slice(0, 2).forEach((highlight, j) =>
+-      text(highlightLabel(highlight), lineX, top + 93 + j * 23, mono(500, 17), color.ink, lineWidth),
+-    );
+-    text(t('cardRed', { score: person.flags.red }), WIDTH - MARGIN, top + 44, mono(600, 20), color.accent, 240, 'right');
+-    text(t('cardGreen', { score: person.flags.green }), WIDTH - MARGIN, top + 72, mono(500, 19), color.soft, 240, 'right');
+-    text(t('cardGameScore').toUpperCase(), WIDTH - MARGIN, top + 98, mono(500, 15), color.muted, 240, 'right');
+-    if (i < people.length - 1) rule(top + rowHeight, 1, color.rule);
+-  });
+-
+-  // Footer
+-  rule(height - 86, 3);
+-  text(pageUrl(), MARGIN, height - 40, mono(500, 22), color.ink, inner / 2);
+-  text(t('cardGameScore').toUpperCase(), WIDTH - MARGIN, height - 40, mono(500, 18), color.muted, inner / 2, 'right');
+-}
+-
+-/** The largest size up to `size` at which `value` fits `maxWidth`, down to half of it. */
+-function fitSize(ctx, value, font, size, maxWidth) {
+-  const smallest = Math.round(size / 2);
+-  for (; size > smallest; size -= 4) {
+-    ctx.font = font(size);
+-    if (ctx.measureText(value).width <= maxWidth) return size;
+-  }
+-  return smallest;
+-}
+-
+-/** Word-wrapped lines for the current font; the last one is clipped if needed. */
+-function lines(ctx, value, maxWidth, maxLines) {
+-  const result = [''];
+-  for (const word of value.split(' ')) {
+-    const candidate = result.at(-1) ? `${result.at(-1)} ${word}` : word;
+-    if (ctx.measureText(candidate).width <= maxWidth || !result.at(-1)) result[result.length - 1] = candidate;
+-    else if (result.length < maxLines) result.push(word);
+-    else {
+-      result[result.length - 1] = candidate;
+-      break;
+-    }
+-  }
+-  return result;
+-}
+-
+-function clip(ctx, value, maxWidth) {
+-  if (ctx.measureText(value).width <= maxWidth) return value;
+-  let cut = value;
+-  while (cut && ctx.measureText(`${cut}…`).width > maxWidth) cut = cut.slice(0, -1);
+-  return `${cut.trimEnd()}…`;
+-}
+-
+-function stamp(ctx, label, x, y, font, color) {
+-  ctx.save();
+-  ctx.translate(x, y);
+-  ctx.rotate((-11 * Math.PI) / 180);
+-  ctx.globalAlpha = 0.88;
+-  ctx.font = font;
+-  const width = ctx.measureText(label).width + 44;
+-  ctx.strokeStyle = color.accent;
+-  ctx.lineWidth = 5;
+-  ctx.strokeRect(-width / 2, -30, width, 60);
+-  ctx.lineWidth = 1.5;
+-  ctx.strokeRect(-width / 2 + 7, -23, width - 14, 46);
+-  ctx.fillStyle = color.accent;
+-  ctx.textAlign = 'center';
+-  ctx.textBaseline = 'middle';
+-  ctx.fillText(label, 0, 2);
+-  ctx.restore();
++  redraw();
+ }
+diff --git a/js/i18n.js b/js/i18n.js
+index 9d04d50..add7e0d 100644
+--- a/js/i18n.js
++++ b/js/i18n.js
+@@ -5,7 +5,7 @@ import es from './locales/es.js';
+ 
+ const LOCALES = { en, de, fr, es };
+ export const LANGUAGES = { en: 'English', de: 'Deutsch', fr: 'Français', es: 'Español' };
+-const STORAGE_KEY = 'judgeyou.language';
++const STORAGE_KEY = 'fakeorfriend.language';
+ 
+ // The browser's language is the visitor's own choice; an IP lookup would ask
+ // a third party and still guess wrong for travellers and multilingual countries.
+diff --git a/js/jev.js b/js/jev.js
+index 1016305..3b353aa 100644
+--- a/js/jev.js
++++ b/js/jev.js
+@@ -1,7 +1,7 @@
+ // OpenRouter serves Jev through its (alpha) Decisions endpoint rather than
+ // chat completions; the request and response use TypeSafe's own format.
+ const ENDPOINT = 'https://openrouter.ai/api/alpha/decisions';
+-const STORAGE_KEY = 'judgeyou.openrouterKey';
++const STORAGE_KEY = 'fakeorfriend.openrouterKey';
+ 
+ // Anything else would end up in a request header, which only accepts ASCII;
+ // pasting a chat into the key field used to make fetch throw.
+@@ -40,7 +40,7 @@ export async function askJev(apiKey, body) {
+     headers: {
+       Authorization: `Bearer ${apiKey}`,
+       'Content-Type': 'application/json',
+-      'X-Title': 'JudgeYou',
++      'X-Title': 'FakeorFriend',
+     },
+     body: JSON.stringify(body),
+   });
+diff --git a/js/locales/de.js b/js/locales/de.js
+index 16b3e21..f2362dd 100644
+--- a/js/locales/de.js
++++ b/js/locales/de.js
+@@ -1,152 +1,142 @@
+ export default {
+-  title: 'JudgeYou · Ein Bestimmungsbuch für die Leute in eurem Gruppenchat',
+-  tagline: 'Ein Bestimmungsbuch für die Leute in eurem Gruppenchat',
+-  volume: 'Bd. I · 2026',
+-  language: 'Sprache',
+-  hero: 'Wer ist das <em>Problem</em> in eurem Gruppenchat?',
+-  lede: 'Füg den Chat ein. Jev, ein Modell, das mit kalibrierten Wahrscheinlichkeiten statt Meinungen antwortet, ordnet alle einer von zwölf bekannten Arten zu.',
+-  exhibit: 'Beweisstück A',
+-  evidence: 'Die Beweislage',
+-  chatLabel: 'Chatverlauf',
+-  chatPlaceholder:
+-    'Chat einfügen oder Export öffnen: WhatsApp (auch als ZIP), Telegram, Discord, Slack, Messenger, iMessage, CSV…\n\nOder einfach abtippen:\nAna: kommst du heute?\nBen: k',
+-  openFile: 'Export öffnen',
+-  sample: 'Beispielchat laden',
+-  judge: 'Urteil fällen',
+-  chatModeLabel: 'Chat-Kontext',
+-  chatModes: { group: 'Gruppenchat', partner: 'Partnerchat' },
+-  partnerHint: 'Nutze einen Chat mit genau zwei erkannten Schreibenden und wähle beide unten aus.',
+-  chatModeResult: 'Kontext: {mode}',
+-  partnerCaveat: 'Spielerische Einordnung dieses Chats, keine Bewertung eurer Beziehung. Jev muss zwischen zwei Personen wählen, auch wenn kein Streit zu sehen ist.',
+-  partnerTypeNote: 'Ein spielerisches Etikett für diese Nachrichten, keine Aussage über die Person außerhalb des Chats.',
+-  suspectPartner: 'Mehr Spannung in diesem Chat',
+-  guiltyPartner: 'Spielerische Wahl',
+-  namesLabel: 'Wer hier schreibt, war nicht zu erkennen. Wer ist im Chat?',
+-  namesPlaceholder: 'Namen, durch Kommas getrennt',
+-  namesSubmit: 'Diese Namen nehmen',
+-  keyPlaceholder: 'Dein OpenRouter-Schlüssel (sk-or-…), bleibt in diesem Browser',
+-  keyLabel: 'OpenRouter-API-Schlüssel',
+-  keySubmit: 'Speichern und urteilen',
+-  fineprint: 'Vor dem Urteil: Anzahl und Antwortzeiten berechnet dein Browser. Für das Jev-Urteil gehen die neuesten erkannten Nachrichten (Absender und Text) über OpenRouter an TypeSafe. Bei erkannten Formaten werden Zeitstempel und lokale Statistikwerte nicht mitgesendet.',
+-  rawNotice: 'Weniger als zwei Schreibende erkannt: Wenn du Namen eingibst und urteilen lässt, werden statt erkannter Nachrichten ein Ausschnitt des jüngsten Chat-Rohtexts und die ausgewählten Namen gesendet. Der Ausschnitt kann Datumsangaben und andere Chatdetails enthalten.',
+-  keyStorage: 'Ein selbst eingegebener Schlüssel und deine gewählte Sprache können in diesem Browser gespeichert sein. Auch ein im Deployment unter js/key.js hinterlegter Schlüssel kann genutzt werden.',
+-  clearKey: 'Gespeicherten eigenen Schlüssel löschen',
+-  keyCleared: 'Dein gespeicherter Schlüssel wurde aus diesem Browser entfernt. Ein bereitgestellter Schlüssel in js/key.js bleibt, falls vorhanden, nutzbar.',
+-  suspect: 'Hauptverdacht',
+-  guilty: 'Schuldig',
+-  share: 'Urteil teilen',
+-  colophon: 'Nicht begutachtet. Überhaupt nicht geprüft. Urteile von Jev (TypeSafe), geliefert über OpenRouter.',
+-  cardNames: 'Namen auf der Karte',
+-  cardShare: 'Teilen',
+-  cardDownload: 'Bild herunterladen',
+-  cardClose: 'Schließen',
+-  cardShareText: 'Unser Gruppenchat, bestimmt von JudgeYou',
+-  cardAnonymous: 'Anonym',
+-  cardRenderError: 'Bildvorschau nicht verfügbar. Öffne die Karte erneut.',
+-  cardPreviewHeading: 'Vor dem Teilen auf dem Bild sichtbar',
+-  cardPrivacyNote: 'Prüfe Vorschau und Namen. Chatzitate, Audio und Telefonnummern werden nicht automatisch hinzugefügt.',
+-  cardGameScore: 'Spiel-Score',
+-  cardRed: 'Red Flag {score}%',
+-  cardGreen: 'Green Flag {score}%',
+-  cardReplyHighlight: 'Antwort-Median {time} · n = {n}',
+-  cardCharsHighlight: 'Text-Median {chars} Zeichen · n = {n}',
+-  cardScoreNote: 'Spiel-Score, keine Persönlichkeitswahrscheinlichkeit. Red = gerundeter Gefahrenindex: 35% passiv-aggressiv + 30% Drama + 25% Hauptfigur + 10% Streitbeginn. Green = 100 − Red.',
+-  unknownNumber: 'Unbekannte Nummer {n}',
+-
+-  lab: [
+-    'Beweiskette wird gesichert…',
+-    'Emoji-Aufrichtigkeits-Quote wird gemessen…',
+-    'Ungelesene Fragen werden gezählt…',
+-    'Bestimmungsbuch wird konsultiert…',
+-    'Jev wird befragt…',
++  "title": "FakeorFriend · Wie läuft’s zwischen euch?",
++  "tagline": "Ein Blick auf euren Zweierchat",
++  "volume": "Bd. I · 2026",
++  "language": "Sprache",
++  "hero": "Wie läuft’s <em>zwischen euch</em>?",
++  "lede": "Entdecke, wie zwei Personen in diesem Chatabschnitt miteinander schreiben. Jev beurteilt den Austausch; dein Browser zählt Nachrichten, Längen und Antworten.",
++  "exhibit": "Euer Chat",
++  "evidence": "Zwei Personen",
++  "chatLabel": "Chatverlauf",
++  "chatPlaceholder": "Chat einfügen oder Export öffnen: WhatsApp (auch als ZIP), Telegram, Discord, Slack, Messenger, iMessage, CSV…\n\nOder einfach abtippen:\nAna: kommst du heute?\nBen: k",
++  "openFile": "Export öffnen",
++  "sample": "Beispielchat laden",
++  "judge": "Chat ansehen",
++  "pairHint": "Nur Chats mit genau zwei Personen und mindestens 3 Textnachrichten je Person. Ein Gruppenchat bleibt ausgeschlossen, auch wenn du nur zwei auswählst.",
++  "namesLabel": "Sprechende nicht erkannt. Gib genau zwei Namen ein:",
++  "namesPlaceholder": "Zwei Namen, durch Komma getrennt",
++  "namesSubmit": "Namen übernehmen",
++  "keyPlaceholder": "Dein OpenRouter-Schlüssel (sk-or-…), bleibt in diesem Browser",
++  "keyLabel": "OpenRouter-API-Schlüssel",
++  "keySubmit": "Schlüssel speichern und auswerten",
++  "fineprint": "Nachrichtenanzahl und Antwortzeiten werden im Browser berechnet. Für die Jev-Auswertung gehen die neuesten erkannten Nachrichten (Absender und Text) an OpenRouter und TypeSafe. Zeitstempel und lokale Statistiken werden nicht mitgesendet.",
++  "rawNotice": "Format nicht erkannt: Mit zwei manuell eingegebenen Namen wird ein neuerer Ausschnitt des Rohtexts an OpenRouter und TypeSafe gesendet. Er kann Datum und weitere Angaben enthalten; Sprechende und Stichprobe lassen sich nicht überprüfen.",
++  "keyStorage": "Ein selbst eingegebener Schlüssel und deine gewählte Sprache können in diesem Browser gespeichert sein. Auch ein im Deployment unter js/key.js hinterlegter Schlüssel kann genutzt werden.",
++  "clearKey": "Gespeicherten eigenen Schlüssel löschen",
++  "keyCleared": "Dein gespeicherter Schlüssel wurde aus diesem Browser entfernt. Ein bereitgestellter Schlüssel in js/key.js bleibt, falls vorhanden, nutzbar.",
++  "summaryTitle": "Der Austausch in diesem Ausschnitt",
++  "share": "Ergebnis teilen",
++  "colophon": "Eine spielerische Einordnung des eingereichten Chatabschnitts von Jev (TypeSafe) über OpenRouter. Keine Diagnose und kein Urteil über eure Beziehung.",
++  "cardNames": "Namen auf der Karte",
++  "cardShare": "Teilen",
++  "cardDownload": "Bild herunterladen",
++  "cardClose": "Schließen",
++  "cardShareText": "Unser Chatabschnitt mit FakeorFriend",
++  "cardAnonymous": "Anonym",
++  "cardRenderError": "Bildvorschau nicht verfügbar. Öffne die Karte erneut.",
++  "cardPreviewHeading": "Vor dem Teilen auf dem Bild sichtbar",
++  "cardPrivacyNote": "Prüfe Vorschau und Namen. Chatzitate, Audio und Telefonnummern werden nicht automatisch hinzugefügt.",
++  "cardScoreNote": "Die Einordnung beschreibt nur diesen Chatabschnitt, weder die Personen noch ihre Beziehung außerhalb davon. Keine Persönlichkeitsprozente.",
++  "cardFooter": "Nur der Chatabschnitt · keine Diagnose",
++  "cardReplyHighlight": "Antwort-Median {time} · n = {n}",
++  "cardCharsHighlight": "Text-Median {chars} Zeichen · n = {n}",
++  "unknownNumber": "Unbekannte Nummer {n}",
++  "lab": [
++    "Austausch wird gelesen…",
++    "Hin und Her wird betrachtet…",
++    "Nachrichten lokal gezählt…",
++    "Jev wird gefragt…"
+   ],
+-  spared: '+{n} Stillere verschont',
+-  spare: 'Verschonen',
+-  unspare: 'Doch beurteilen',
+-
+-  errors: {
+-    badKey: 'Das sieht nicht nach einem OpenRouter-Schlüssel aus. Er beginnt mit „sk-or-“.',
+-    jev: 'Jev verweigert die Aussage ({status}): {reason}',
+-    tooBig: 'Die Datei ist zu groß. Chats bis 50 MB Text gehen.',
+-    noChatInZip: 'In der ZIP ist kein Chat. WhatsApp legt ihn als .txt-Datei hinein.',
+-    encryptedZip: 'Die ZIP ist passwortgeschützt.',
+-    unreadableZip: 'Die ZIP lässt sich nicht lesen. Exportier den Chat am besten ohne Medien.',
++  "errors": {
++    "badKey": "Das sieht nicht nach einem OpenRouter-Schlüssel aus. Er beginnt mit „sk-or-“.",
++    "jev": "Jev verweigert die Aussage ({status}): {reason}",
++    "tooBig": "Die Datei ist zu groß. Chats bis 50 MB Text gehen.",
++    "noChatInZip": "In der ZIP ist kein Chat. WhatsApp legt ihn als .txt-Datei hinein.",
++    "encryptedZip": "Die ZIP ist passwortgeschützt.",
++    "unreadableZip": "Die ZIP lässt sich nicht lesen. Exportier den Chat am besten ohne Medien.",
++    "tooFew": "Im an Jev gesendeten Ausschnitt sind mindestens 3 Textnachrichten je Person nötig."
+   },
+-
+-  suspectStat: '{type} · p = {p} · Konfidenz {confidence}',
+-  plate: 'Tafel {n}',
+-  menace: 'Gefahrenindex',
+-  confidence: 'Konf. {c}',
+-  evidenceRaw: 'Rohtext',
+-  evidenceRawTruncated: 'neuester Teil des Rohtexts',
+-  evidenceTruncated: 'neueste {n} von {total} Nachrichten (ältere sprengen Jevs Limit)',
+-  evidenceAll: 'n = {n} Nachrichten',
+-
+-  counted: {
+-    messages: 'Nachrichten',
+-    words: 'Wörter pro Nachricht',
+-    medianChars: 'Mediane Textlänge',
+-    longest: 'Längste Nachricht',
+-    charValue: '{count} Zeichen',
+-    sample: 'n = {n} Nachrichten',
+-    tooFew: 'Weniger als 3 Textnachrichten: noch kein verlässlicher Längenvergleich.',
+-    medianCharsDefinition: 'Median der Textlänge in Unicode-Codepoints; Leerzeichen und Zeilenumbrüche zählen mit.',
+-    longestDefinition: 'Länge der längsten Textnachricht in Unicode-Codepoints; angezeigt wird nur die Zahl.',
+-    reply: 'Antwortzeit',
+-    wordsDefinition: 'Median der Wörter pro Nachricht',
+-    replyDefinition:
+-      'Median der Zeit, bis die Person nach jemand anderem schreibt. Nach über 6 Stunden Stille beginnt stattdessen ein neues Gespräch. n = gemessene Antworten.',
++  "connection": {
++    "friendly": "Überwiegend herzlicher Austausch",
++    "mixed": "Gemischter oder alltäglicher Austausch",
++    "strained": "Spürbare Reibung in diesem Ausschnitt",
++    "uncertain": "Zu wenig überprüfbarer Kontext",
++    "note": "Ein Eindruck aus den gezeigten Nachrichten, kein Maß für eure echte Beziehung. Schweigen und kurze Antworten belegen keine Feindseligkeit.",
++    "rawNote": "Die Sprechenden lassen sich in diesem Format nicht prüfen. Die Skalen beschreiben nur den Rohtextausschnitt; eine Gesamteinordnung entfällt.",
++    "cardNote": "Nur dieser Ausschnitt · keine Beziehungsdiagnose"
+   },
+-  statNotes: {
+-    median: 'Die Zeichenbilanz: im Median {chars} Zeichen pro Nachricht (n = {n}).',
+-    maximum: 'Die längste einzelne Nachricht bringt es auf {chars} Zeichen (n = {n}).',
+-    leader: 'Die längste Einzelnachricht der bewerteten Personen stammt von {name}: {chars} Zeichen (n = {n}).',
+-    reply: 'Auf eine andere Person folgt die Antwort im Median nach {time} (n = {n}).',
++  "evidenceRaw": "Rohtext",
++  "evidenceRawTruncated": "neuester Teil des Rohtexts",
++  "evidenceTruncated": "neueste {n} von {total} Nachrichten (ältere sprengen Jevs Limit)",
++  "evidenceAll": "n = {n} Nachrichten",
++  "counted": {
++    "messages": "Nachrichten",
++    "words": "Wörter pro Nachricht",
++    "medianChars": "Mediane Textlänge",
++    "longest": "Längste Nachricht",
++    "charValue": "{count} Zeichen",
++    "sample": "n = {n} Nachrichten",
++    "tooFew": "Weniger als 3 Textnachrichten: noch kein verlässlicher Längenvergleich.",
++    "medianCharsDefinition": "Median der Textlänge in Unicode-Codepoints; Leerzeichen und Zeilenumbrüche zählen mit.",
++    "longestDefinition": "Länge der längsten Textnachricht in Unicode-Codepoints; angezeigt wird nur die Zahl.",
++    "reply": "Antwortzeit",
++    "wordsDefinition": "Median der Wörter pro Nachricht",
++    "replyDefinition": "Median der Zeit, bis die Person nach jemand anderem schreibt. Nach über 6 Stunden Stille beginnt stattdessen ein neues Gespräch. n = gemessene Antworten."
+   },
+-  records: {
+-    slowest: { title: 'Langsamste Daumen', detail: 'Antwort im Median nach {time} · n = {n}' },
+-    fastest: { title: 'Schnellste Daumen', detail: 'Antwort im Median nach {time} · n = {n}' },
+-    wordiest: { title: 'Holt am weitesten aus', detail: 'im Median {words} Wörter pro Nachricht · n = {n}' },
+-    starter: { title: 'Bricht das Schweigen', detail: 'hat {count} von {of} Gesprächen begonnen' },
++  "statNotes": {
++    "median": "Die Zeichenbilanz: im Median {chars} Zeichen pro Nachricht (n = {n}).",
++    "maximum": "Die längste einzelne Nachricht bringt es auf {chars} Zeichen (n = {n}).",
++    "leader": "Die längste Einzelnachricht der bewerteten Personen stammt von {name}: {chars} Zeichen (n = {n}).",
++    "reply": "Auf eine andere Person folgt die Antwort im Median nach {time} (n = {n})."
+   },
+-
+-  types: {
+-    giga_chad: { name: 'Der Giga Chad', note: 'Hat noch nie „sorry für die lange Nachricht“ geschrieben.' },
+-    golden_retriever: { name: 'Der Golden Retriever', note: 'Begrüßt jede Nachricht wie die beste Neuigkeit des Jahres.' },
+-    cat: { name: 'Die Katze', note: 'Antwortet irgendwann, wenn die Frage interessant genug ist.' },
+-    chaos_goblin: { name: 'Der Chaos-Kobold', note: 'Zuletzt gesehen, als er ein Meme in ein ernstes Gespräch warf.' },
+-    dragon: { name: 'Der Drache', note: 'Bewacht das Gespräch wie einen Schatz. Dem Schatz nicht nähern.' },
+-    owl: { name: 'Die Eule', note: '„Eigentlich“ ist ihr liebster Satzanfang.' },
+-    sloth: { name: 'Das Faultier', note: 'Kommuniziert vor allem per Daumen hoch und einzelnen Buchstaben.' },
+-    mother_hen: { name: 'Die Glucke', note: 'Verwaltet den Plan, die Liste, das Geld und die Geduld aller.' },
+-    troll: { name: 'Der Troll', note: 'Wohnt unter dem Thread und verlangt Aufmerksamkeit als Maut.' },
+-    drama_llama: { name: 'Das Drama-Lama', note: 'Jede Terminüberschneidung ist eine Tragödie in fünf Akten.' },
+-    mosquito: { name: 'Die Mücke', note: 'Klein und hartnäckig. Den Stich merkt man erst hinterher.' },
+-    npc: { name: 'Der NPC', note: 'Die Dialogoptionen beschränken sich offenbar auf „same“ und „lol“.' },
++  "records": {
++    "slowest": {
++      "title": "Langsamste Daumen",
++      "detail": "Antwort im Median nach {time} · n = {n}"
++    },
++    "fastest": {
++      "title": "Schnellste Daumen",
++      "detail": "Antwort im Median nach {time} · n = {n}"
++    },
++    "wordiest": {
++      "title": "Holt am weitesten aus",
++      "detail": "im Median {words} Wörter pro Nachricht · n = {n}"
++    },
++    "starter": {
++      "title": "Bricht das Schweigen",
++      "detail": "hat {count} von {of} Gesprächen begonnen"
++    }
+   },
+-  traits: {
+-    passive_aggression: 'Passiv-Aggressivität',
+-    main_character: 'Hauptfigur-Syndrom',
+-    drama: 'Drama-Ausstoß',
+-    effort: 'Mühe',
+-  },
+-  levels: {
+-    passive_aggression: ['Sagt freundlich, was Sache ist', 'Ab und zu eine spitze Bemerkung', 'Regelmäßig versteckte Seitenhiebe', 'Höflichkeit als Waffe in fast jeder Nachricht'],
+-    main_character: ['Fragt meist nach anderen und geht auf sie ein', 'Nimmt sich einen fairen Teil der Aufmerksamkeit', 'Lenkt Themen oft auf sich zurück', 'Alle anderen sind Nebenfiguren'],
+-    drama: ['Durchweg ruhig und gelassen', 'Leicht aufgeregt', 'Bauscht Kleinigkeiten oft auf', 'Jede Nachricht ist ein Notfall'],
+-    effort: ['Nur Ein-Wort-Antworten und Reaktionen', 'Kurz, aber zur Sache', 'Durchdachte, vollständige Antworten', 'Aufsätze, um die niemand gebeten hat'],
+-  },
+-  partnerLevels: {
+-    main_character: ['Geht auf die andere Person ein', 'Teilt sich die Aufmerksamkeit fair', 'Lenkt den Chat oft auf sich zurück', 'Macht fast jedes Gespräch zu seinem Thema'],
+-  },
+-  findings: {
+-    started_it: 'Hat angefangen',
+-    leaves_on_read: 'Weicht Fragen aus',
+-    secretly_right: 'Hat heimlich recht',
+-  },
+-  severity: {
+-    low: 'Harmlos',
+-    medium: 'Unter Beobachtung',
+-    high: 'Amtlich gefährlich',
++  "traits": {
++    "warmth": "Gegenseitige Wärme",
++    "reciprocity": "Hin und Her",
++    "tension": "Sichtbare Spannung",
++    "clarity": "Verständlichkeit"
+   },
++  "levels": {
++    "warmth": [
++      "Keine klare Wärme",
++      "Gelegentlich freundlich",
++      "Wiederholt freundlich",
++      "Anhaltend unterstützend"
++    ],
++    "reciprocity": [
++      "Wenig Austausch",
++      "Etwas Austausch",
++      "Regelmäßiges Hin und Her",
++      "Beide bauen aufeinander auf"
++    ],
++    "tension": [
++      "Keine sichtbare Spannung",
++      "Leichte Meinungsverschiedenheit",
++      "Wiederholte Reibung",
++      "Wiederholt feindselig"
++    ],
++    "clarity": [
++      "Oft unklar",
++      "Teils unklar",
++      "Meist verständlich",
++      "Durchgehend verständlich"
++    ]
++  }
+ };
+diff --git a/js/locales/en.js b/js/locales/en.js
+index d971db3..3756131 100644
+--- a/js/locales/en.js
++++ b/js/locales/en.js
+@@ -1,152 +1,142 @@
+ export default {
+-  title: 'JudgeYou · A field guide to the people in your group chat',
+-  tagline: 'A field guide to the people in your group chat',
+-  volume: 'Vol. I · 2026',
+-  language: 'Language',
+-  hero: 'Who is the <em>problem</em> in your group chat?',
+-  lede: 'Paste the chat. Jev, a model that answers in calibrated probabilities instead of opinions, sorts everyone into one of twelve known species.',
+-  exhibit: 'Exhibit A',
+-  evidence: 'The evidence',
+-  chatLabel: 'Chat transcript',
+-  chatPlaceholder:
+-    'Paste a chat, or open an export: WhatsApp (also as ZIP), Telegram, Discord, Slack, Messenger, iMessage, CSV…\n\nOr just write it out:\nAna: are you coming tonight?\nBen: k',
+-  openFile: 'Open an export',
+-  sample: 'Try a sample chat',
+-  judge: 'Judge them',
+-  chatModeLabel: 'Chat context',
+-  chatModes: { group: 'Group chat', partner: 'Partner chat' },
+-  partnerHint: 'Use a chat with exactly two recognised speakers and select both below.',
+-  chatModeResult: 'Context: {mode}',
+-  partnerCaveat: 'Playful reading of this chat, not an assessment of your relationship. Jev must choose between two people even if no disagreement appears.',
+-  partnerTypeNote: 'A playful label for these messages, not a claim about someone outside this chat.',
+-  suspectPartner: 'More tension in this chat',
+-  guiltyPartner: 'Playful pick',
+-  namesLabel: 'Couldn’t tell who is talking. Who’s in this chat?',
+-  namesPlaceholder: 'Names, separated by commas',
+-  namesSubmit: 'Use these names',
+-  keyPlaceholder: 'Your OpenRouter key (sk-or-…), kept in this browser only',
+-  keyLabel: 'OpenRouter API key',
+-  keySubmit: 'Save and judge',
+-  fineprint: 'Before judging: counts and reply times are calculated in your browser. For the Jev verdict, the newest parsed messages (sender and text) are sent via OpenRouter to TypeSafe. In this parsed mode, timestamps and local statistics are not sent.',
+-  rawNotice: 'Fewer than two speakers recognised: if you enter names and judge, a recent excerpt of the raw chat text and the selected names are sent instead of parsed messages. The excerpt may contain dates or other chat details.',
+-  keyStorage: 'A key you enter and your chosen language can be saved in this browser. A key built into the deployment in js/key.js can also be used.',
+-  clearKey: 'Delete saved personal key',
+-  keyCleared: 'Saved personal key removed from this browser. A deployment key in js/key.js remains available if configured.',
+-  suspect: 'Prime suspect',
+-  guilty: 'Guilty',
+-  share: 'Share the verdict',
+-  colophon: 'Not peer reviewed. Not reviewed at all. Judgments by Jev from TypeSafe, served through OpenRouter.',
+-  cardNames: 'Names on the card',
+-  cardShare: 'Share',
+-  cardDownload: 'Download image',
+-  cardClose: 'Close',
+-  cardShareText: 'Our group chat, classified by JudgeYou',
+-  cardAnonymous: 'Anonymous',
+-  cardRenderError: 'Image preview unavailable. Try opening the card again.',
+-  cardPreviewHeading: 'Visible on the image before sharing',
+-  cardPrivacyNote: 'Check the preview and names. No chat quotes, audio or phone numbers are added automatically.',
+-  cardGameScore: 'Play score',
+-  cardRed: 'Red Flag {score}%',
+-  cardGreen: 'Green Flag {score}%',
+-  cardReplyHighlight: 'Reply median {time} · n = {n}',
+-  cardCharsHighlight: 'Text median {chars} chars · n = {n}',
+-  cardScoreNote: 'Play score, not a personality probability. Red = rounded Menace Index: 35% passive aggression + 30% drama + 25% main-character score + 10% started-it score. Green = 100 − Red.',
+-  unknownNumber: 'Unknown number {n}',
+-
+-  lab: [
+-    'Establishing chain of custody…',
+-    'Measuring emoji-to-sincerity ratio…',
+-    'Counting questions left on read…',
+-    'Consulting the field guide…',
+-    'Asking Jev…',
++  "title": "FakeorFriend · How is your connection?",
++  "tagline": "A closer look at a two-person chat",
++  "volume": "Vol. I · 2026",
++  "language": "Language",
++  "hero": "How is your <em>connection</em>?",
++  "lede": "Explore how two people communicate in this chat excerpt. Jev checks the exchange; your browser counts messages, lengths and replies.",
++  "exhibit": "Your chat",
++  "evidence": "Two people",
++  "chatLabel": "Chat transcript",
++  "chatPlaceholder": "Paste a chat, or open an export: WhatsApp (also as ZIP), Telegram, Discord, Slack, Messenger, iMessage, CSV…\n\nOr just write it out:\nAna: are you coming tonight?\nBen: k",
++  "openFile": "Open an export",
++  "sample": "Try a sample chat",
++  "judge": "Explore this chat",
++  "pairHint": "Use a chat with exactly two people and at least 3 text messages each. Group chats cannot be analysed, even if you select only two.",
++  "namesLabel": "Couldn’t recognise the speakers. Enter exactly two names:",
++  "namesPlaceholder": "Two names, separated by a comma",
++  "namesSubmit": "Use these names",
++  "keyPlaceholder": "Your OpenRouter key (sk-or-…), kept in this browser only",
++  "keyLabel": "OpenRouter API key",
++  "keySubmit": "Save key and explore",
++  "fineprint": "Message counts and reply times are calculated in your browser. For Jev’s reading, the newest recognised messages (sender and text) are sent to OpenRouter and TypeSafe. Timestamps and local statistics are not included.",
++  "rawNotice": "Format not recognised: with two manually entered names, a recent raw text excerpt is sent to OpenRouter and TypeSafe. It may include dates and other details; the speakers and sample size cannot be verified.",
++  "keyStorage": "A key you enter and your chosen language can be saved in this browser. A key built into the deployment in js/key.js can also be used.",
++  "clearKey": "Delete saved personal key",
++  "keyCleared": "Saved personal key removed from this browser. A deployment key in js/key.js remains available if configured.",
++  "summaryTitle": "The exchange in this excerpt",
++  "share": "Share this result",
++  "colophon": "An exploratory reading of the submitted chat excerpt by Jev (TypeSafe) via OpenRouter. No diagnosis or relationship verdict.",
++  "cardNames": "Names on the card",
++  "cardShare": "Share",
++  "cardDownload": "Download image",
++  "cardClose": "Close",
++  "cardShareText": "Our chat excerpt, viewed with FakeorFriend",
++  "cardAnonymous": "Anonymous",
++  "cardRenderError": "Image preview unavailable. Try opening the card again.",
++  "cardPreviewHeading": "Visible on the image before sharing",
++  "cardPrivacyNote": "Check the preview and names. No chat quotes, audio or phone numbers are added automatically.",
++  "cardScoreNote": "The label describes this chat excerpt, not the people or the relationship outside it. No personality percentages.",
++  "cardFooter": "Chat excerpt only · no diagnosis",
++  "cardReplyHighlight": "Reply median {time} · n = {n}",
++  "cardCharsHighlight": "Text median {chars} chars · n = {n}",
++  "unknownNumber": "Unknown number {n}",
++  "lab": [
++    "Reading the exchange…",
++    "Checking the back-and-forth…",
++    "Counting messages locally…",
++    "Asking Jev…"
+   ],
+-  spared: '+{n} quieter ones spared',
+-  spare: 'Spare them',
+-  unspare: 'Judge them after all',
+-
+-  errors: {
+-    badKey: 'That doesn’t look like an OpenRouter key. It should start with “sk-or-”.',
+-    jev: 'Jev refused to testify ({status}): {reason}',
+-    tooBig: 'That file is too big. Chats up to 50 MB of text are fine.',
+-    noChatInZip: 'No chat found in that ZIP. WhatsApp exports hold it as a .txt file.',
+-    encryptedZip: 'That ZIP is password-protected.',
+-    unreadableZip: 'That ZIP can’t be read. Try exporting the chat without media.',
++  "errors": {
++    "badKey": "That doesn’t look like an OpenRouter key. It should start with “sk-or-”.",
++    "jev": "Jev refused to testify ({status}): {reason}",
++    "tooBig": "That file is too big. Chats up to 50 MB of text are fine.",
++    "noChatInZip": "No chat found in that ZIP. WhatsApp exports hold it as a .txt file.",
++    "encryptedZip": "That ZIP is password-protected.",
++    "unreadableZip": "That ZIP can’t be read. Try exporting the chat without media.",
++    "tooFew": "At least 3 text messages per person are needed in the part sent to Jev."
+   },
+-
+-  suspectStat: '{type} · p = {p} · confidence {confidence}',
+-  plate: 'Plate {n}',
+-  menace: 'Menace index',
+-  confidence: 'conf. {c}',
+-  evidenceRaw: 'raw transcript',
+-  evidenceRawTruncated: 'newest part of the raw transcript',
+-  evidenceTruncated: 'newest {n} of {total} messages (older ones exceed Jev’s limit)',
+-  evidenceAll: 'n = {n} messages',
+-
+-  counted: {
+-    messages: 'Messages',
+-    words: 'Words per message',
+-    medianChars: 'Median message length',
+-    longest: 'Longest message',
+-    charValue: '{count} characters',
+-    sample: 'n = {n} messages',
+-    tooFew: 'Fewer than 3 text messages: no reliable length comparison yet.',
+-    medianCharsDefinition: 'Median length of text messages in Unicode code points; spaces and line breaks count.',
+-    longestDefinition: 'Length of the longest text message in Unicode code points; only the number is shown.',
+-    reply: 'Reply time',
+-    wordsDefinition: 'Median words per message',
+-    replyDefinition:
+-      'Median time until they write after someone else. Silences over 6 hours start a new conversation instead. n = replies measured.',
++  "connection": {
++    "friendly": "Mostly warm exchange",
++    "mixed": "Mixed or everyday exchange",
++    "strained": "Noticeable friction in this excerpt",
++    "uncertain": "Not enough verifiable context",
++    "note": "An impression of the messages shown, not a measure of your real relationship. Silence and brief replies do not prove hostility.",
++    "rawNote": "Speakers cannot be verified from this format. The scores describe only the raw excerpt; no overall relationship label is assigned.",
++    "cardNote": "Only this excerpt · not a relationship diagnosis"
+   },
+-  statNotes: {
+-    median: 'The character tally: a median of {chars} characters per message (n = {n}).',
+-    maximum: 'The longest single message runs to {chars} characters (n = {n}).',
+-    leader: '{name} has the longest single message among those judged: {chars} characters (n = {n}).',
+-    reply: 'A reply follows someone else’s message after a median of {time} (n = {n}).',
++  "evidenceRaw": "raw transcript",
++  "evidenceRawTruncated": "newest part of the raw transcript",
++  "evidenceTruncated": "newest {n} of {total} messages (older ones exceed Jev’s limit)",
++  "evidenceAll": "n = {n} messages",
++  "counted": {
++    "messages": "Messages",
++    "words": "Words per message",
++    "medianChars": "Median message length",
++    "longest": "Longest message",
++    "charValue": "{count} characters",
++    "sample": "n = {n} messages",
++    "tooFew": "Fewer than 3 text messages: no reliable length comparison yet.",
++    "medianCharsDefinition": "Median length of text messages in Unicode code points; spaces and line breaks count.",
++    "longestDefinition": "Length of the longest text message in Unicode code points; only the number is shown.",
++    "reply": "Reply time",
++    "wordsDefinition": "Median words per message",
++    "replyDefinition": "Median time until they write after someone else. Silences over 6 hours start a new conversation instead. n = replies measured."
+   },
+-  records: {
+-    slowest: { title: 'Slowest thumbs', detail: 'median reply {time} · n = {n}' },
+-    fastest: { title: 'Fastest thumbs', detail: 'median reply {time} · n = {n}' },
+-    wordiest: { title: 'Longest-winded', detail: 'median {words} words per message · n = {n}' },
+-    starter: { title: 'Breaks the silence', detail: 'started {count} of {of} conversations' },
++  "statNotes": {
++    "median": "The character tally: a median of {chars} characters per message (n = {n}).",
++    "maximum": "The longest single message runs to {chars} characters (n = {n}).",
++    "leader": "{name} has the longest single message among those judged: {chars} characters (n = {n}).",
++    "reply": "A reply follows someone else’s message after a median of {time} (n = {n})."
+   },
+-
+-  types: {
+-    giga_chad: { name: 'The Giga Chad', note: 'Has never once typed “sorry for the long message”.' },
+-    golden_retriever: { name: 'The Golden Retriever', note: 'Greets every message like the best news of the year.' },
+-    cat: { name: 'The Cat', note: 'Will answer eventually, if the question is interesting enough.' },
+-    chaos_goblin: { name: 'The Chaos Goblin', note: 'Last seen dropping a meme into a serious conversation.' },
+-    dragon: { name: 'The Dragon', note: 'Guards the conversation like a hoard. Do not approach the hoard.' },
+-    owl: { name: 'The Owl', note: '“Actually” is its favourite way to begin a sentence.' },
+-    sloth: { name: 'The Sloth', note: 'Communicates chiefly through thumbs-up and single letters.' },
+-    mother_hen: { name: 'The Mother Hen', note: 'Keeps the plan, the list, the money and everyone’s patience.' },
+-    troll: { name: 'The Troll', note: 'Lives under the thread and charges a toll in attention.' },
+-    drama_llama: { name: 'The Drama Llama', note: 'Every scheduling conflict is a tragedy in five acts.' },
+-    mosquito: { name: 'The Mosquito', note: 'Small and persistent. You only notice the bite afterwards.' },
+-    npc: { name: 'The NPC', note: 'Dialogue options appear limited to “same” and “lol”.' },
++  "records": {
++    "slowest": {
++      "title": "Slowest thumbs",
++      "detail": "median reply {time} · n = {n}"
++    },
++    "fastest": {
++      "title": "Fastest thumbs",
++      "detail": "median reply {time} · n = {n}"
++    },
++    "wordiest": {
++      "title": "Longest-winded",
++      "detail": "median {words} words per message · n = {n}"
++    },
++    "starter": {
++      "title": "Breaks the silence",
++      "detail": "started {count} of {of} conversations"
++    }
+   },
+-  traits: {
+-    passive_aggression: 'Passive aggression',
+-    main_character: 'Main character syndrome',
+-    drama: 'Drama output',
+-    effort: 'Effort',
+-  },
+-  levels: {
+-    passive_aggression: ['Says what they mean, kindly', 'An occasional pointed remark', 'Regular veiled digs', 'Weaponised politeness in most messages'],
+-    main_character: ['Mostly asks about and responds to others', 'Takes a fair share of the attention', 'Often steers topics back to themselves', 'Everyone else is a supporting character'],
+-    drama: ['Calm and steady throughout', 'Mildly excitable', 'Frequently escalates small things', 'Every message is an emergency'],
+-    effort: ['One-word replies and reactions only', 'Short but relevant replies', 'Thoughtful, complete replies', 'Essays nobody asked for'],
+-  },
+-  partnerLevels: {
+-    main_character: ['Responds to the other person', 'Shares the attention fairly', 'Often brings the chat back to themselves', 'Makes most exchanges about themselves'],
+-  },
+-  findings: {
+-    started_it: 'Started it',
+-    leaves_on_read: 'Dodges questions',
+-    secretly_right: 'Secretly right',
+-  },
+-  severity: {
+-    low: 'Harmless',
+-    medium: 'Under observation',
+-    high: 'Certified menace',
++  "traits": {
++    "warmth": "Mutual warmth",
++    "reciprocity": "Back-and-forth",
++    "tension": "Visible tension",
++    "clarity": "Clarity"
+   },
++  "levels": {
++    "warmth": [
++      "No clear warmth",
++      "Occasional friendliness",
++      "Repeated friendliness",
++      "Sustained support"
++    ],
++    "reciprocity": [
++      "Little exchange",
++      "Some exchange",
++      "Regular back-and-forth",
++      "Both build on each other"
++    ],
++    "tension": [
++      "No visible tension",
++      "Mild disagreement",
++      "Repeated friction",
++      "Repeated hostile exchanges"
++    ],
++    "clarity": [
++      "Repeated ambiguity",
++      "Some ambiguity",
++      "Mostly clear",
++      "Consistently clear"
++    ]
++  }
+ };
+diff --git a/js/locales/es.js b/js/locales/es.js
+index 6bbc161..a3aa2df 100644
+--- a/js/locales/es.js
++++ b/js/locales/es.js
+@@ -1,152 +1,142 @@
+ export default {
+-  title: 'JudgeYou · Guía de campo de la gente de tu grupo',
+-  tagline: 'Guía de campo de la gente de tu grupo',
+-  volume: 'Vol. I · 2026',
+-  language: 'Idioma',
+-  hero: '¿Quién es el <em>problema</em> en tu grupo?',
+-  lede: 'Pega el chat. Jev, un modelo que responde con probabilidades calibradas en lugar de opiniones, clasifica a cada persona en una de doce especies conocidas.',
+-  exhibit: 'Prueba A',
+-  evidence: 'Las pruebas',
+-  chatLabel: 'Transcripción del chat',
+-  chatPlaceholder:
+-    'Pega un chat o abre una exportación: WhatsApp (también en ZIP), Telegram, Discord, Slack, Messenger, iMessage, CSV…\n\nO escríbelo tal cual:\nAna: ¿vienes esta noche?\nBen: k',
+-  openFile: 'Abrir exportación',
+-  sample: 'Probar un chat de ejemplo',
+-  judge: 'Juzgarlos',
+-  chatModeLabel: 'Contexto del chat',
+-  chatModes: { group: 'Chat de grupo', partner: 'Chat de pareja' },
+-  partnerHint: 'Usa un chat con exactamente dos participantes reconocidos y selecciona ambos abajo.',
+-  chatModeResult: 'Contexto: {mode}',
+-  partnerCaveat: 'Lectura lúdica de este chat, no una evaluación de vuestra relación. Jev debe elegir entre dos personas aunque no haya desacuerdo.',
+-  partnerTypeNote: 'Una etiqueta lúdica para estos mensajes, no una afirmación sobre la persona fuera del chat.',
+-  suspectPartner: 'Más tensión en este chat',
+-  guiltyPartner: 'Elección lúdica',
+-  namesLabel: 'No se sabe quién habla. ¿Quién está en este chat?',
+-  namesPlaceholder: 'Nombres, separados por comas',
+-  namesSubmit: 'Usar estos nombres',
+-  keyPlaceholder: 'Tu clave de OpenRouter (sk-or-…), guardada solo en este navegador',
+-  keyLabel: 'Clave API de OpenRouter',
+-  keySubmit: 'Guardar y juzgar',
+-  fineprint: 'Antes de juzgar: los recuentos y tiempos de respuesta se calculan en tu navegador. Para el veredicto de Jev, los últimos mensajes reconocidos (remitente y texto) pasan por OpenRouter a TypeSafe. Con formatos reconocidos no se envían marcas de tiempo ni estadísticas locales.',
+-  rawNotice: 'Se reconocieron menos de dos participantes: si introduces nombres y pides un veredicto, se envían en lugar de los mensajes analizados un fragmento reciente del texto bruto y los nombres seleccionados. El fragmento puede incluir fechas y otros detalles del chat.',
+-  keyStorage: 'Una clave introducida por ti y el idioma elegido pueden guardarse en este navegador. También puede usarse una clave incluida en el despliegue en js/key.js.',
+-  clearKey: 'Borrar mi clave guardada',
+-  keyCleared: 'Tu clave guardada se eliminó de este navegador. Una clave de despliegue en js/key.js sigue disponible si existe.',
+-  suspect: 'Sospechoso principal',
+-  guilty: 'Culpable',
+-  share: 'Compartir el veredicto',
+-  colophon: 'Sin revisión por pares. Sin revisión alguna. Juicios de Jev (TypeSafe), servidos a través de OpenRouter.',
+-  cardNames: 'Nombres en la tarjeta',
+-  cardShare: 'Compartir',
+-  cardDownload: 'Descargar imagen',
+-  cardClose: 'Cerrar',
+-  cardShareText: 'Nuestro grupo, clasificado por JudgeYou',
+-  cardAnonymous: 'Anónimo',
+-  cardRenderError: 'Vista previa no disponible. Abre la tarjeta de nuevo.',
+-  cardPreviewHeading: 'Visible en la imagen antes de compartir',
+-  cardPrivacyNote: 'Revisa la vista previa y los nombres. No se añaden citas, audios ni números de teléfono automáticamente.',
+-  cardGameScore: 'Puntuación lúdica',
+-  cardRed: 'Bandera roja {score}%',
+-  cardGreen: 'Bandera verde {score}%',
+-  cardReplyHighlight: 'Respuesta mediana {time} · n = {n}',
+-  cardCharsHighlight: 'Texto mediano {chars} caracteres · n = {n}',
+-  cardScoreNote: 'Puntuación lúdica, no probabilidad de personalidad. Rojo = índice de amenaza redondeado: 35% agresividad pasiva + 30% drama + 25% protagonismo + 10% inicio del conflicto. Verde = 100 − Rojo.',
+-  unknownNumber: 'Número desconocido {n}',
+-
+-  lab: [
+-    'Estableciendo la cadena de custodia…',
+-    'Midiendo la proporción emoji/sinceridad…',
+-    'Contando preguntas dejadas en visto…',
+-    'Consultando la guía de campo…',
+-    'Preguntando a Jev…',
++  "title": "FakeorFriend · ¿Cómo os comunicáis?",
++  "tagline": "Una mirada a un chat entre dos personas",
++  "volume": "Vol. I · 2026",
++  "language": "Idioma",
++  "hero": "¿Cómo va vuestra <em>conexión</em>?",
++  "lede": "Descubre cómo se comunican dos personas en este fragmento. Jev observa el intercambio; tu navegador cuenta mensajes, longitudes y respuestas.",
++  "exhibit": "Vuestro chat",
++  "evidence": "Dos personas",
++  "chatLabel": "Transcripción del chat",
++  "chatPlaceholder": "Pega un chat o abre una exportación: WhatsApp (también en ZIP), Telegram, Discord, Slack, Messenger, iMessage, CSV…\n\nO escríbelo tal cual:\nAna: ¿vienes esta noche?\nBen: k",
++  "openFile": "Abrir exportación",
++  "sample": "Probar un chat de ejemplo",
++  "judge": "Explorar este chat",
++  "pairHint": "Usa un chat con exactamente dos personas y al menos 3 mensajes de texto de cada una. Un grupo queda excluido aunque selecciones solo a dos.",
++  "namesLabel": "No se reconocieron los participantes. Introduce exactamente dos nombres:",
++  "namesPlaceholder": "Dos nombres separados por coma",
++  "namesSubmit": "Usar estos nombres",
++  "keyPlaceholder": "Tu clave de OpenRouter (sk-or-…), guardada solo en este navegador",
++  "keyLabel": "Clave API de OpenRouter",
++  "keySubmit": "Guardar clave y explorar",
++  "fineprint": "El navegador calcula el número de mensajes y los tiempos de respuesta. Para Jev, los últimos mensajes reconocidos (remitente y texto) se envían a OpenRouter y TypeSafe. No se envían las fechas ni las estadísticas locales.",
++  "rawNotice": "Formato desconocido: con dos nombres introducidos manualmente, se envía un fragmento reciente del texto bruto a OpenRouter y TypeSafe. Puede incluir fechas y otros datos; no se pueden verificar los participantes ni la muestra.",
++  "keyStorage": "Una clave introducida por ti y el idioma elegido pueden guardarse en este navegador. También puede usarse una clave incluida en el despliegue en js/key.js.",
++  "clearKey": "Borrar mi clave guardada",
++  "keyCleared": "Tu clave guardada se eliminó de este navegador. Una clave de despliegue en js/key.js sigue disponible si existe.",
++  "summaryTitle": "El intercambio en este fragmento",
++  "share": "Compartir resultado",
++  "colophon": "Lectura exploratoria de este fragmento por Jev (TypeSafe) mediante OpenRouter. No es un diagnóstico ni un veredicto sobre vuestra relación.",
++  "cardNames": "Nombres en la tarjeta",
++  "cardShare": "Compartir",
++  "cardDownload": "Descargar imagen",
++  "cardClose": "Cerrar",
++  "cardShareText": "Nuestro fragmento de chat con FakeorFriend",
++  "cardAnonymous": "Anónimo",
++  "cardRenderError": "Vista previa no disponible. Abre la tarjeta de nuevo.",
++  "cardPreviewHeading": "Visible en la imagen antes de compartir",
++  "cardPrivacyNote": "Revisa la vista previa y los nombres. No se añaden citas, audios ni números de teléfono automáticamente.",
++  "cardScoreNote": "La etiqueta solo describe este fragmento, no a las personas ni su relación fuera del chat. Sin porcentajes de personalidad.",
++  "cardFooter": "Solo este fragmento · sin diagnósticos",
++  "cardReplyHighlight": "Respuesta mediana {time} · n = {n}",
++  "cardCharsHighlight": "Texto mediano {chars} caracteres · n = {n}",
++  "unknownNumber": "Número desconocido {n}",
++  "lab": [
++    "Leyendo el intercambio…",
++    "Observando las respuestas…",
++    "Contando mensajes en el navegador…",
++    "Consultando a Jev…"
+   ],
+-  spared: '+{n} más callados perdonados',
+-  spare: 'Perdonarle',
+-  unspare: 'Juzgarle al final',
+-
+-  errors: {
+-    badKey: 'Eso no parece una clave de OpenRouter. Empieza por «sk-or-».',
+-    jev: 'Jev se niega a declarar ({status}): {reason}',
+-    tooBig: 'Ese archivo es demasiado grande. Hasta 50 MB de texto está bien.',
+-    noChatInZip: 'No hay ningún chat en ese ZIP. WhatsApp lo guarda como archivo .txt.',
+-    encryptedZip: 'Ese ZIP está protegido con contraseña.',
+-    unreadableZip: 'No se puede leer ese ZIP. Prueba a exportar el chat sin archivos multimedia.',
++  "errors": {
++    "badKey": "Eso no parece una clave de OpenRouter. Empieza por «sk-or-».",
++    "jev": "Jev se niega a declarar ({status}): {reason}",
++    "tooBig": "Ese archivo es demasiado grande. Hasta 50 MB de texto está bien.",
++    "noChatInZip": "No hay ningún chat en ese ZIP. WhatsApp lo guarda como archivo .txt.",
++    "encryptedZip": "Ese ZIP está protegido con contraseña.",
++    "unreadableZip": "No se puede leer ese ZIP. Prueba a exportar el chat sin archivos multimedia.",
++    "tooFew": "Se necesitan al menos 3 mensajes de texto de cada persona en el fragmento enviado a Jev."
+   },
+-
+-  suspectStat: '{type} · p = {p} · confianza {confidence}',
+-  plate: 'Lámina {n}',
+-  menace: 'Índice de amenaza',
+-  confidence: 'conf. {c}',
+-  evidenceRaw: 'texto sin procesar',
+-  evidenceRawTruncated: 'parte más reciente del texto sin procesar',
+-  evidenceTruncated: 'los {n} mensajes más recientes de {total} (los antiguos superan el límite de Jev)',
+-  evidenceAll: 'n = {n} mensajes',
+-
+-  counted: {
+-    messages: 'Mensajes',
+-    words: 'Palabras por mensaje',
+-    medianChars: 'Longitud mediana',
+-    longest: 'Mensaje más largo',
+-    charValue: '{count} caracteres',
+-    sample: 'n = {n} mensajes',
+-    tooFew: 'Menos de 3 mensajes de texto: aún no hay una comparación fiable de longitudes.',
+-    medianCharsDefinition: 'Longitud mediana de los mensajes de texto en puntos de código Unicode; incluye espacios y saltos de línea.',
+-    longestDefinition: 'Longitud del mensaje de texto más largo en puntos de código Unicode; solo se muestra la cifra.',
+-    reply: 'Tiempo de respuesta',
+-    wordsDefinition: 'Mediana de palabras por mensaje',
+-    replyDefinition:
+-      'Mediana del tiempo hasta que escribe después de otra persona. Tras más de 6 horas de silencio empieza una conversación nueva. n = respuestas medidas.',
++  "connection": {
++    "friendly": "Intercambio mayormente cálido",
++    "mixed": "Intercambio variado o cotidiano",
++    "strained": "Fricción visible en este fragmento",
++    "uncertain": "Contexto verificable insuficiente",
++    "note": "Una impresión de estos mensajes, no una medida de vuestra relación real. El silencio y las respuestas breves no prueban hostilidad.",
++    "rawNote": "Los participantes no se pueden verificar en este formato. Las escalas describen solo el texto bruto; no se asigna una etiqueta global.",
++    "cardNote": "Solo este fragmento · no es un diagnóstico de la relación"
+   },
+-  statNotes: {
+-    median: 'El recuento: una mediana de {chars} caracteres por mensaje (n = {n}).',
+-    maximum: 'El mensaje individual más largo llega a {chars} caracteres (n = {n}).',
+-    leader: '{name} escribió el mensaje individual más largo entre las personas evaluadas: {chars} caracteres (n = {n}).',
+-    reply: 'La respuesta tras el mensaje de otra persona llega en una mediana de {time} (n = {n}).',
++  "evidenceRaw": "texto sin procesar",
++  "evidenceRawTruncated": "parte más reciente del texto sin procesar",
++  "evidenceTruncated": "los {n} mensajes más recientes de {total} (los antiguos superan el límite de Jev)",
++  "evidenceAll": "n = {n} mensajes",
++  "counted": {
++    "messages": "Mensajes",
++    "words": "Palabras por mensaje",
++    "medianChars": "Longitud mediana",
++    "longest": "Mensaje más largo",
++    "charValue": "{count} caracteres",
++    "sample": "n = {n} mensajes",
++    "tooFew": "Menos de 3 mensajes de texto: aún no hay una comparación fiable de longitudes.",
++    "medianCharsDefinition": "Longitud mediana de los mensajes de texto en puntos de código Unicode; incluye espacios y saltos de línea.",
++    "longestDefinition": "Longitud del mensaje de texto más largo en puntos de código Unicode; solo se muestra la cifra.",
++    "reply": "Tiempo de respuesta",
++    "wordsDefinition": "Mediana de palabras por mensaje",
++    "replyDefinition": "Mediana del tiempo hasta que escribe después de otra persona. Tras más de 6 horas de silencio empieza una conversación nueva. n = respuestas medidas."
+   },
+-  records: {
+-    slowest: { title: 'Pulgares más lentos', detail: 'respuesta mediana en {time} · n = {n}' },
+-    fastest: { title: 'Pulgares más rápidos', detail: 'respuesta mediana en {time} · n = {n}' },
+-    wordiest: { title: 'El que más se enrolla', detail: 'mediana de {words} palabras por mensaje · n = {n}' },
+-    starter: { title: 'Rompe el silencio', detail: 'empezó {count} de {of} conversaciones' },
++  "statNotes": {
++    "median": "El recuento: una mediana de {chars} caracteres por mensaje (n = {n}).",
++    "maximum": "El mensaje individual más largo llega a {chars} caracteres (n = {n}).",
++    "leader": "{name} escribió el mensaje individual más largo entre las personas evaluadas: {chars} caracteres (n = {n}).",
++    "reply": "La respuesta tras el mensaje de otra persona llega en una mediana de {time} (n = {n})."
+   },
+-
+-  types: {
+-    giga_chad: { name: 'El Giga Chad', note: 'Jamás ha escrito «perdón por el mensaje largo».' },
+-    golden_retriever: { name: 'El Golden Retriever', note: 'Recibe cada mensaje como la mejor noticia del año.' },
+-    cat: { name: 'El Gato', note: 'Responderá algún día, si la pregunta le parece interesante.' },
+-    chaos_goblin: { name: 'El Duende del caos', note: 'Visto por última vez soltando un meme en una conversación seria.' },
+-    dragon: { name: 'El Dragón', note: 'Custodia la conversación como un tesoro. No acercarse al tesoro.' },
+-    owl: { name: 'La Lechuza', note: '«En realidad» es su forma favorita de empezar una frase.' },
+-    sloth: { name: 'El Perezoso', note: 'Se comunica sobre todo con pulgares arriba y letras sueltas.' },
+-    mother_hen: { name: 'La Mamá gallina', note: 'Lleva el plan, la lista, el bote y la paciencia de todos.' },
+-    troll: { name: 'El Trol', note: 'Vive bajo el hilo y cobra peaje en atención.' },
+-    drama_llama: { name: 'La Llama del drama', note: 'Cada choque de agenda es una tragedia en cinco actos.' },
+-    mosquito: { name: 'El Mosquito', note: 'Pequeño y persistente. La picadura se nota después.' },
+-    npc: { name: 'El NPC', note: 'Sus opciones de diálogo parecen limitarse a «igual» y «jaja».' },
++  "records": {
++    "slowest": {
++      "title": "Pulgares más lentos",
++      "detail": "respuesta mediana en {time} · n = {n}"
++    },
++    "fastest": {
++      "title": "Pulgares más rápidos",
++      "detail": "respuesta mediana en {time} · n = {n}"
++    },
++    "wordiest": {
++      "title": "El que más se enrolla",
++      "detail": "mediana de {words} palabras por mensaje · n = {n}"
++    },
++    "starter": {
++      "title": "Rompe el silencio",
++      "detail": "empezó {count} de {of} conversaciones"
++    }
+   },
+-  traits: {
+-    passive_aggression: 'Agresividad pasiva',
+-    main_character: 'Síndrome de protagonista',
+-    drama: 'Producción de drama',
+-    effort: 'Esfuerzo',
+-  },
+-  levels: {
+-    passive_aggression: ['Dice lo que piensa, con amabilidad', 'Algún comentario afilado de vez en cuando', 'Pullas veladas con frecuencia', 'Cortesía como arma en casi todos los mensajes'],
+-    main_character: ['Sobre todo pregunta por los demás', 'Se lleva su parte justa de atención', 'Suele llevar el tema hacia sí', 'Los demás son personajes secundarios'],
+-    drama: ['Tranquilidad total', 'Algo excitable', 'Hace un mundo de cosas pequeñas a menudo', 'Cada mensaje es una emergencia'],
+-    effort: ['Solo respuestas de una palabra y reacciones', 'Breve pero al grano', 'Respuestas pensadas y completas', 'Redacciones que nadie pidió'],
+-  },
+-  partnerLevels: {
+-    main_character: ['Responde a la otra persona', 'Comparte la atención de forma justa', 'Vuelve a centrar el chat en sí', 'Hace que casi toda conversación gire en torno a sí'],
+-  },
+-  findings: {
+-    started_it: 'Empezó todo',
+-    leaves_on_read: 'Esquiva preguntas',
+-    secretly_right: 'En secreto tiene razón',
+-  },
+-  severity: {
+-    low: 'Inofensivo',
+-    medium: 'En observación',
+-    high: 'Amenaza certificada',
++  "traits": {
++    "warmth": "Calidez mutua",
++    "reciprocity": "Reciprocidad",
++    "tension": "Tensión visible",
++    "clarity": "Claridad"
+   },
++  "levels": {
++    "warmth": [
++      "Sin calidez clara",
++      "A veces cordial",
++      "Cordial repetidamente",
++      "Apoyo sostenido"
++    ],
++    "reciprocity": [
++      "Poco intercambio",
++      "Algo de intercambio",
++      "Diálogo frecuente",
++      "Ambos siguen las ideas"
++    ],
++    "tension": [
++      "Sin tensión visible",
++      "Desacuerdo leve",
++      "Fricción repetida",
++      "Intercambios hostiles repetidos"
++    ],
++    "clarity": [
++      "Frecuentemente ambiguo",
++      "Algo ambiguo",
++      "Generalmente claro",
++      "Siempre claro"
++    ]
++  }
+ };
+diff --git a/js/locales/fr.js b/js/locales/fr.js
+index 80d7147..1b4303d 100644
+--- a/js/locales/fr.js
++++ b/js/locales/fr.js
+@@ -1,152 +1,142 @@
+ export default {
+-  title: 'JudgeYou · Guide de terrain des membres de votre groupe',
+-  tagline: 'Guide de terrain des membres de votre groupe',
+-  volume: 'Vol. I · 2026',
+-  language: 'Langue',
+-  hero: 'Qui est le <em>problème</em> dans votre groupe ?',
+-  lede: 'Collez la discussion. Jev, un modèle qui répond en probabilités calibrées plutôt qu’en opinions, classe chacun dans l’une de douze espèces connues.',
+-  exhibit: 'Pièce A',
+-  evidence: 'Les preuves',
+-  chatLabel: 'Transcription de la discussion',
+-  chatPlaceholder:
+-    'Collez une discussion ou ouvrez un export : WhatsApp (aussi en ZIP), Telegram, Discord, Slack, Messenger, iMessage, CSV…\n\nOu écrivez-la simplement :\nAna : tu viens ce soir ?\nBen : k',
+-  openFile: 'Ouvrir un export',
+-  sample: 'Essayer un exemple',
+-  judge: 'Les juger',
+-  chatModeLabel: 'Contexte du chat',
+-  chatModes: { group: 'Discussion de groupe', partner: 'Discussion de couple' },
+-  partnerHint: 'Utilisez un chat avec exactement deux personnes reconnues et sélectionnez les deux ci-dessous.',
+-  chatModeResult: 'Contexte : {mode}',
+-  partnerCaveat: 'Lecture ludique de ce chat, pas une évaluation de votre relation. Jev doit choisir entre deux personnes même si aucun désaccord n’apparaît.',
+-  partnerTypeNote: 'Une étiquette ludique pour ces messages, pas une affirmation sur la personne hors du chat.',
+-  suspectPartner: 'Plus de tension dans ce chat',
+-  guiltyPartner: 'Choix ludique',
+-  namesLabel: 'Impossible de savoir qui parle. Qui est dans cette discussion ?',
+-  namesPlaceholder: 'Prénoms, séparés par des virgules',
+-  namesSubmit: 'Utiliser ces prénoms',
+-  keyPlaceholder: 'Votre clé OpenRouter (sk-or-…), gardée dans ce navigateur',
+-  keyLabel: 'Clé API OpenRouter',
+-  keySubmit: 'Enregistrer et juger',
+-  fineprint: 'Avant de juger : les comptes et temps de réponse sont calculés dans votre navigateur. Pour le verdict de Jev, les derniers messages reconnus (expéditeur et texte) passent par OpenRouter vers TypeSafe. Pour les formats reconnus, ni horodatages ni statistiques locales ne sont envoyés.',
+-  rawNotice: 'Moins de deux participants reconnus : si vous saisissez des noms et lancez le jugement, un extrait récent du texte brut et les noms sélectionnés sont envoyés à la place des messages analysés. Cet extrait peut contenir des dates et d’autres détails du chat.',
+-  keyStorage: 'Une clé saisie par vous et la langue choisie peuvent être enregistrées dans ce navigateur. Une clé intégrée au déploiement dans js/key.js peut aussi être utilisée.',
+-  clearKey: 'Effacer ma clé enregistrée',
+-  keyCleared: 'Votre clé enregistrée a été effacée de ce navigateur. Une clé déployée dans js/key.js reste utilisable si elle existe.',
+-  suspect: 'Suspect principal',
+-  guilty: 'Coupable',
+-  share: 'Partager le verdict',
+-  colophon: 'Non évalué par les pairs. Pas évalué du tout. Jugements de Jev (TypeSafe), servis par OpenRouter.',
+-  cardNames: 'Noms sur la carte',
+-  cardShare: 'Partager',
+-  cardDownload: 'Télécharger l’image',
+-  cardClose: 'Fermer',
+-  cardShareText: 'Notre groupe, classifié par JudgeYou',
+-  cardAnonymous: 'Anonyme',
+-  cardRenderError: 'Aperçu indisponible. Ouvrez à nouveau la carte.',
+-  cardPreviewHeading: 'Visible sur l’image avant le partage',
+-  cardPrivacyNote: 'Vérifiez l’aperçu et les noms. Aucune citation, aucun audio ni numéro de téléphone n’est ajouté automatiquement.',
+-  cardGameScore: 'Score ludique',
+-  cardRed: 'Drapeau rouge {score}%',
+-  cardGreen: 'Drapeau vert {score}%',
+-  cardReplyHighlight: 'Réponse médiane {time} · n = {n}',
+-  cardCharsHighlight: 'Texte médian {chars} caractères · n = {n}',
+-  cardScoreNote: 'Score ludique, pas une probabilité de personnalité. Rouge = indice de nuisance arrondi : 35% agressivité passive + 30% drame + 25% personnage principal + 10% début du conflit. Vert = 100 − Rouge.',
+-  unknownNumber: 'Numéro inconnu {n}',
+-
+-  lab: [
+-    'Établissement de la chaîne de preuves…',
+-    'Mesure du ratio emoji/sincérité…',
+-    'Comptage des questions restées en vu…',
+-    'Consultation du guide de terrain…',
+-    'Interrogatoire de Jev…',
++  "title": "FakeorFriend · Comment échangez-vous ?",
++  "tagline": "Un regard sur une conversation à deux",
++  "volume": "Vol. I · 2026",
++  "language": "Langue",
++  "hero": "Comment se passe votre <em>échange</em> ?",
++  "lede": "Découvrez comment deux personnes communiquent dans cet extrait. Jev lit l’échange ; votre navigateur compte les messages, les longueurs et les réponses.",
++  "exhibit": "Votre chat",
++  "evidence": "Deux personnes",
++  "chatLabel": "Transcription de la discussion",
++  "chatPlaceholder": "Collez une discussion ou ouvrez un export : WhatsApp (aussi en ZIP), Telegram, Discord, Slack, Messenger, iMessage, CSV…\n\nOu écrivez-la simplement :\nAna : tu viens ce soir ?\nBen : k",
++  "openFile": "Ouvrir un export",
++  "sample": "Essayer un exemple",
++  "judge": "Explorer ce chat",
++  "pairHint": "Utilisez un chat avec exactement deux personnes et au moins 3 messages texte chacune. Un groupe reste exclu, même si vous ne sélectionnez que deux personnes.",
++  "namesLabel": "Locuteurs non reconnus. Saisissez exactement deux noms :",
++  "namesPlaceholder": "Deux noms séparés par une virgule",
++  "namesSubmit": "Utiliser ces noms",
++  "keyPlaceholder": "Votre clé OpenRouter (sk-or-…), gardée dans ce navigateur",
++  "keyLabel": "Clé API OpenRouter",
++  "keySubmit": "Enregistrer la clé et explorer",
++  "fineprint": "Le navigateur calcule le nombre de messages et les délais de réponse. Pour Jev, les derniers messages reconnus (expéditeur et texte) sont envoyés à OpenRouter et TypeSafe. Ni horodatages ni statistiques locales ne sont envoyés.",
++  "rawNotice": "Format inconnu : avec deux noms saisis manuellement, un extrait récent du texte brut est envoyé à OpenRouter et TypeSafe. Il peut contenir des dates et autres détails ; les locuteurs et la taille de l’échantillon ne sont pas vérifiés.",
++  "keyStorage": "Une clé saisie par vous et la langue choisie peuvent être enregistrées dans ce navigateur. Une clé intégrée au déploiement dans js/key.js peut aussi être utilisée.",
++  "clearKey": "Effacer ma clé enregistrée",
++  "keyCleared": "Votre clé enregistrée a été effacée de ce navigateur. Une clé déployée dans js/key.js reste utilisable si elle existe.",
++  "summaryTitle": "L’échange dans cet extrait",
++  "share": "Partager ce résultat",
++  "colophon": "Lecture exploratoire de cet extrait par Jev (TypeSafe) via OpenRouter. Ni diagnostic ni verdict sur votre relation.",
++  "cardNames": "Noms sur la carte",
++  "cardShare": "Partager",
++  "cardDownload": "Télécharger l’image",
++  "cardClose": "Fermer",
++  "cardShareText": "Notre extrait de chat avec FakeorFriend",
++  "cardAnonymous": "Anonyme",
++  "cardRenderError": "Aperçu indisponible. Ouvrez à nouveau la carte.",
++  "cardPreviewHeading": "Visible sur l’image avant le partage",
++  "cardPrivacyNote": "Vérifiez l’aperçu et les noms. Aucune citation, aucun audio ni numéro de téléphone n’est ajouté automatiquement.",
++  "cardScoreNote": "L’étiquette décrit uniquement cet extrait, ni les personnes ni leur relation en dehors du chat. Aucun pourcentage de personnalité.",
++  "cardFooter": "Cet extrait uniquement · aucun diagnostic",
++  "cardReplyHighlight": "Réponse médiane {time} · n = {n}",
++  "cardCharsHighlight": "Texte médian {chars} caractères · n = {n}",
++  "unknownNumber": "Numéro inconnu {n}",
++  "lab": [
++    "Lecture de l’échange…",
++    "Analyse des réponses…",
++    "Comptage local des messages…",
++    "Consultation de Jev…"
+   ],
+-  spared: '+{n} plus discrets épargnés',
+-  spare: 'L’épargner',
+-  unspare: 'Le juger finalement',
+-
+-  errors: {
+-    badKey: 'Ça ne ressemble pas à une clé OpenRouter. Elle commence par « sk-or- ».',
+-    jev: 'Jev refuse de témoigner ({status}) : {reason}',
+-    tooBig: 'Ce fichier est trop gros. Jusqu’à 50 Mo de texte, ça passe.',
+-    noChatInZip: 'Aucune discussion dans ce ZIP. WhatsApp la range dans un fichier .txt.',
+-    encryptedZip: 'Ce ZIP est protégé par un mot de passe.',
+-    unreadableZip: 'Impossible de lire ce ZIP. Essayez d’exporter la discussion sans médias.',
++  "errors": {
++    "badKey": "Ça ne ressemble pas à une clé OpenRouter. Elle commence par « sk-or- ».",
++    "jev": "Jev refuse de témoigner ({status}) : {reason}",
++    "tooBig": "Ce fichier est trop gros. Jusqu’à 50 Mo de texte, ça passe.",
++    "noChatInZip": "Aucune discussion dans ce ZIP. WhatsApp la range dans un fichier .txt.",
++    "encryptedZip": "Ce ZIP est protégé par un mot de passe.",
++    "unreadableZip": "Impossible de lire ce ZIP. Essayez d’exporter la discussion sans médias.",
++    "tooFew": "Il faut au moins 3 messages texte par personne dans l’extrait envoyé à Jev."
+   },
+-
+-  suspectStat: '{type} · p = {p} · confiance {confidence}',
+-  plate: 'Planche {n}',
+-  menace: 'Indice de nuisance',
+-  confidence: 'conf. {c}',
+-  evidenceRaw: 'texte brut',
+-  evidenceRawTruncated: 'partie la plus récente du texte brut',
+-  evidenceTruncated: '{n} messages les plus récents sur {total} (les plus anciens dépassent la limite de Jev)',
+-  evidenceAll: 'n = {n} messages',
+-
+-  counted: {
+-    messages: 'Messages',
+-    words: 'Mots par message',
+-    medianChars: 'Longueur médiane',
+-    longest: 'Message le plus long',
+-    charValue: '{count} caractères',
+-    sample: 'n = {n} messages',
+-    tooFew: 'Moins de 3 messages texte : pas encore de comparaison fiable des longueurs.',
+-    medianCharsDefinition: 'Longueur médiane des messages texte en points de code Unicode ; espaces et retours à la ligne compris.',
+-    longestDefinition: 'Longueur du plus long message texte en points de code Unicode ; seul le nombre est affiché.',
+-    reply: 'Temps de réponse',
+-    wordsDefinition: 'Nombre médian de mots par message',
+-    replyDefinition:
+-      'Temps médian avant d’écrire après quelqu’un d’autre. Après plus de 6 heures de silence, une nouvelle conversation commence. n = réponses mesurées.',
++  "connection": {
++    "friendly": "Échange plutôt chaleureux",
++    "mixed": "Échange varié ou ordinaire",
++    "strained": "Friction visible dans cet extrait",
++    "uncertain": "Contexte vérifiable insuffisant",
++    "note": "Une impression fondée sur ces messages, pas une mesure de votre relation réelle. Silence et réponses brèves ne prouvent aucune hostilité.",
++    "rawNote": "Les locuteurs ne peuvent pas être vérifiés dans ce format. Les échelles ne décrivent que le texte brut ; aucune étiquette globale n’est attribuée.",
++    "cardNote": "Cet extrait uniquement · pas de diagnostic relationnel"
+   },
+-  statNotes: {
+-    median: 'Le décompte : une médiane de {chars} caractères par message (n = {n}).',
+-    maximum: 'Le message individuel le plus long atteint {chars} caractères (n = {n}).',
+-    leader: '{name} a écrit le message individuel le plus long parmi les personnes évaluées : {chars} caractères (n = {n}).',
+-    reply: 'Une réponse après le message d’une autre personne arrive en médiane au bout de {time} (n = {n}).',
++  "evidenceRaw": "texte brut",
++  "evidenceRawTruncated": "partie la plus récente du texte brut",
++  "evidenceTruncated": "{n} messages les plus récents sur {total} (les plus anciens dépassent la limite de Jev)",
++  "evidenceAll": "n = {n} messages",
++  "counted": {
++    "messages": "Messages",
++    "words": "Mots par message",
++    "medianChars": "Longueur médiane",
++    "longest": "Message le plus long",
++    "charValue": "{count} caractères",
++    "sample": "n = {n} messages",
++    "tooFew": "Moins de 3 messages texte : pas encore de comparaison fiable des longueurs.",
++    "medianCharsDefinition": "Longueur médiane des messages texte en points de code Unicode ; espaces et retours à la ligne compris.",
++    "longestDefinition": "Longueur du plus long message texte en points de code Unicode ; seul le nombre est affiché.",
++    "reply": "Temps de réponse",
++    "wordsDefinition": "Nombre médian de mots par message",
++    "replyDefinition": "Temps médian avant d’écrire après quelqu’un d’autre. Après plus de 6 heures de silence, une nouvelle conversation commence. n = réponses mesurées."
+   },
+-  records: {
+-    slowest: { title: 'Pouces les plus lents', detail: 'réponse médiane en {time} · n = {n}' },
+-    fastest: { title: 'Pouces les plus rapides', detail: 'réponse médiane en {time} · n = {n}' },
+-    wordiest: { title: 'Le plus bavard', detail: '{words} mots par message en médiane · n = {n}' },
+-    starter: { title: 'Brise le silence', detail: 'a lancé {count} conversations sur {of}' },
++  "statNotes": {
++    "median": "Le décompte : une médiane de {chars} caractères par message (n = {n}).",
++    "maximum": "Le message individuel le plus long atteint {chars} caractères (n = {n}).",
++    "leader": "{name} a écrit le message individuel le plus long parmi les personnes évaluées : {chars} caractères (n = {n}).",
++    "reply": "Une réponse après le message d’une autre personne arrive en médiane au bout de {time} (n = {n})."
+   },
+-
+-  types: {
+-    giga_chad: { name: 'Le Giga Chad', note: 'N’a jamais écrit « désolé pour le pavé ».' },
+-    golden_retriever: { name: 'Le Golden Retriever', note: 'Accueille chaque message comme la meilleure nouvelle de l’année.' },
+-    cat: { name: 'Le Chat', note: 'Répondra un jour, si la question est assez intéressante.' },
+-    chaos_goblin: { name: 'Le Gobelin du chaos', note: 'Vu pour la dernière fois en train de lâcher un mème dans une discussion sérieuse.' },
+-    dragon: { name: 'Le Dragon', note: 'Garde la conversation comme un trésor. Ne pas approcher du trésor.' },
+-    owl: { name: 'La Chouette', note: '« En fait » est sa façon préférée de commencer une phrase.' },
+-    sloth: { name: 'Le Paresseux', note: 'Communique surtout par pouces levés et lettres isolées.' },
+-    mother_hen: { name: 'La Mère poule', note: 'Tient le plan, la liste, la cagnotte et la patience de tout le monde.' },
+-    troll: { name: 'Le Troll', note: 'Vit sous le fil et fait payer un péage en attention.' },
+-    drama_llama: { name: 'Le Lama du drame', note: 'Chaque conflit d’agenda est une tragédie en cinq actes.' },
+-    mosquito: { name: 'Le Moustique', note: 'Petit et tenace. On ne remarque la piqûre qu’après.' },
+-    npc: { name: 'Le PNJ', note: 'Ses options de dialogue semblent limitées à « pareil » et « mdr ».' },
++  "records": {
++    "slowest": {
++      "title": "Pouces les plus lents",
++      "detail": "réponse médiane en {time} · n = {n}"
++    },
++    "fastest": {
++      "title": "Pouces les plus rapides",
++      "detail": "réponse médiane en {time} · n = {n}"
++    },
++    "wordiest": {
++      "title": "Le plus bavard",
++      "detail": "{words} mots par message en médiane · n = {n}"
++    },
++    "starter": {
++      "title": "Brise le silence",
++      "detail": "a lancé {count} conversations sur {of}"
++    }
+   },
+-  traits: {
+-    passive_aggression: 'Agressivité passive',
+-    main_character: 'Syndrome du personnage principal',
+-    drama: 'Production de drame',
+-    effort: 'Effort',
+-  },
+-  levels: {
+-    passive_aggression: ['Dit ce qu’il pense, gentiment', 'Une remarque piquante de temps en temps', 'Des piques voilées régulières', 'Politesse utilisée comme arme presque partout'],
+-    main_character: ['S’intéresse surtout aux autres', 'Prend sa juste part d’attention', 'Ramène souvent le sujet à lui', 'Tous les autres sont des figurants'],
+-    drama: ['Calme et posé du début à la fin', 'Un peu excitable', 'Monte souvent les petites choses en épingle', 'Chaque message est une urgence'],
+-    effort: ['Réponses d’un mot et réactions uniquement', 'Court mais pertinent', 'Réponses réfléchies et complètes', 'Des dissertations que personne n’a demandées'],
+-  },
+-  partnerLevels: {
+-    main_character: ['Répond à l’autre personne', 'Partage l’attention équitablement', 'Ramène souvent la discussion à soi', 'Ramène presque tous les échanges à soi'],
+-  },
+-  findings: {
+-    started_it: 'A commencé',
+-    leaves_on_read: 'Esquive les questions',
+-    secretly_right: 'A secrètement raison',
+-  },
+-  severity: {
+-    low: 'Inoffensif',
+-    medium: 'Sous surveillance',
+-    high: 'Nuisance certifiée',
++  "traits": {
++    "warmth": "Chaleur mutuelle",
++    "reciprocity": "Échange réciproque",
++    "tension": "Tension visible",
++    "clarity": "Clarté"
+   },
++  "levels": {
++    "warmth": [
++      "Aucune chaleur claire",
++      "Parfois amical",
++      "Souvent amical",
++      "Soutien durable"
++    ],
++    "reciprocity": [
++      "Peu d’échanges",
++      "Quelques échanges",
++      "Échanges réguliers",
++      "Chacun rebondit sur l’autre"
++    ],
++    "tension": [
++      "Aucune tension visible",
++      "Léger désaccord",
++      "Frictions répétées",
++      "Échanges hostiles répétés"
++    ],
++    "clarity": [
++      "Souvent ambigu",
++      "Parfois ambigu",
++      "Plutôt clair",
++      "Toujours clair"
++    ]
++  }
+ };
+diff --git a/js/presentation.js b/js/presentation.js
+index e769a6e..0970685 100644
+--- a/js/presentation.js
++++ b/js/presentation.js
+@@ -1,45 +1,6 @@
+-// How judgments look: names, flavour text, mascots and number formats.
+-// Components read from here instead of deciding. Wording lives in locales/.
+ import { lang, t } from './i18n.js';
+-
+-/** Keys match the Choice options in questions.js. Latin needs no translation. */
+-export const SPECIES = {
+-  giga_chad: 'Homo gigachadensis',
+-  golden_retriever: 'Canis entusiasticus',
+-  cat: 'Felis indifferens',
+-  chaos_goblin: 'Goblinus chaoticus',
+-  dragon: 'Draco attentionis',
+-  owl: 'Strix pedantica',
+-  sloth: 'Bradypus minimus',
+-  mother_hen: 'Gallus organizatrix',
+-  troll: 'Trollus provocans',
+-  drama_llama: 'Lama theatralis',
+-  mosquito: 'Culex passivoaggressivus',
+-  npc: 'Homo nonludens',
+-};
+-
+-export const TYPE_KEYS = Object.keys(SPECIES);
+-
+-export const typeName = (type) => t(`types.${type}.name`);
+-export const typeNote = (type) => t(`types.${type}.note`);
+-
+-export function mascotOf(type) {
+-  return `img/types/${type}.webp`;
+-}
+-
+-export const TRAIT_KEYS = ['passive_aggression', 'main_character', 'drama', 'effort'];
+-export const FINDING_KEYS = ['started_it', 'leaves_on_read', 'secretly_right'];
+-
+-// The stamp word carries the severity; the stamp colour is the one accent.
+-export const severityLabel = (severity) => t(`severity.${severity}`);
+-
+-export const percent = (p) => `${Math.round(p * 100)}%`;
+-
+-export function formatNumber(value) {
+-  return new Intl.NumberFormat(lang, { maximumFractionDigits: 1 }).format(value);
+-}
+-
+-/** Text lengths for a result plate; missing samples remain visible and honest. */
++export const percent = (value) => `${Math.round(value * 100)}%`;
++export const formatNumber = (value) => new Intl.NumberFormat(lang, { maximumFractionDigits: 1 }).format(value);
+ export function textLengthPresentation(counts) {
+   const length = counts.textLength;
+   return {
+@@ -49,44 +10,28 @@ export function textLengthPresentation(counts) {
+     note: length ? null : t('counted.tooFew'),
+   };
+ }
+-
+-/** Two or three fixed sentences about counted messages, never generated text. */
+ export function statisticNotes(stats, judged, name) {
+   const counts = stats?.get(name);
+   const length = counts?.textLength;
+   if (!length) return [];
+-
+-  // Only people actually judged and supported by enough text are contenders.
+-  const contenders = judged
+-    .map((person) => ({ name: person, max: stats.get(person)?.textLength?.maxChars }))
+-    .filter(({ max }) => Number.isFinite(max))
+-    .sort((a, b) => b.max - a.max);
+-  const leader = contenders.length >= 2 && contenders[0].max > contenders[1].max
+-    ? contenders[0].name : null;
++  const contenders = judged.map((person) => ({ name: person, max: stats.get(person)?.textLength?.maxChars }))
++    .filter(({ max }) => Number.isFinite(max)).sort((a, b) => b.max - a.max);
++  const leader = contenders.length >= 2 && contenders[0].max > contenders[1].max ? contenders[0].name : null;
+   const n = formatNumber(length.n);
+-  const notes = [
+-    t('statNotes.median', { chars: formatNumber(length.medianChars), n }),
+-    leader === name
+-      ? t('statNotes.leader', { name, chars: formatNumber(length.maxChars), n })
+-      : t('statNotes.maximum', { chars: formatNumber(length.maxChars), n }),
+-  ];
+-  if (counts.reply) notes.push(t('statNotes.reply', {
+-    time: formatDuration(counts.reply.median), n: formatNumber(counts.reply.n),
+-  }));
++  const notes = [t('statNotes.median', { chars: formatNumber(length.medianChars), n }),
++    leader === name ? t('statNotes.leader', { name, chars: formatNumber(length.maxChars), n })
++      : t('statNotes.maximum', { chars: formatNumber(length.maxChars), n })];
++  if (counts.reply) notes.push(t('statNotes.reply', { time: formatDuration(counts.reply.median), n: formatNumber(counts.reply.n) }));
+   return notes;
+ }
+-
+-/** "40 s", "12 min", "2 h 5 min", in the page's language. */
+ export function formatDuration(ms) {
+-  const unit = (value, unit) => new Intl.NumberFormat(lang, { style: 'unit', unit, unitDisplay: 'short' }).format(value);
++  const unit = (value, name) => new Intl.NumberFormat(lang, { style: 'unit', unit: name, unitDisplay: 'short' }).format(value);
+   const minutes = Math.round(ms / 60_000);
+   if (minutes < 1) return unit(Math.round(ms / 1000), 'second');
+   if (minutes < 60) return unit(minutes, 'minute');
+   const rest = minutes % 60;
+   return rest ? `${unit(Math.floor(minutes / 60), 'hour')} ${unit(rest, 'minute')}` : unit(minutes / 60, 'hour');
+ }
+-
+-/** The one-line proof behind a record, e.g. "median reply 2 h · n = 14". */
+ export function recordDetail({ key, stats }) {
+   const detail = `records.${key}.detail`;
+   if (key === 'slowest' || key === 'fastest') return t(detail, { time: formatDuration(stats.reply.median), n: stats.reply.n });
+diff --git a/js/questions.js b/js/questions.js
+index 7bd9047..e2c8622 100644
+--- a/js/questions.js
++++ b/js/questions.js
+@@ -1,227 +1,97 @@
+-import en from './locales/en.js';
+-
+ export const MODEL = '~typesafe/jev-latest';
+-
+-// Jev allows 32k tokens for the state plus the longest question. Measured on
+-// English, German-with-emoji and Japanese chats, one token is ~2.06 UTF-8
+-// bytes of JSON state, so bytes / 2 slightly overestimates tokens. The budget
+-// leaves room for the longest question.
++// State only contains sender and text; timestamps and locally calculated
++// statistics never enter Jev's request. Allow room for the longest question.
+ export const STATE_TOKEN_BUDGET = 29_000;
+-const BYTES_PER_TOKEN = 2;
+ const utf8 = new TextEncoder();
++const estimateTokens = (value) => utf8.encode(JSON.stringify(value)).length / 2;
++export const MIN_MESSAGES_PER_PERSON = 3;
+ 
+-function estimateTokens(value) {
+-  return utf8.encode(JSON.stringify(value)).length / BYTES_PER_TOKEN;
++/** Every recognised participant must be one of the two being analysed. */
++export function canJudgeSubjects(selected, total) {
++  return selected === 2 && total === 2;
+ }
+ 
+-// Each extra person only adds questions, which Jev answers in parallel for
+-// almost no extra time; the cap keeps the results page readable.
+-export const MAX_SUBJECTS = 8;
+-export const CHAT_MODES = Object.freeze({ GROUP: 'group', PARTNER: 'partner' });
+-
+-/** Partner questions only make sense with exactly two selected speakers. */
+-export function canJudgeSubjects(mode, count, total = count) {
+-  return count >= 2 && (mode !== CHAT_MODES.PARTNER || (count === 2 && total === 2));
++/** Enough evidence for the two people in the part actually sent to Jev. */
++export function hasEnoughMessages(messages, subjects) {
++  return subjects.length === 2 && subjects.every((name) =>
++    messages.filter((message) => message.from === name && typeof message.text === 'string' && message.text.trim()).length >= MIN_MESSAGES_PER_PERSON,
++  );
+ }
+ 
+-// Option keys match TYPES in presentation.js; the descriptions are what Jev
+-// actually judges against. Each names a defining excess rather than a common
+-// behaviour: everyday chats are mostly logistics, and with softer wording
+-// ("makes plans", "short messages") almost everyone became a Mother Hen or a
+-// Giga Chad.
+-const TYPE_CRITERIA = {
+-  giga_chad: 'Supremely confident and unbothered; blunt one-liners; never explains, apologises or seeks approval',
+-  golden_retriever: 'Overflowing enthusiasm and affection; exclamation marks and hearts; cheers everyone on',
+-  cat: 'Aloof and selective; ignores questions they do not feel like answering; replies on their own terms, with sass',
+-  chaos_goblin: 'Random and unhinged; memes, absurd tangents, derails serious topics',
+-  dragon: 'Domineering; makes everything about themselves, demands attention, lashes out when challenged',
+-  owl: 'Know-it-all; corrects people, lectures, adds facts nobody asked for',
+-  sloth: 'Barely participates; one-word answers and emoji reactions; has to be chased for a reply',
+-  mother_hen: 'Fusses over everyone far beyond what is needed; nagging reminders, checks on how people are, keeps lists, collects money',
+-  troll: 'Provokes on purpose; hot takes, bait, mocks others for fun',
+-  drama_llama: 'Turns small things into a crisis about their feelings; guilt trips, self-pity, "it\'s fine" when it is not',
+-  mosquito: 'Passive-aggressive; small snide jabs, sarcastic smileys, backhanded compliments',
+-  npc: 'No opinions of their own; agrees with whoever spoke last; generic filler like "same", "lol", "haha"',
+-};
+-
+-// The partner mode keeps the same twelve answer keys and score definitions,
+-// but gives Jev examples grounded in a two-person conversation. No claim about
+-// the actual relationship or a person's character can be inferred from these.
+-const PARTNER_TYPE_CRITERIA = {
+-  giga_chad: 'Unusually self-assured in this exchange; blunt one-liners; rarely explains or checks how the other person reads them',
+-  golden_retriever: 'Repeatedly enthusiastic and encouraging toward the other person; excited greetings and warm reactions beyond ordinary politeness',
+-  cat: 'Noticeably selective and distant in this exchange; answers on their own terms, sometimes with sass; skips direct questions',
+-  chaos_goblin: 'Frequently throws the two-person conversation off course with surreal jokes, memes or abrupt tangents',
+-  dragon: 'Tries to dominate the exchange or the other person’s decisions; demands attention and reacts sharply to pushback',
+-  owl: 'Habitually corrects the other person, lectures or adds unasked-for facts in this exchange',
+-  sloth: 'Contributes very little in this exchange; repeatedly responds with one-word answers or reactions that leave the other person carrying the conversation',
+-  mother_hen: 'Repeatedly checks on and manages the other person beyond what the exchange needs; nagging reminders or unsolicited planning',
+-  troll: 'Repeatedly provokes the other person for a reaction; teasing bait, hot takes or mockery rather than a shared joke',
+-  drama_llama: 'Turns small two-person misunderstandings into crises about their feelings; guilt trips, self-pity or pointed "it’s fine"',
+-  mosquito: 'Repeated small passive-aggressive jabs at the other person; sarcastic smileys and backhanded compliments',
+-  npc: 'Repeatedly echoes the other person without adding a view; generic agreement or filler rather than engagement',
+-};
+-
+-// Score levels are shared with the English UI, so the wording Jev judges
+-// against is the wording people read. Other languages translate by position.
+-const PERSONAL_QUESTIONS = {
+-  type: (name) => ({
+-    type: 'choice',
+-    instructions: `Which type best captures what makes ${name} stand out compared with the other people in this chat? Judge ${name}'s own messages.`,
+-    criteria: TYPE_CRITERIA,
+-  }),
+-  passive_aggression: (name) => ({
++// Jev returns structured scores only. The UI derives a cautious interaction
++// label from these values. The questions describe this excerpt, not a person's
++// character or the nature of the relationship outside the messages.
++export const DIMENSIONS = ['warmth', 'reciprocity', 'tension', 'clarity'];
++const QUESTIONS = {
++  warmth: {
+     type: 'score',
+-    instructions: `How passive-aggressive is ${name}?`,
+-    criteria: en.levels.passive_aggression,
+-  }),
+-  main_character: (name) => ({
++    instructions: 'How much mutual kindness and supportive language appears in these two people’s messages? Assess the exchange shown only. Brief practical messages are neutral, not hostile.',
++    criteria: ['No clear warmth in this excerpt', 'Occasional friendly words', 'Repeated mutual friendliness', 'Strong, sustained mutual support'],
++  },
++  reciprocity: {
+     type: 'score',
+-    instructions: `How much does ${name} make the conversation about themselves?`,
+-    criteria: en.levels.main_character,
+-  }),
+-  effort: (name) => ({
++    instructions: 'How often do both people respond to each other’s ideas and questions in the messages shown? Short relevant answers count as engagement; unequal message lengths alone do not mean one person cares less.',
++    criteria: ['Little observable back-and-forth', 'Some exchange but often one-sided', 'Regular back-and-forth', 'Both repeatedly build on each other'],
++  },
++  tension: {
+     type: 'score',
+-    instructions: `How much effort does ${name} put into their messages?`,
+-    criteria: en.levels.effort,
+-  }),
+-  drama: (name) => ({
++    instructions: 'How much explicit tension or recurring friction appears between these two people in the messages shown? Neutral planning, delays and jokes without an argument are not signs of conflict.',
++    criteria: ['No visible tension', 'A single mild disagreement', 'Repeated friction', 'Repeated, clearly hostile exchanges'],
++  },
++  clarity: {
+     type: 'score',
+-    instructions: `How much drama does ${name} generate?`,
+-    criteria: en.levels.drama,
+-  }),
+-  started_it: (name) => ({
+-    type: 'noul',
+-    instructions: `${name} started the main disagreement or tension in this chat.`,
+-  }),
+-  leaves_on_read: (name) => ({
+-    type: 'noul',
+-    instructions: `${name} ignores or dodges direct questions from others.`,
+-  }),
+-  secretly_right: (name) => ({
+-    type: 'noul',
+-    instructions: `${name} holds the most reasonable position in this chat.`,
+-  }),
++    instructions: 'How clearly do the two people communicate their requests and responses in this excerpt? Do not treat brevity or colloquial language as a defect.',
++    criteria: ['Repeated unclear exchanges', 'Some ambiguity', 'Mostly understandable', 'Consistently clear to each other'],
++  },
+ };
+ 
+-const PARTNER_QUESTIONS = {
+-  type: (name) => ({
+-    type: 'choice',
+-    instructions: `Which playful communication type best describes ${name}'s own messages in this two-person exchange? Compare the two people only using this chat, without assuming a relationship dynamic outside it.`,
+-    criteria: PARTNER_TYPE_CRITERIA,
+-  }),
+-  passive_aggression: (name) => ({
+-    type: 'score',
+-    instructions: `How often does ${name} use indirect or pointed remarks toward the other person in this exchange? Judge only the messages shown.`,
+-    criteria: en.levels.passive_aggression,
+-  }),
+-  main_character: (name) => ({
+-    type: 'score',
+-    instructions: `How much does ${name} bring the two-person conversation back to themselves instead of engaging with the other person?`,
+-    criteria: en.partnerLevels.main_character,
+-  }),
+-  effort: (name) => ({
+-    type: 'score',
+-    instructions: `How much effort does ${name} put into responding to the other person in the messages shown?`,
+-    criteria: en.levels.effort,
+-  }),
+-  drama: (name) => ({
+-    type: 'score',
+-    instructions: `How often does ${name} escalate minor issues in this two-person exchange? Do not assume there is conflict if none appears.`,
+-    criteria: en.levels.drama,
+-  }),
+-  started_it: (name) => ({
+-    type: 'noul',
+-    instructions: `When there is a disagreement in the messages shown, ${name} initiates the tension. If there is no disagreement, the claim has no support.`,
+-  }),
+-  leaves_on_read: (name) => ({
+-    type: 'noul',
+-    instructions: `${name} repeatedly ignores or dodges direct questions from the other person in the messages shown. The timing alone does not show that a message was read.`,
+-  }),
+-  secretly_right: (name) => ({
+-    type: 'noul',
+-    instructions: `When the two disagree in the messages shown, ${name}'s position is better supported by the conversation. If there is no disagreement, the claim has no support.`,
+-  }),
+-};
+-
+-const CULPRIT = 'culprit';
+-
+-/** The newest messages whose state fits the token budget, oldest first. */
+ function newestWithinBudget(messages, budget) {
+   const kept = [];
+   let tokens = estimateTokens({ messages: [] });
+   for (let i = messages.length - 1; i >= 0; i--) {
+     const message = { from: messages[i].author, text: messages[i].text };
+-    tokens += estimateTokens(message) + 1; // +1 for the separating comma
++    tokens += estimateTokens(message) + 1;
+     if (tokens > budget) break;
+     kept.unshift(message);
+   }
+   return kept;
+ }
+ 
+-/** The end of a raw transcript, cut so its state fits the token budget. */
+ function tailWithinBudget(transcript, participants, budget) {
+   let tail = transcript;
+   let tokens = estimateTokens({ participants, transcript: tail });
+   while (tokens > budget) {
++    if (!tail) throw new RangeError('Transcript cannot fit the state budget');
+     tail = tail.slice(Math.ceil(tail.length * (1 - (0.98 * budget) / tokens)));
+     tokens = estimateTokens({ participants, transcript: tail });
+   }
+   return tail;
+ }
+ 
+-/**
+- * Builds one Jev request that judges every subject at once. `chat` is either
+- * parsed messages or, when the format wasn't recognised, the raw text; either
+- * way only the newest part that fits `budget` tokens is sent. Question keys
+- * are namespaced by subject index (`p0_drama`) so `readVerdicts` can split the
+- * answers back out.
+- */
+-export function buildRequest(chat, subjects, budget = STATE_TOKEN_BUDGET, mode = CHAT_MODES.GROUP) {
+-  if (mode !== CHAT_MODES.GROUP && mode !== CHAT_MODES.PARTNER) throw new RangeError('Unknown chat mode');
+-  if (mode === CHAT_MODES.PARTNER && subjects.length !== 2) throw new RangeError('Partner chat needs two subjects');
+-  const partner = mode === CHAT_MODES.PARTNER;
+-  const questions = {
+-    [CULPRIT]: {
+-      type: 'choice',
+-      instructions: partner
+-        ? 'Which of the two more often contributes to tension in the messages shown, if any? Choose from the two people; do not assume the chat contains an argument.'
+-        : 'Who is most responsible for the tension or drama in this chat?',
+-      criteria: Object.fromEntries(subjects.map((name) => [name, null])),
+-    },
+-  };
+-
+-  subjects.forEach((name, i) => {
+-    for (const [key, question] of Object.entries(partner ? PARTNER_QUESTIONS : PERSONAL_QUESTIONS)) {
+-      questions[`p${i}_${key}`] = question(name);
+-    }
+-  });
+-
++/** Exactly one Jev request for a two-person exchange, with bounded state. */
++export function buildRequest(chat, subjects, budget = STATE_TOKEN_BUDGET) {
++  if (subjects.length !== 2 || new Set(subjects).size !== 2) throw new RangeError('Exactly two people required');
+   if (typeof chat === 'string') {
+     const transcript = tailWithinBudget(chat, subjects, budget);
+     return {
+       judgedCount: null,
+       truncated: transcript.length < chat.length,
+-      body: { model: MODEL, state: { participants: subjects, transcript }, questions },
++      body: { model: MODEL, state: { participants: subjects, transcript }, questions: QUESTIONS },
+     };
+   }
+-
++  if (chat.some((message) => !subjects.includes(message.author))) throw new RangeError('Third speaker in chat');
+   const messages = newestWithinBudget(chat, budget);
+   return {
+     judgedCount: messages.length,
+     truncated: messages.length < chat.length,
+-    body: { model: MODEL, state: { messages }, questions },
++    body: { model: MODEL, state: { messages }, questions: QUESTIONS },
+   };
+ }
+ 
+-export function readVerdicts(answers, subjects) {
+-  return {
+-    culprit: answers[CULPRIT],
+-    people: subjects.map((name, i) => ({
+-      name,
+-      answers: Object.fromEntries(
+-        Object.keys(PERSONAL_QUESTIONS).map((key) => [key, answers[`p${i}_${key}`]]),
+-      ),
+-    })),
+-  };
++export function readVerdicts(answers) {
++  if (!answers || DIMENSIONS.some((key) => !Number.isFinite(answers[key]?.score)
++    || answers[key].score < 0 || answers[key].score > 3)) {
++    throw new Error('Jev returned incomplete interaction scores');
++  }
++  return Object.fromEntries(DIMENSIONS.map((key) => [key, answers[key]]));
+ }
+diff --git a/js/sample.js b/js/sample.js
+index da8f6c1..f8b9a8f 100644
+--- a/js/sample.js
++++ b/js/sample.js
+@@ -1,19 +1,6 @@
+-export const SAMPLE_CHAT = `[2026-09-18, 19:02:11] Mara: ok team, Leo's birthday dinner. Saturday 8pm, I booked Trattoria Sole for 6. Can everyone confirm by tomorrow?
+-[2026-09-18, 19:03:40] Jonas: 👍
+-[2026-09-18, 19:15:02] Priya: Saturday works!! Should we do a group gift?
+-[2026-09-18, 19:16:45] Mara: Yes. I'll make a list. 20€ each?
+-[2026-09-18, 19:44:30] Tobi: saturday? I thought we said friday. I literally told everyone I'm at my cousin's wedding saturday
+-[2026-09-18, 19:45:12] Mara: Nobody said Friday, Tobi. I asked on Monday and you didn't answer.
+-[2026-09-18, 19:45:59] Tobi: wow ok. nice to know my schedule doesn't matter I guess
+-[2026-09-18, 19:46:20] Priya: Guys it's fine!! We can find a day that works for everyone 😊
+-[2026-09-18, 19:46:48] Jonas: lol
+-[2026-09-18, 19:52:03] Tobi: honestly this always happens. last year I also found out about the hiking trip from instagram. but sure, go ahead without me, it's totally fine, I'm used to it by now
+-[2026-09-18, 19:53:30] Tobi: not that anyone asked but the wedding is actually a big deal for my family, I'm giving a speech and I've been working on it for weeks
+-[2026-09-18, 19:54:01] Mara: Tobi, can you do Sunday lunch instead? Yes or no.
+-[2026-09-18, 20:10:44] Tobi: I'll see
+-[2026-09-18, 20:11:05] Mara: Jonas, are you in for the gift?
+-[2026-09-18, 21:30:00] Jonas: 🙃
+-[2026-09-18, 21:31:12] Priya: Maybe we just do both? Dinner Saturday and a little brunch Sunday so Tobi can come too? I can bake a cake!! 🎂
+-[2026-09-18, 21:33:40] Mara: Fine. Saturday stays. Sunday brunch is optional. Gift list is pinned, pay me by Thursday please.
+-[2026-09-18, 21:34:02] Tobi: "optional" 🙂
+-[2026-09-18, 21:34:30] Jonas: can someone tell me what's happening`;
++export const SAMPLE_CHAT = `[2026-09-18, 19:02:11] Mara: Hast du Zeit, am Samstag zusammen zu kochen?
++[2026-09-18, 19:03:40] Leo: Ja, gerne! Was schwebt dir vor?
++[2026-09-18, 19:15:02] Mara: Vielleicht Pasta. Kannst du Tomaten mitbringen?
++[2026-09-18, 19:16:45] Leo: Klar, ich hole auch Basilikum.
++[2026-09-18, 19:44:30] Mara: Super, ich kümmere mich um den Rest. 19 Uhr?
++[2026-09-18, 19:45:12] Leo: Passt. Freue mich!`;
+diff --git a/js/verdict.js b/js/verdict.js
+index d4640e1..37d60d2 100644
+--- a/js/verdict.js
++++ b/js/verdict.js
+@@ -1,63 +1,16 @@
+-// Jev answers narrow questions; the overall judgment is combined here, in
+-// code, so the weights stay ours to tune.
+-const WEIGHTS = {
+-  passive_aggression: 0.35,
+-  drama: 0.3,
+-  main_character: 0.25,
+-  started_it: 0.1,
+-};
+-
+-/** A Score answer as a fraction of its scale, 0–1. */
+-export function normalisedScore(answer) {
+-  const topLevel = Object.keys(answer.legend).length - 1;
+-  return answer.score / topLevel;
+-}
+-
+-/** Returns 0–100. */
+-export function menaceIndex(answers) {
+-  const total =
+-    WEIGHTS.passive_aggression * normalisedScore(answers.passive_aggression) +
+-    WEIGHTS.drama * normalisedScore(answers.drama) +
+-    WEIGHTS.main_character * normalisedScore(answers.main_character) +
+-    WEIGHTS.started_it * answers.started_it.noul;
+-  return Math.round(total * 100);
+-}
+-
+-/** An entertainment score, not a probability about a person. */
+-export function flagScores(index) {
+-  const red = Math.max(0, Math.min(100, Math.round(index)));
+-  return { red, green: 100 - red };
+-}
+-
+-export function severityOf(index) {
+-  if (index < 34) return 'low';
+-  if (index < 67) return 'medium';
+-  return 'high';
+-}
+-
+-// Below this, a runner-up type is a guess rather than a reading of the chat.
+-const PLAUSIBLE_TYPE = 0.15;
+-
+-/**
+- * Picks each person's type from Jev's probabilities. Everyday chats leave most
+- * people only weakly typed, and they would all land on the same catch-all
+- * type. So when a type is taken, the person who fits it best keeps it and the
+- * others move to their most likely free type, if Jev finds it plausible.
+- * Returns `{ type, probability }` per person, in the given order.
+- */
+-export function assignTypes(typeAnswers) {
+-  const ranked = typeAnswers.map((answer) =>
+-    Object.entries(answer.probabilities).sort(([, a], [, b]) => b - a),
++// These four scores describe the submitted excerpt. No forced suspect, game
++// percentage or inference about a real relationship/personality is produced.
++export function interactionLabel(answers, { raw = false } = {}) {
++  if (raw) return 'uncertain'; // We could not verify two authors in raw text.
++  const valid = ['warmth', 'reciprocity', 'tension', 'clarity'].every((key) =>
++    Number.isFinite(answers?.[key]?.score) && answers[key].score >= 0 && answers[key].score <= 3,
+   );
+-  const byConfidence = ranked.map((_, i) => i).sort((a, b) => ranked[b][0][1] - ranked[a][0][1]);
+-  const taken = new Set();
+-  const assigned = [];
++  if (!valid) return 'uncertain';
++  if (answers.tension.score >= 2 && answers.warmth.score <= 1) return 'strained';
++  if (answers.warmth.score >= 2 && answers.reciprocity.score >= 2 && answers.tension.score <= 1) return 'friendly';
++  return 'mixed';
++}
+ 
+-  for (const i of byConfidence) {
+-    const [type, probability] =
+-      ranked[i].find(([t, p]) => !taken.has(t) && p >= PLAUSIBLE_TYPE) ?? ranked[i][0];
+-    taken.add(type);
+-    assigned[i] = { type, probability };
+-  }
+-  return assigned;
++export function normalisedScore(answer) {
++  return Math.max(0, Math.min(1, answer.score / (Object.keys(answer.legend ?? {}).length - 1 || 3)));
+ }
+diff --git a/scripts/preview-server.mjs b/scripts/preview-server.mjs
+index 80c2c59..a2cbdf7 100644
+--- a/scripts/preview-server.mjs
++++ b/scripts/preview-server.mjs
+@@ -14,7 +14,7 @@ const security = {
+   'X-Content-Type-Options': 'nosniff',
+ };
+ 
+-const banner = '<aside style="padding:.7rem 1rem;background:#edf4e8;color:#17281d;font:600 14px system-ui">Lokale Testvorschau · simulierte Jev-Antworten · keine API-Anfrage · Urteile: <strong id="preview-requests">0</strong></aside>';
++const banner = '<aside style="padding:.7rem 1rem;background:#edf4e8;color:#17281d;font:600 14px system-ui">FakeorFriend Testvorschau · simulierte Jev-Antworten · keine API-Anfrage · Auswertungen: <strong id="preview-requests">0</strong></aside>';
+ 
+ async function responseFor(pathname) {
+   if (pathname === '/js/key.js') return { code: 404, data: 'Key unavailable in preview', type: 'text/plain' };
+@@ -59,6 +59,6 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
+   const server = createPreviewServer();
+   server.listen(0, '127.0.0.1', () => {
+     const url = `http://127.0.0.1:${server.address().port}`;
+-    process.stdout.write(`JudgeYou Testvorschau: ${url}\nNur lokal. Keine echten API-Schlüssel oder Jev-Anfragen. Mit Strg+C beenden.\n`);
++    process.stdout.write(`FakeorFriend Testvorschau: ${url}\nNur lokal. Keine echten API-Schlüssel oder Jev-Anfragen. Mit Strg+C beenden.\n`);
+   });
+ }
+diff --git a/test/card.test.js b/test/card.test.js
+index 88a59eb..5745647 100644
+--- a/test/card.test.js
++++ b/test/card.test.js
+@@ -1,61 +1,31 @@
+ import { test } from 'node:test';
+ import assert from 'node:assert/strict';
+ import { shareHighlights } from '../js/card-data.js';
+-import { flagScores } from '../js/verdict.js';
+-
+ globalThis.localStorage = { getItem: () => null, setItem: () => {} };
+ Object.defineProperty(globalThis, 'navigator', { configurable: true, value: { languages: ['de-DE'] } });
+ const { cardPreviewLines, defaultNames, shownCardName } = await import('../js/card.js');
+ 
+-test('share highlights include at most two numeric values with adequate samples', () => {
+-  const counts = {
+-    reply: { median: 12 * 60_000, n: 5 },
+-    textLength: { medianChars: 24, maxChars: 72, n: 8 },
+-    text: 'private chat message',
+-  };
+-  assert.deepEqual(shareHighlights(counts), [
+-    { key: 'reply', median: 12 * 60_000, n: 5 },
+-    { key: 'chars', median: 24, n: 8 },
+-  ]);
+-  assert.deepEqual(shareHighlights({ reply: { median: 42, n: 2 }, textLength: null }), []);
+-  assert.deepEqual(shareHighlights(null), []);
+-});
+-
+-test('green and red play scores are bounded complements', () => {
+-  assert.deepEqual(flagScores(0), { red: 0, green: 100 });
+-  assert.deepEqual(flagScores(43), { red: 43, green: 57 });
+-  assert.deepEqual(flagScores(100), { red: 100, green: 0 });
+-  assert.deepEqual(flagScores(130), { red: 100, green: 0 });
++test('only locally counted highlights with adequate samples are shared', () => {
++  const counts = { reply: { median: 12 * 60_000, n: 5 }, textLength: { medianChars: 24, n: 8 }, text: 'private chat message' };
++  assert.deepEqual(shareHighlights(counts), [ { key: 'reply', median: 12 * 60_000, n: 5 }, { key: 'chars', median: 24, n: 8 } ]);
++  assert.deepEqual(shareHighlights({ reply: { median: 12, n: 2 }, textLength: null }), []);
+ });
+ 
+-test('preview keeps names editable and omits phone numbers, raw text and missing stats', () => {
++test('preview includes exact card content, editable names and no original phone numbers or quotes', () => {
+   const number = '+49 151 12345678';
+-  const defaults = defaultNames(['Ana Very Long Family Name', number]);
++  const names = ['Ana Very Long Family Name', number];
++  const defaults = defaultNames(names);
+   assert.deepEqual(defaults, ['Ana', 'Unbekannte Nummer 1']);
+-  const shown = new Map([['Ana Very Long Family Name', 'Ana'], [number, 'Unbekannte Nummer 1']]);
+-  const people = [
+-    { name: 'Ana Very Long Family Name', flags: flagScores(35), highlights: [
+-      { key: 'reply', median: 12 * 60_000, n: 5 }, { key: 'chars', median: 24, n: 8 },
+-    ] },
+-    { name: number, flags: flagScores(70), highlights: [] },
+-  ];
+-  const lines = cardPreviewLines({ people }, (name) => shownCardName(shown, name));
+-  assert.equal(lines.length, 2);
+-  assert.match(lines[0], /Ana.*12.*n = 5.*24.*n = 8/);
+-  assert.match(lines[1], /Unbekannte Nummer 1/);
+-  assert.doesNotMatch(lines.join(' '), /151|Family|private chat/);
++  const shown = new Map(names.map((name, i) => [name, defaults[i]]));
++  const verdict = { label: 'friendly', people: [
++    { name: names[0], highlights: [{ key: 'reply', median: 12 * 60_000, n: 5 }] },
++    { name: names[1], highlights: [] },
++  ], text: 'private chat message' };
++  const lines = cardPreviewLines(verdict, (name) => shownCardName(shown, name));
++  assert.equal(lines.length, 3);
++  assert.match(lines[1], /Ana.*12.*n = 5/);
++  assert.match(lines[2], /Unbekannte Nummer 1/);
++  assert.doesNotMatch(lines.join(' '), /151|Family|private chat|%/);
+   shown.set(number, '   ');
+   assert.equal(shownCardName(shown, number), 'Anonym');
+ });
+-
+-test('partner preview shows its context without changing group preview or exposing chat text', () => {
+-  const people = [{ name: 'Ana', flags: flagScores(40), highlights: [] },
+-    { name: 'Ben', flags: flagScores(60), highlights: [] }];
+-  const display = (name) => name;
+-  const group = cardPreviewLines({ people, mode: 'group' }, display);
+-  const partner = cardPreviewLines({ people, mode: 'partner' }, display);
+-  assert.equal(group.length, 2);
+-  assert.equal(partner.length, 3);
+-  assert.match(partner[0], /Partnerchat/);
+-  assert.deepEqual(partner.slice(1), group);
+-});
+diff --git a/test/modes.test.js b/test/modes.test.js
+index c017b1a..3e061d8 100644
+--- a/test/modes.test.js
++++ b/test/modes.test.js
+@@ -1,72 +1,59 @@
+ import { test } from 'node:test';
+ import assert from 'node:assert/strict';
+ import { readFile } from 'node:fs/promises';
+-import { buildRequest, canJudgeSubjects, CHAT_MODES, STATE_TOKEN_BUDGET } from '../js/questions.js';
++import { buildRequest, canJudgeSubjects, hasEnoughMessages, DIMENSIONS } from '../js/questions.js';
++import { parseChat, participantsOf } from '../js/parse.js';
+ import en from '../js/locales/en.js';
+ import de from '../js/locales/de.js';
+ import fr from '../js/locales/fr.js';
+ import es from '../js/locales/es.js';
+ 
+-const names = ['Ana', 'Ben'];
+-const chat = [{ author: 'Ana', text: 'hello', at: 1000 }, { author: 'Ben', text: 'hi', at: 2000 }];
++const pair = ['Ana', 'Ben'];
++const sample = ['Ana: Hi Ben!', 'Ben: Hey Ana.', 'Ana: How are you?', 'Ben: Good, thanks. You?', 'Ana: Great!', 'Ben: See you soon!'].join('\n');
+ 
+-test('switching group → partner → group preserves the original group request', () => {
+-  const original = buildRequest(chat, names);
+-  const partner = buildRequest(chat, names, STATE_TOKEN_BUDGET, CHAT_MODES.PARTNER);
+-  const restored = buildRequest(chat, names, STATE_TOKEN_BUDGET, CHAT_MODES.GROUP);
+-
+-  assert.deepEqual(restored, original);
+-  assert.equal(original.body.questions.culprit.instructions, 'Who is most responsible for the tension or drama in this chat?');
+-  assert.match(original.body.questions.p0_type.criteria.mother_hen, /collects money/);
+-  assert.equal(Object.keys(original.body.questions).length, 17);
+-  assert.deepEqual(partner.body.state, original.body.state);
+-  assert.deepEqual(Object.keys(partner.body.questions), Object.keys(original.body.questions));
+-  assert.notDeepEqual(partner.body.questions, original.body.questions);
++test('exactly two speakers; excluding a third one is not enough', () => {
++  const messages = parseChat(sample);
++  assert.deepEqual(participantsOf(messages).map((p) => p.name).sort(), pair);
++  assert.equal(canJudgeSubjects(2, 2), true);
++  assert.equal(canJudgeSubjects(2, 3), false);
++  assert.equal(canJudgeSubjects(1, 2), false);
++  assert.equal(canJudgeSubjects(3, 3), false);
++  assert.throws(() => buildRequest([...messages, { author: 'Cy', text: 'hello' }], pair), /Third speaker/);
++  assert.throws(() => buildRequest(messages, ['Ana', 'Ana']), /two people/i);
+ });
+ 
+-test('partner questions cover all twelve types and all eight questions with two-person wording', () => {
+-  const group = buildRequest(chat, names).body.questions;
+-  const partner = buildRequest(chat, names, STATE_TOKEN_BUDGET, CHAT_MODES.PARTNER).body.questions;
+-  assert.equal(Object.keys(partner.p0_type.criteria).length, 12);
+-  assert.deepEqual(Object.keys(partner.p0_type.criteria), Object.keys(group.p0_type.criteria));
+-  for (const type of Object.keys(group.p0_type.criteria)) {
+-    assert.notEqual(partner.p0_type.criteria[type], group.p0_type.criteria[type], type);
+-  }
+-  for (const key of ['type', 'passive_aggression', 'main_character', 'effort', 'drama', 'started_it', 'leaves_on_read', 'secretly_right']) {
+-    assert.notEqual(partner[`p0_${key}`].instructions, group[`p0_${key}`].instructions, key);
+-    assert.match(partner[`p0_${key}`].instructions, /Ana/);
+-  }
+-  assert.deepEqual(partner.p0_main_character.criteria, en.partnerLevels.main_character);
+-  assert.deepEqual(partner.p0_passive_aggression.criteria, en.levels.passive_aggression);
+-  assert.match(partner.p0_started_it.instructions, /no disagreement/);
+-  assert.match(partner.p0_leaves_on_read.instructions, /does not show.*read/);
++test('too few messages and recent excerpts that exclude a speaker stay ineligible', () => {
++  const messages = parseChat(sample);
++  const whole = buildRequest(messages, pair);
++  assert.equal(hasEnoughMessages(whole.body.state.messages, pair), true);
++  const tail = buildRequest(messages, pair, 80);
++  assert.equal(hasEnoughMessages(tail.body.state.messages, pair), false);
++  assert.equal(hasEnoughMessages([{ from: 'Ana', text: 'hi' }], pair), false);
+ });
+ 
+-test('partner mode requires the entire chat to have exactly two selected speakers', () => {
+-  assert.equal(canJudgeSubjects(CHAT_MODES.GROUP, 2, 5), true);
+-  assert.equal(canJudgeSubjects(CHAT_MODES.PARTNER, 2, 2), true);
+-  assert.equal(canJudgeSubjects(CHAT_MODES.PARTNER, 1, 2), false);
+-  assert.equal(canJudgeSubjects(CHAT_MODES.PARTNER, 2, 3), false);
+-  assert.equal(canJudgeSubjects(CHAT_MODES.PARTNER, 3, 3), false);
+-  assert.throws(() => buildRequest(chat, ['Ana'], STATE_TOKEN_BUDGET, CHAT_MODES.PARTNER), RangeError);
+-  assert.throws(() => buildRequest(chat, names, STATE_TOKEN_BUDGET, 'invalid'), RangeError);
++test('one set of four interaction questions with no forced culprit, types or personality probability', () => {
++  const questions = buildRequest(parseChat(sample), pair).body.questions;
++  assert.deepEqual(Object.keys(questions), DIMENSIONS);
++  for (const question of Object.values(questions)) {
++    assert.equal(question.type, 'score');
++    assert.equal(question.criteria.length, 4);
++  }
++  assert.doesNotMatch(JSON.stringify(questions), /culprit|toxic|personality|diagnos/i);
+ });
+ 
+-test('partner mode also works with raw transcripts, with no extra state fields', () => {
+-  const raw = '22.09.2026 - Ana: hi\n22.09.2026 - Ben: hi';
+-  const group = buildRequest(raw, names).body.state;
+-  const partner = buildRequest(raw, names, STATE_TOKEN_BUDGET, CHAT_MODES.PARTNER).body.state;
+-  assert.deepEqual(partner, group);
+-  assert.deepEqual(Object.keys(partner), ['participants', 'transcript']);
++test('raw text requires exactly two supplied names but cannot verify speakers', () => {
++  const raw = 'Unrecognised format — Ana and Ben talked';
++  assert.deepEqual(buildRequest(raw, pair).body.state, { participants: pair, transcript: raw });
++  assert.throws(() => buildRequest(raw, ['Ana', 'Ben', 'Cy']), RangeError);
+ });
+ 
+-test('mode labels and partner scale exist in all languages; mode is visible before and after judging', async () => {
++test('pair guidance and result copy exist in four languages; no mode selector or group hero', async () => {
+   for (const [code, locale] of Object.entries({ en, de, fr, es })) {
+-    assert.ok(locale.chatModes.group && locale.chatModes.partner, code);
+-    assert.equal(locale.partnerLevels.main_character.length, en.partnerLevels.main_character.length, code);
+-    assert.ok(locale.partnerCaveat && locale.suspectPartner && locale.guiltyPartner, code);
++    assert.ok(locale.pairHint && locale.connection.uncertain && locale.connection.rawNote, code);
++    assert.equal(Object.keys(locale.traits).length, DIMENSIONS.length);
++    assert.ok(locale.levels.warmth.length === 4, code);
+   }
+   const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+-  assert.ok(html.indexOf('id="chat-mode"') < html.indexOf('id="judge"'));
+-  assert.ok(html.indexOf('id="result-mode"') > html.indexOf('id="results"'));
++  assert.doesNotMatch(html, /id="chat-mode"|Prime suspect|group chat|id="suspect-name"/i);
++  assert.match(html, /id="connection-label"/);
+ });
+diff --git a/test/preview.test.js b/test/preview.test.js
+index ccd0117..808af1d 100644
+--- a/test/preview.test.js
++++ b/test/preview.test.js
+@@ -2,7 +2,7 @@ import { test } from 'node:test';
+ import assert from 'node:assert/strict';
+ import { createPreviewServer } from '../scripts/preview-server.mjs';
+ import { askJev, findApiKey } from '../scripts/mock-jev.js';
+-import { buildRequest, CHAT_MODES, STATE_TOKEN_BUDGET } from '../js/questions.js';
++import { buildRequest, STATE_TOKEN_BUDGET } from '../js/questions.js';
+ 
+ test('browser preview serves mock Jev, blocks deployment key and external connections', async () => {
+   const server = createPreviewServer();
+@@ -25,20 +25,15 @@ test('browser preview serves mock Jev, blocks deployment key and external connec
+   }
+ });
+ 
+-test('mock verdict supports both modes and needs no real key or network call', async () => {
++test('mock verdict answers every interaction question without using a key or network', async () => {
+   const network = globalThis.fetch;
+   globalThis.fetch = () => { throw new Error('No network in preview mock'); };
+   try {
+     assert.equal(await findApiKey(), 'sk-or-preview-only');
+-    for (const mode of [CHAT_MODES.GROUP, CHAT_MODES.PARTNER]) {
+-      const request = buildRequest([{ author: 'Ana', text: 'hello' }, { author: 'Ben', text: 'hi' }], ['Ana', 'Ben'], STATE_TOKEN_BUDGET, mode);
+-      const result = await askJev('sk-or-preview-only', request.body);
+-      assert.equal(result.answers.culprit.choice, 'Ana');
+-      assert.ok(result.answers.p1_type.probabilities);
+-      assert.equal(result.answers.p0_main_character.legend[3], '');
+-      assert.equal(result.answers.p0_started_it.noul, 0.4);
+-    }
+-  } finally {
+-    globalThis.fetch = network;
+-  }
++    const request = buildRequest([{ author: 'Ana', text: 'hello' }, { author: 'Ben', text: 'hi' }], ['Ana', 'Ben'], STATE_TOKEN_BUDGET);
++    const result = await askJev('sk-or-preview-only', request.body);
++    assert.deepEqual(Object.keys(result.answers), Object.keys(request.body.questions));
++    assert.equal(result.answers.reciprocity.score, 1);
++    assert.equal(result.answers.tension.legend[3], '');
++  } finally { globalThis.fetch = network; }
+ });
+diff --git a/test/privacy.test.js b/test/privacy.test.js
+index d26f1e8..1e668ed 100644
+--- a/test/privacy.test.js
++++ b/test/privacy.test.js
+@@ -26,7 +26,7 @@ test('unrecognised transcripts send the raw excerpt with names, including raw da
+ });
+ 
+ test('delete personal key removes only its browser storage entry', async () => {
+-  const values = new Map([['judgeyou.language', 'de']]);
++  const values = new Map([['fakeorfriend.language', 'de'], ['judgeyou.openrouterKey', 'sk-or-old-project']]);
+   globalThis.localStorage = {
+     getItem: (key) => values.get(key) ?? null,
+     setItem: (key, value) => values.set(key, value),
+@@ -35,8 +35,9 @@ test('delete personal key removes only its browser storage entry', async () => {
+   rememberApiKey('sk-or-personal');
+   assert.equal(await findApiKey(), 'sk-or-personal');
+   forgetApiKey();
+-  assert.equal(values.has('judgeyou.openrouterKey'), false);
+-  assert.equal(values.get('judgeyou.language'), 'de');
++  assert.equal(values.has('fakeorfriend.openrouterKey'), false);
++  assert.equal(values.get('judgeyou.openrouterKey'), 'sk-or-old-project');
++  assert.equal(values.get('fakeorfriend.language'), 'de');
+ });
+ 
+ test('the raw disclosure and personal key deletion are visible around the judge action', async () => {
+diff --git a/test/questions.test.js b/test/questions.test.js
+index 69e0528..ab298a7 100644
+--- a/test/questions.test.js
++++ b/test/questions.test.js
+@@ -5,18 +5,11 @@ import { buildRequest, readVerdicts, STATE_TOKEN_BUDGET } from '../js/questions.
+ // Measured: one Jev token is ~2.06 UTF-8 bytes of state in any language.
+ const stateTokens = (body) => new TextEncoder().encode(JSON.stringify(body.state)).length / 2.06;
+ 
+-test('answers for each subject come back to the right person', () => {
+-  const subjects = ['Ana', 'Ben'];
+-  const { body } = buildRequest([{ author: 'Ana', text: 'hi' }], subjects);
+-
+-  // Answer every question with its own key, so any mix-up is visible.
+-  const answers = Object.fromEntries(Object.keys(body.questions).map((key) => [key, key]));
+-  const { culprit, people } = readVerdicts(answers, subjects);
+-
+-  assert.equal(culprit, 'culprit');
+-  assert.equal(people[1].name, 'Ben');
+-  assert.equal(people[1].answers.drama, 'p1_drama');
+-  assert.match(body.questions.p1_drama.instructions, /Ben/);
++test('all interaction answers map to their own question', () => {
++  const { body } = buildRequest([{ author: 'Ana', text: 'hi' }], ['Ana', 'Ben']);
++  const answers = Object.fromEntries(Object.keys(body.questions).map((key) => [key, { score: 1 }]));
++  assert.deepEqual(readVerdicts(answers), answers);
++  assert.throws(() => readVerdicts({ warmth: { score: 2 } }), /incomplete/);
+ });
+ 
+ test('parsed timestamp and other local metadata are excluded from the Jev state', () => {
+@@ -28,7 +21,7 @@ test('parsed timestamp and other local metadata are excluded from the Jev state'
+ 
+ test('keeps only the newest messages when the chat is too long', () => {
+   const longText = 'x'.repeat(10_000);
+-  const messages = Array.from({ length: 10 }, (_, i) => ({ author: `P${i}`, text: longText }));
++  const messages = Array.from({ length: 10 }, (_, i) => ({ author: i % 2 ? 'P9' : 'P8', text: longText }));
+   const { body, judgedCount } = buildRequest(messages, ['P8', 'P9']);
+ 
+   assert.ok(judgedCount < messages.length);
+diff --git a/test/verdict.test.js b/test/verdict.test.js
+index 48ea141..b11e9af 100644
+--- a/test/verdict.test.js
++++ b/test/verdict.test.js
+@@ -1,26 +1,18 @@
+ import { test } from 'node:test';
+ import assert from 'node:assert/strict';
+-import { assignTypes } from '../js/verdict.js';
+-
+-const answer = (probabilities) => ({ probabilities });
+-
+-test('weakly typed people move to a plausible free type instead of sharing', () => {
+-  const types = assignTypes([
+-    answer({ mother_hen: 0.47, giga_chad: 0.23, npc: 0.22 }),
+-    answer({ mother_hen: 1.0, npc: 0 }),
+-    answer({ mother_hen: 0.36, npc: 0.39, giga_chad: 0.12 }),
+-  ]);
+-  assert.deepEqual(
+-    types.map((t) => t.type),
+-    ['giga_chad', 'mother_hen', 'npc'],
+-  );
+-  assert.equal(types[0].probability, 0.23);
++import { interactionLabel } from '../js/verdict.js';
++const sample = (warmth, reciprocity, tension, clarity = 2) => Object.fromEntries(
++  Object.entries({ warmth, reciprocity, tension, clarity }).map(([key, score]) => [key, { score }]),
++);
++test('peaceful chat gets no forced suspect or conflict', () => {
++  assert.equal(interactionLabel(sample(3, 3, 0)), 'friendly');
++  assert.equal(interactionLabel(sample(0, 2, 0)), 'mixed');
+ });
+-
+-test('confident verdicts are kept even when they repeat', () => {
+-  const types = assignTypes([answer({ sloth: 0.95, npc: 0.05 }), answer({ sloth: 0.9, cat: 0.1 })]);
+-  assert.deepEqual(
+-    types.map((t) => t.type),
+-    ['sloth', 'sloth'],
+-  );
++test('explicit repeated friction may be described in this excerpt only', () => {
++  assert.equal(interactionLabel(sample(1, 1, 2)), 'strained');
++  assert.equal(interactionLabel(sample(2, 2, 2)), 'mixed');
++});
++test('raw transcripts and missing scores receive no overall label', () => {
++  assert.equal(interactionLabel(sample(3, 3, 0), { raw: true }), 'uncertain');
++  assert.equal(interactionLabel({ warmth: { score: 3 } }), 'uncertain');
+ });

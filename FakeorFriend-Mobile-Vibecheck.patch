@@ -1,0 +1,552 @@
+diff --git a/README.md b/README.md
+index 2671afd..0466dfb 100644
+--- a/README.md
++++ b/README.md
+@@ -9,6 +9,8 @@ Paste a chat or open a WhatsApp (including ZIP), Telegram, Messenger, Instagram,
+ Discord, Slack, Teams, iMessage, IRC, LINE, KakaoTalk, CSV or plain transcript.
+ Existing import parsers remain in place. With a recognised format the browser
+ requires exactly two recognised speakers with at least three text messages each.
++A 40-message, completely fictional sample chat is built in; it includes
++different message lengths and reply gaps, and fits in a single Jev request.
+ A three-person chat cannot be made eligible by hiding or excluding one person.
+ A long chat can be truncated to the newest messages that fit Jev's state
+ limit; if that excerpt has fewer than three messages from either speaker, no
+@@ -41,6 +43,14 @@ still be wrong and no passages or quotes are displayed as proof.
+ 
+ ## Playful presentation and research basis
+ 
++The mobile-first interface presents three stages: choose a chat, explore the
++excerpt, then preview a share card. Its dark plum surfaces, pale blue panels
++and lime actions use text labels alongside color. Each of the four ordinal
++scales has a short explanation and a spoken label with its 0–3 level. The
++original card flow exports one 1080×1350 PNG; edited names and numeric local
++highlights remain visible in its preview before sharing. This presentation
++does not change the four Jev questions or their scoring rules.
++
+ The result shows an original two-chat-bubble illustration for each of the
+ four possible labels, a two-axis map of Jev's **warmth** (horizontal, 0–3)
+ and **visible tension** (vertical, 0–3), and a local bar chart of each
+diff --git a/css/style.css b/css/style.css
+index 3fd2dc1..795265e 100644
+--- a/css/style.css
++++ b/css/style.css
+@@ -1096,3 +1096,97 @@ button {
+   .vibe-map { margin-inline: 1.9rem; }
+   .axis-label { white-space: normal; max-width: 50%; }
+ }
++
++/* FakeorFriend: a direct three-stage flow with readable dark surfaces. */
++body { overflow-x: clip; }
++main, .masthead, .colophon { width: min(1100px, calc(100% - 2rem)); }
++.masthead { align-items: center; border-bottom: 1px solid var(--rule); }
++.masthead strong { font: 800 1.2rem var(--font-display); color: var(--accent); }
++.masthead span:nth-child(3) { display: none; }
++.masthead select { padding: .55rem .7rem; border-radius: .7rem; }
++.hero { grid-template-columns: minmax(0, 1.3fr) minmax(15rem, .7fr); gap: 1.5rem; padding: clamp(3rem, 7vw, 6rem) 0 2rem; align-items: center; }
++h1 { font: 800 clamp(3.4rem, 8vw, 6.6rem)/.98 var(--font-display); letter-spacing: -.06em; overflow-wrap: anywhere; }
++h1 em { color: var(--accent); font-style: normal; }
++.hero-aside { display: grid; justify-items: center; gap: 1.25rem; min-width: 0; }
++.lede { padding: 0; border: 0; font-size: clamp(1rem, 1.8vw, 1.2rem); color: var(--ink-soft); }
++.hero-art { position: relative; isolation: isolate; width: min(100%, 16rem); aspect-ratio: 1.8; transform: rotate(-5deg); }
++.hero-art span { position: absolute; display: grid; place-items: center; font: 800 3rem var(--font-display); color: var(--paper); box-shadow: 0 12px 35px #140a18a0; }
++.hero-art .bubble-one { left: 4%; top: 5%; width: 57%; height: 63%; border-radius: 1.5rem 1.5rem 1.5rem .3rem; background: var(--accent-blue); }
++.hero-art .bubble-two { right: 4%; bottom: 2%; width: 55%; height: 63%; border-radius: 1.5rem 1.5rem .3rem 1.5rem; background: var(--accent); transform: rotate(11deg); }
++.hero-art .art-orbit { display: none; }
++.step-label { display: block; margin: 0 0 .65rem; color: var(--accent); font: 700 .78rem var(--font-mono); letter-spacing: .07em; text-transform: uppercase; }
++.intake { grid-template-columns: minmax(0, 1fr); gap: 1rem; margin: 1.5rem 0 0; padding: clamp(1.1rem, 4vw, 2rem); border: 1px solid var(--rule); border-radius: 1.6rem; background: var(--paper-raised); box-shadow: 0 24px 70px #160b1955; }
++.intake-label { display: flex; flex-wrap: wrap; align-items: baseline; gap: .3rem 1rem; }
++.intake-label .step-label { flex-basis: 100%; }
++.intake-label b { font: 800 1.8rem var(--font-display); letter-spacing: -.03em; }
++textarea, input, .masthead select { border: 1px solid var(--rule); border-radius: .8rem; }
++textarea { min-height: 13rem; font: .9rem/1.6 var(--font-mono); }
++.chip { border: 1px solid var(--rule); background: #473046; color: var(--ink); }
++.primary, .secondary, .names-form button, .key-form button { min-height: 2.9rem; border-radius: .8rem; }
++.primary { border-color: var(--accent); background: var(--accent); color: #211622; font-weight: 800; }
++.primary:hover:not(:disabled) { background: #f6ffa4; border-color: #f6ffa4; }
++.primary:disabled { opacity: .55; }
++.secondary { border-color: var(--rule); background: var(--accent-blue); color: #211622; font-weight: 700; }
++.secondary:hover { color: #211622; background: #eff9ff; }
++.link { color: var(--accent-blue); text-decoration-color: var(--accent-blue); }
++.link:hover { color: var(--accent); }
++.intake-bar { gap: .75rem; }
++.intake-bar .primary { margin-left: auto; }
++.data-notice { border-left: 3px solid var(--accent-blue); border-radius: .5rem; background: #2a1b2b; }
++.error { color: var(--accent-coral); }
++.results { margin-top: 3rem; }
++.results > .step-label { margin-bottom: 1rem; }
++.connection-summary { border: 1px solid var(--rule); border-radius: 1.6rem; background: linear-gradient(125deg, #433047, #302238 62%, #263241); box-shadow: 0 24px 70px #160b1944; }
++.connection-summary h2 { font: 800 clamp(2rem, 5vw, 3.8rem)/1.08 var(--font-display); letter-spacing: -.04em; }
++.connection-summary .measures { margin-bottom: 0; }
++.scale { min-width: 0; padding: 1rem; border: 1px solid var(--rule); border-radius: 1rem; background: #2d2032; }
++.scale-top { gap: .5rem; font-weight: 700; }
++.scale .track { height: 1rem; border-radius: 999px; overflow: hidden; background: repeating-linear-gradient(90deg, transparent 0 calc(25% - 2px), #2d2032 calc(25% - 2px) 25%), var(--rule-soft); }
++.scale .fill { border-radius: inherit; background: var(--accent); }
++.scale:nth-child(even) .fill { background: var(--accent-blue); }
++.scale-level { margin-top: .55rem; font-weight: 700; color: var(--ink); }
++.scale-explainer { margin: .3rem 0 0; font-size: .85rem; color: var(--ink-soft); }
++.vibe-panel, .plate, .method-note, .card-dialog { border: 1px solid var(--rule); border-radius: 1.2rem; background: var(--paper-raised); }
++.vibe-panel h3 { font-family: var(--font-display); }
++.vibe-map { background: linear-gradient(90deg, transparent calc(50% - 1px), #52445a 50%, transparent calc(50% + 1px)), linear-gradient(0deg, transparent calc(50% - 1px), #52445a 50%, transparent calc(50% + 1px)), linear-gradient(135deg, #655270, #5a465c 48%, #476879); border: 1px solid var(--rule); border-radius: 1rem; }
++.map-dot { border-color: var(--paper); background: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
++.balance-track { background: var(--rule-soft); }
++.balance-track span { background: var(--accent); }
++.balance-row:nth-child(2) .balance-track span { background: var(--accent-blue); }
++.idea-panel { background: linear-gradient(110deg, #354356, #413048); }
++.idea-panel p { color: var(--ink); }
++.plates { gap: 1rem; border: 0; }
++.plate { padding: 1.3rem; }
++.record { padding-left: 1rem; }
++.results-foot { align-items: end; padding-block: 1rem; }
++.share-action { display: grid; gap: .2rem; }
++.share-action .step-label { margin: 0; }
++.card-dialog canvas { border-radius: .8rem; border-color: var(--rule); }
++.card-dialog::backdrop { background: #110a15d9; }
++.card-dialog .primary { width: 100%; }
++.colophon { border-color: var(--rule); }
++textarea:focus-visible, input:focus-visible, button:focus-visible, .track:focus-visible, select:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
++@media (max-width: 820px) { .hero { grid-template-columns: 1fr; } .hero-aside { grid-template-columns: minmax(0, 1fr) 11rem; } }
++@media (max-width: 540px) {
++  main, .masthead, .colophon { width: min(100% - 1.25rem, 1100px); }
++  .hero { padding: 2.5rem .35rem 1rem; }
++  h1 { font-size: clamp(2.75rem, 11vw, 4rem); }
++  .hero-aside { grid-template-columns: minmax(0, 1fr) 6rem; }
++  .hero-art { align-self: start; margin-top: 1rem; }
++  .hero-art span { font-size: 1.35rem; border-radius: .8rem !important; }
++  .intake { margin-top: 1rem; padding: 1rem; }
++  .intake-bar .primary { flex-basis: 100%; order: 1; margin: 0; }
++  .intake-bar .secondary { flex: 1; justify-content: center; }
++  .intake-bar .link { flex: 1; }
++  .names-form, .key-form { grid-template-columns: 1fr; }
++  .vibe-hero { grid-template-columns: minmax(0, 1fr) 6rem; }
++  .vibe-hero img { width: 6rem; }
++  .connection-summary { padding: 1.1rem; }
++  .connection-summary .measures { grid-template-columns: 1fr; }
++  .vibe-map { margin: 2.1rem 2rem 2.5rem; }
++  .results-foot { align-items: stretch; }
++  .share-action { width: 100%; }
++  .share-action button { width: 100%; }
++  .card-dialog { width: calc(100% - 1rem); padding: 1rem; }
++}
++@media (max-width: 360px) { .hero-aside { grid-template-columns: 1fr; } .hero-art { display: none; } .counted { grid-template-columns: 1fr; } }
+diff --git a/css/theme.css b/css/theme.css
+index 5843413..806af8f 100644
+--- a/css/theme.css
++++ b/css/theme.css
+@@ -1,21 +1,22 @@
+-/* The only place raw color values live. A printed field guide: paper, ink,
+-   and one vermilion accent reserved for stamps and emphasis. */
++/* A dark canvas with clear type and restrained, high-contrast accents. */
+ :root {
+-  color-scheme: light;
++  color-scheme: dark;
+ 
+-  --paper: #f3ede0;
+-  --paper-raised: #f8f4ea;
+-  --ink: #1d1b17;
+-  --ink-soft: #57524a;
+-  --ink-muted: #857e71;
+-  --rule: #cfc6b3;
+-  --rule-soft: #e2dbcb;
+-  --accent: #c2381c;
++  --paper: #251823;
++  --paper-raised: #35212f;
++  --ink: #faf3f7;
++  --ink-soft: #e6d6e0;
++  --ink-muted: #c9b4c5;
++  --rule: #78586d;
++  --rule-soft: #594052;
++  --accent: #e9f056;
++  --accent-blue: #d7efff;
++  --accent-coral: #ffb9a3;
+ 
+   /* Fine paper grain, tinted by whatever sits beneath it. */
+-  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.1 0 0 0 0 0.08 0 0 0 0 0.05 0 0 0 0.07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
++  --grain: linear-gradient(145deg, #352133 0%, transparent 46%, #231a2c 100%);
+ 
+-  --font-display: 'Fraunces', Georgia, serif;
++  --font-display: 'IBM Plex Sans', system-ui, sans-serif;
+   --font-body: 'IBM Plex Sans', system-ui, sans-serif;
+   --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+ }
+diff --git a/index.html b/index.html
+index b88fee9..43aa245 100644
+--- a/index.html
++++ b/index.html
+@@ -26,11 +26,13 @@
+     <main>
+       <section class="hero">
+         <h1 data-i18n-html="hero">How is your <em>connection</em>?</h1>
+-        <p class="lede" data-i18n="lede"></p>
++        <div class="hero-aside"><p class="lede" data-i18n="lede"></p>
++          <div class="hero-art" aria-hidden="true"><span class="bubble-one">✦</span><span class="bubble-two">↗</span><span class="art-orbit"></span></div>
++        </div>
+       </section>
+ 
+       <section class="intake">
+-        <div class="intake-label"><b data-i18n="exhibit">Your chat</b><span data-i18n="evidence">Two people</span></div>
++        <div class="intake-label"><span class="step-label" data-i18n="stageInput"></span><b data-i18n="exhibit">Your chat</b><span data-i18n="evidence">Two people</span></div>
+         <div>
+           <p id="pair-hint" class="partner-caveat" data-i18n="pairHint"></p>
+           <textarea
+@@ -83,6 +85,7 @@
+       </section>
+ 
+       <section id="results" class="results" aria-live="polite" hidden>
++        <p class="step-label" data-i18n="stageResult"></p>
+         <article class="connection-summary">
+           <div class="vibe-hero">
+             <div>
+@@ -128,7 +131,7 @@
+         <div id="plates" class="plates"></div>
+         <div class="results-foot">
+           <p id="footnote" class="footnote"></p>
+-          <button id="share" class="primary" type="button" data-i18n="share"></button>
++          <div class="share-action"><span class="step-label" data-i18n="stageShare"></span><button id="share" class="primary" type="button" data-i18n="share"></button></div>
+         </div>
+       </section>
+     </main>
+diff --git a/js/app.js b/js/app.js
+index 3e6839d..6ebb1c8 100644
+--- a/js/app.js
++++ b/js/app.js
+@@ -137,6 +137,10 @@ function scale(key, answer) {
+   meter.querySelector('.scale-confidence').textContent = '';
+   meter.querySelector('.fill').dataset.width = percent(normalisedScore(answer));
+   meter.querySelector('.scale-level').textContent = levels[Math.max(0, Math.min(3, Math.round(answer.score)))];
++  const track = meter.querySelector('.track');
++  track.setAttribute('role', 'img');
++  track.setAttribute('aria-label', t('scaleAccessible', { trait: t(`traits.${key}`), score: answer.score, level: meter.querySelector('.scale-level').textContent }));
++  meter.append(Object.assign(document.createElement('p'), { className: 'scale-explainer', textContent: t(`traitExplainers.${key}`) }));
+   return meter;
+ }
+ function plate(name, stats, people) {
+diff --git a/js/card.js b/js/card.js
+index b236a55..33bcbd4 100644
+--- a/js/card.js
++++ b/js/card.js
+@@ -28,51 +28,54 @@ async function asFile(canvas) {
+ function drawCard(canvas, verdict, shownName) {
+   const ctx = canvas.getContext('2d');
+   canvas.width = 1080;
+-  canvas.height = 1020;
+-  ctx.fillStyle = '#f8f4e9';
+-  ctx.fillRect(0, 0, 1080, 1020);
+-  const paint = (value, x, y, size, color = '#252421', max = 900) => {
+-    ctx.font = `600 ${size}px system-ui, sans-serif`;
++  canvas.height = 1350;
++  ctx.fillStyle = '#251823';
++  ctx.fillRect(0, 0, 1080, 1350);
++  const paint = (value, x, y, size, color = '#faf3f7', max = 900, weight = 700) => {
++    ctx.font = `${weight} ${size}px system-ui, sans-serif`;
+     ctx.fillStyle = color;
+     ctx.textAlign = 'left';
+     ctx.fillText(value, x, y, max);
+   };
+-  paint('FakeorFriend', 72, 100, 50);
+-  ctx.fillStyle = '#272421'; ctx.fillRect(72, 130, 936, 3);
+-  paint(t('summaryTitle'), 72, 205, 28, '#67635d');
+-  paint(t(`connection.${verdict.label}`), 72, 280, 65, '#252421', 680);
+-  paint(t('connection.cardNote'), 72, 325, 22, '#67635d');
+-  // Draw the two chat characters into the same PNG as the names and numbers.
+-  // No image fetch or additional sharing path is needed.
++  // The visible card and PNG are drawn from the same curated names, label and
++  // local numeric highlights. No transcript or external images are loaded.
++  const gradient = ctx.createLinearGradient(0, 0, 1080, 930);
++  gradient.addColorStop(0, '#493052'); gradient.addColorStop(1, '#263746');
++  ctx.fillStyle = gradient; ctx.beginPath(); ctx.roundRect(48, 46, 984, 1250, 48); ctx.fill();
++  paint('FakeorFriend', 94, 133, 46, '#e9f056');
++  ctx.fillStyle = '#8b728d'; ctx.fillRect(94, 166, 892, 2);
++  paint(t('summaryTitle'), 94, 228, 27, '#e1d2e3');
++  paint(t(`connection.${verdict.label}`), 94, 326, 61, '#faf3f7', 875, 800);
++  paint(t('connection.cardNote'), 94, 375, 24, '#e1d2e3', 880, 500);
+   const colors = {
+-    friendly: ['#a6efc0', '#ffedb3'], mixed: ['#cbb5ff', '#fff1b9'],
+-    strained: ['#ffd0a5', '#c6d4ff'], uncertain: ['#e3e6ed', '#f3ebd9'],
++    friendly: ['#e9f056', '#d7efff'], mixed: ['#d7efff', '#e9f056'],
++    strained: ['#ffb9a3', '#d7efff'], uncertain: ['#d7efff', '#c9b4c5'],
+   };
+   const [first, second] = colors[verdict.label] ?? colors.uncertain;
+   ctx.fillStyle = first;
+-  ctx.beginPath(); ctx.roundRect(790, 165, 130, 100, 28); ctx.fill();
++  ctx.beginPath(); ctx.roundRect(155, 440, 340, 210, 55); ctx.fill();
+   ctx.fillStyle = second;
+-  ctx.beginPath(); ctx.roundRect(855, 230, 125, 98, 28); ctx.fill();
+-  ctx.fillStyle = '#252421';
+-  for (const [x, y] of [[822, 207], [873, 207], [887, 269], [937, 269]]) {
+-    ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fill();
++  ctx.beginPath(); ctx.roundRect(575, 490, 340, 210, 55); ctx.fill();
++  ctx.fillStyle = '#251823';
++  for (const [x, y] of [[255, 520], [373, 520], [675, 565], [793, 565]]) {
++    ctx.beginPath(); ctx.arc(x, y, 12, 0, Math.PI * 2); ctx.fill();
+   }
+-  ctx.lineWidth = 4; ctx.strokeStyle = '#252421';
+-  for (const [x, y] of [[822, 231], [887, 292]]) {
++  ctx.lineWidth = 9; ctx.strokeStyle = '#251823';
++  for (const [x, y] of [[245, 565], [665, 610]]) {
+     ctx.beginPath();
+-    if (verdict.label === 'strained') { ctx.moveTo(x, y + 7); ctx.lineTo(x + 54, y + 7); }
+-    else { ctx.moveTo(x, y); ctx.quadraticCurveTo(x + 27, y + 24, x + 54, y); }
++    if (verdict.label === 'strained') { ctx.moveTo(x, y + 16); ctx.lineTo(x + 140, y + 16); }
++    else { ctx.moveTo(x, y); ctx.quadraticCurveTo(x + 70, y + 60, x + 140, y); }
+     ctx.stroke();
+   }
+   verdict.people.forEach((person, i) => {
+-    const y = 430 + i * 235;
+-    ctx.fillStyle = '#a8a39a'; ctx.fillRect(72, y - 30, 936, 1);
+-    paint(shownName(person.name), 72, y + 25, 48);
++    const y = 790 + i * 195;
++    ctx.fillStyle = '#867589'; ctx.fillRect(94, y - 36, 892, 2);
++    paint(shownName(person.name), 94, y + 22, 51, '#faf3f7', 890, 800);
+     person.highlights.slice(0, 2).forEach((highlight, j) =>
+-      paint(highlightLabel(highlight), 72, y + 77 + 35 * j, 25, '#67635d'));
++      paint(highlightLabel(highlight), 94, y + 65 + 34 * j, 24, '#e1d2e3', 890, 500));
+   });
+-  ctx.fillStyle = '#272421'; ctx.fillRect(72, 918, 936, 3);
+-  paint(t('cardFooter'), 72, 965, 21, '#67635d');
++  ctx.fillStyle = '#867589'; ctx.fillRect(94, 1186, 892, 2);
++  paint(t('cardFooter'), 94, 1230, 23, '#e1d2e3', 880, 500);
+ }
+ export function openCard(verdict) {
+   const dialog = $('card-dialog');
+diff --git a/js/locales/de.js b/js/locales/de.js
+index 9d04b0e..95521c9 100644
+--- a/js/locales/de.js
++++ b/js/locales/de.js
+@@ -4,14 +4,19 @@ export default {
+   "volume": "Bd. I · 2026",
+   "language": "Sprache",
+   "hero": "Wie läuft’s <em>zwischen euch</em>?",
+-  "lede": "Euer Chat, eure Dynamik: vier kleine Vibe-Skalen, Zahlen zum Hin und Her und eine Gesprächsidee. Spielerisch, mit psychologischen Konzepten als Inspiration – kein Test für eure Beziehung.",
++  "lede": "Was geht zwischen euch? Checkt vier Seiten eures Chat-Ausschnitts, schaut auf echte Chat-Zahlen und nehmt eine Gesprächsidee mit. Ein spielerischer Blick, keine Diagnose.",
++  "stageInput": "01 / Chat auswählen",
++  "stageResult": "02 / Euer Vibe auf einen Blick",
++  "stageShare": "03 / Karte ansehen & teilen",
++  "scaleAccessible": "{trait}: Stufe {score} von 3 – {level}.",
++  "traitExplainers": { "warmth": "Wie oft zeigen beide freundliche oder unterstützende Reaktionen?", "reciprocity": "Greifen beide auf, was die andere Person schreibt?", "tension": "Gibt es sichtbare Reibung im Ausschnitt?", "clarity": "Ist aus dem Text erkennbar, was jeweils gemeint ist?" },
+   "exhibit": "Euer Chat",
+   "evidence": "Zwei Personen",
+   "chatLabel": "Chatverlauf",
+   "chatPlaceholder": "Chat einfügen oder Export öffnen: WhatsApp (auch als ZIP), Telegram, Discord, Slack, Messenger, iMessage, CSV…\n\nOder einfach abtippen:\nAna: kommst du heute?\nBen: k",
+   "openFile": "Export öffnen",
+-  "sample": "Beispielchat laden",
+-  "judge": "Chat ansehen",
++  "sample": "Erfundenen Chat testen",
++  "judge": "Vibe-Check starten",
+   "pairHint": "Nur Chats mit genau zwei Personen und mindestens 3 Textnachrichten je Person. Ein Gruppenchat bleibt ausgeschlossen, auch wenn du nur zwei auswählst.",
+   "namesLabel": "Sprechende nicht erkannt. Gib genau zwei Namen ein:",
+   "namesPlaceholder": "Zwei Namen, durch Komma getrennt",
+@@ -25,7 +30,7 @@ export default {
+   "clearKey": "Gespeicherten eigenen Schlüssel löschen",
+   "keyCleared": "Dein gespeicherter Schlüssel wurde aus diesem Browser entfernt. Ein bereitgestellter Schlüssel in js/key.js bleibt, falls vorhanden, nutzbar.",
+   "summaryTitle": "Der Austausch in diesem Ausschnitt",
+-  "share": "Ergebnis teilen",
++  "share": "Karte ansehen",
+   "colophon": "Eine spielerische Einordnung des eingereichten Chatabschnitts von Jev (TypeSafe) über OpenRouter. Keine Diagnose und kein Urteil über eure Beziehung.",
+   "cardNames": "Namen auf der Karte",
+   "cardShare": "Teilen",
+diff --git a/js/locales/en.js b/js/locales/en.js
+index 1f67fcc..40ca3a5 100644
+--- a/js/locales/en.js
++++ b/js/locales/en.js
+@@ -4,14 +4,19 @@ export default {
+   "volume": "Vol. I · 2026",
+   "language": "Language",
+   "hero": "How is your <em>connection</em>?",
+-  "lede": "Your chat, your dynamic: four small vibe scales, a look at the back-and-forth and one conversation idea. Playful and inspired by psychology, but not a relationship test.",
++  "lede": "What's the vibe between you? Explore four sides of your chat excerpt, see the real chat numbers and take away one conversation idea. A playful look, not a diagnosis.",
++  "stageInput": "01 / Pick a chat",
++  "stageResult": "02 / Your vibe at a glance",
++  "stageShare": "03 / Preview & share your card",
++  "scaleAccessible": "{trait}: level {score} out of 3 – {level}.",
++  "traitExplainers": { "warmth": "Do both people respond with friendliness or support?", "reciprocity": "Do both build on what the other person says?", "tension": "Is there visible friction in this excerpt?", "clarity": "Is it clear from the text what each person means?" },
+   "exhibit": "Your chat",
+   "evidence": "Two people",
+   "chatLabel": "Chat transcript",
+   "chatPlaceholder": "Paste a chat, or open an export: WhatsApp (also as ZIP), Telegram, Discord, Slack, Messenger, iMessage, CSV…\n\nOr just write it out:\nAna: are you coming tonight?\nBen: k",
+   "openFile": "Open an export",
+-  "sample": "Try a sample chat",
+-  "judge": "Explore this chat",
++  "sample": "Try a fictional chat",
++  "judge": "Start vibe check",
+   "pairHint": "Use a chat with exactly two people and at least 3 text messages each. Group chats cannot be analysed, even if you select only two.",
+   "namesLabel": "Couldn’t recognise the speakers. Enter exactly two names:",
+   "namesPlaceholder": "Two names, separated by a comma",
+@@ -25,7 +30,7 @@ export default {
+   "clearKey": "Delete saved personal key",
+   "keyCleared": "Saved personal key removed from this browser. A deployment key in js/key.js remains available if configured.",
+   "summaryTitle": "The exchange in this excerpt",
+-  "share": "Share this result",
++  "share": "Preview card",
+   "colophon": "An exploratory reading of the submitted chat excerpt by Jev (TypeSafe) via OpenRouter. No diagnosis or relationship verdict.",
+   "cardNames": "Names on the card",
+   "cardShare": "Share",
+diff --git a/js/locales/es.js b/js/locales/es.js
+index 2532e76..0949565 100644
+--- a/js/locales/es.js
++++ b/js/locales/es.js
+@@ -4,14 +4,19 @@ export default {
+   "volume": "Vol. I · 2026",
+   "language": "Idioma",
+   "hero": "¿Cómo va vuestra <em>conexión</em>?",
+-  "lede": "Vuestro chat, vuestra dinámica: cuatro escalas de ambiente, el ida y vuelta y una idea para conversar. Un juego inspirado en psicología, no un test de vuestra relación.",
++  "lede": "¿Qué tal vuestra conexión? Explorad cuatro aspectos del chat, cifras reales y una idea para conversar. Una mirada divertida, no un diagnóstico.",
++  "stageInput": "01 / Elegir un chat",
++  "stageResult": "02 / Vuestro chat de un vistazo",
++  "stageShare": "03 / Ver y compartir la tarjeta",
++  "scaleAccessible": "{trait}: nivel {score} de 3 – {level}.",
++  "traitExplainers": { "warmth": "¿Responden ambos con amabilidad o apoyo?", "reciprocity": "¿Cada uno retoma lo que dice el otro?", "tension": "¿Hay roces visibles en este fragmento?", "clarity": "¿Se entiende en el texto lo que quiere decir cada uno?" },
+   "exhibit": "Vuestro chat",
+   "evidence": "Dos personas",
+   "chatLabel": "Transcripción del chat",
+   "chatPlaceholder": "Pega un chat o abre una exportación: WhatsApp (también en ZIP), Telegram, Discord, Slack, Messenger, iMessage, CSV…\n\nO escríbelo tal cual:\nAna: ¿vienes esta noche?\nBen: k",
+   "openFile": "Abrir exportación",
+-  "sample": "Probar un chat de ejemplo",
+-  "judge": "Explorar este chat",
++  "sample": "Probar un chat inventado",
++  "judge": "Explorar el ambiente",
+   "pairHint": "Usa un chat con exactamente dos personas y al menos 3 mensajes de texto de cada una. Un grupo queda excluido aunque selecciones solo a dos.",
+   "namesLabel": "No se reconocieron los participantes. Introduce exactamente dos nombres:",
+   "namesPlaceholder": "Dos nombres separados por coma",
+@@ -25,7 +30,7 @@ export default {
+   "clearKey": "Borrar mi clave guardada",
+   "keyCleared": "Tu clave guardada se eliminó de este navegador. Una clave de despliegue en js/key.js sigue disponible si existe.",
+   "summaryTitle": "El intercambio en este fragmento",
+-  "share": "Compartir resultado",
++  "share": "Ver tarjeta",
+   "colophon": "Lectura exploratoria de este fragmento por Jev (TypeSafe) mediante OpenRouter. No es un diagnóstico ni un veredicto sobre vuestra relación.",
+   "cardNames": "Nombres en la tarjeta",
+   "cardShare": "Compartir",
+diff --git a/js/locales/fr.js b/js/locales/fr.js
+index fbcfddf..8a6ebf6 100644
+--- a/js/locales/fr.js
++++ b/js/locales/fr.js
+@@ -4,14 +4,19 @@ export default {
+   "volume": "Vol. I · 2026",
+   "language": "Langue",
+   "hero": "Comment se passe votre <em>échange</em> ?",
+-  "lede": "Votre chat, votre dynamique : quatre petites échelles d’ambiance, un aperçu des échanges et une idée de conversation. Inspiré de la psychologie, mais ce n’est pas un test de relation.",
++  "lede": "Quelle ambiance entre vous ? Découvrez quatre aspects de cet extrait, des chiffres concrets et une idée pour discuter. Un regard ludique, pas un diagnostic.",
++  "stageInput": "01 / Choisir un chat",
++  "stageResult": "02 / Votre échange en bref",
++  "stageShare": "03 / Voir et partager la carte",
++  "scaleAccessible": "{trait} : niveau {score} sur 3 – {level}.",
++  "traitExplainers": { "warmth": "Les deux personnes réagissent-elles avec gentillesse ou soutien ?", "reciprocity": "Chacune rebondit-elle sur les propos de l’autre ?", "tension": "Y a-t-il des frictions visibles dans cet extrait ?", "clarity": "Le texte permet-il de comprendre ce que chacun veut dire ?" },
+   "exhibit": "Votre chat",
+   "evidence": "Deux personnes",
+   "chatLabel": "Transcription de la discussion",
+   "chatPlaceholder": "Collez une discussion ou ouvrez un export : WhatsApp (aussi en ZIP), Telegram, Discord, Slack, Messenger, iMessage, CSV…\n\nOu écrivez-la simplement :\nAna : tu viens ce soir ?\nBen : k",
+   "openFile": "Ouvrir un export",
+-  "sample": "Essayer un exemple",
+-  "judge": "Explorer ce chat",
++  "sample": "Essayer un chat fictif",
++  "judge": "Découvrir l’ambiance",
+   "pairHint": "Utilisez un chat avec exactement deux personnes et au moins 3 messages texte chacune. Un groupe reste exclu, même si vous ne sélectionnez que deux personnes.",
+   "namesLabel": "Locuteurs non reconnus. Saisissez exactement deux noms :",
+   "namesPlaceholder": "Deux noms séparés par une virgule",
+@@ -25,7 +30,7 @@ export default {
+   "clearKey": "Effacer ma clé enregistrée",
+   "keyCleared": "Votre clé enregistrée a été effacée de ce navigateur. Une clé déployée dans js/key.js reste utilisable si elle existe.",
+   "summaryTitle": "L’échange dans cet extrait",
+-  "share": "Partager ce résultat",
++  "share": "Voir la carte",
+   "colophon": "Lecture exploratoire de cet extrait par Jev (TypeSafe) via OpenRouter. Ni diagnostic ni verdict sur votre relation.",
+   "cardNames": "Noms sur la carte",
+   "cardShare": "Partager",
+diff --git a/js/sample.js b/js/sample.js
+index f8b9a8f..7cddb1d 100644
+--- a/js/sample.js
++++ b/js/sample.js
+@@ -1,6 +1,41 @@
+-export const SAMPLE_CHAT = `[2026-09-18, 19:02:11] Mara: Hast du Zeit, am Samstag zusammen zu kochen?
+-[2026-09-18, 19:03:40] Leo: Ja, gerne! Was schwebt dir vor?
+-[2026-09-18, 19:15:02] Mara: Vielleicht Pasta. Kannst du Tomaten mitbringen?
+-[2026-09-18, 19:16:45] Leo: Klar, ich hole auch Basilikum.
+-[2026-09-18, 19:44:30] Mara: Super, ich kümmere mich um den Rest. 19 Uhr?
+-[2026-09-18, 19:45:12] Leo: Passt. Freue mich!`;
++// Entirely invented. Two speakers, varied reply gaps and lengths for local statistics.
++export const SAMPLE_CHAT = `[18.09.26, 16:02] Mara: Sag mal, hast du Samstag Lust, zusammen Pasta zu machen?
++[18.09.26, 16:07] Leo: Ja, voll gern. Soll ich etwas mitbringen?
++[18.09.26, 16:09] Mara: Tomaten wären super. Ich habe noch Nudeln und diesen riesigen Topf.
++[18.09.26, 16:12] Leo: Endlich bekommt der Topf seinen großen Auftritt 😄
++[18.09.26, 16:14] Leo: Basilikum nehme ich auch mit.
++[18.09.26, 16:20] Mara: Deal. 19 Uhr bei mir?
++[18.09.26, 16:23] Leo: Passt. Wie lief eigentlich dein Referat heute?
++[18.09.26, 16:31] Mara: Besser als gedacht! Am Anfang war ich nervös, aber danach kamen richtig gute Fragen.
++[18.09.26, 16:34] Leo: Hab ich doch gesagt, du kannst das. Freut mich richtig für dich.
++[18.09.26, 16:38] Mara: Danke, das hat mir vorher echt geholfen.
++[18.09.26, 16:44] Mara: Wie war dein Training?
++[18.09.26, 16:52] Leo: Anstrengend, aber gut. Meine Beine fühlen sich gerade wie Pudding an.
++[18.09.26, 16:56] Mara: Dann gibt es Samstag extra viel Pasta.
++[18.09.26, 17:01] Leo: Wissenschaftlich absolut notwendig.
++[19.09.26, 10:02] Leo: Kurze Frage: Meintest du mit 19 Uhr wirklich Samstag?
++[19.09.26, 10:10] Mara: Ja, wieso? Habe ich mich irgendwo vertippt?
++[19.09.26, 10:17] Leo: Du hattest mir vorhin geschrieben, ich soll heute vorbeikommen. War kurz verwirrt.
++[19.09.26, 10:20] Mara: Oh, sorry! Ich meinte morgen. Heute bin ich noch unterwegs.
++[19.09.26, 10:24] Leo: Alles gut, jetzt weiß ich Bescheid. Ich hatte nur schon fast die Tomaten eingepackt.
++[19.09.26, 10:27] Mara: Die haben noch einen Tag Schonfrist 😄
++[19.09.26, 10:34] Mara: Danke fürs Nachfragen, wäre sonst echt blöd gelaufen.
++[19.09.26, 10:39] Leo: Klar. Lieber einmal fragen als vor einer verschlossenen Tür stehen.
++[19.09.26, 14:04] Mara: Ich suche noch einen Film für danach. Hast du eine Idee?
++[19.09.26, 14:16] Leo: Etwas Lustiges wäre gut. Heute brauche ich echt mal eine Pause vom Lernen.
++[19.09.26, 14:22] Mara: Verständlich. Wir können auch einfach Musik anmachen und quatschen.
++[19.09.26, 14:28] Leo: Das klingt sogar besser. Kein Stress mit einem Film.
++[19.09.26, 14:35] Mara: Okay, dann entspannt. Gibt es etwas, worüber du reden magst?
++[19.09.26, 14:43] Leo: Vielleicht später. Gerade ist es eher viel auf einmal, aber danke, dass du fragst.
++[19.09.26, 14:48] Mara: Klar, kein Druck. Wir machen einfach einen ruhigen Abend.
++[19.09.26, 15:01] Leo: Freu mich drauf.
++[20.09.26, 17:42] Leo: Ich bin beim Einkaufen. Tomaten, Basilikum und noch irgendwas?
++[20.09.26, 17:49] Mara: Wenn du magst, eine Zitrone. Sonst haben wir alles.
++[20.09.26, 17:52] Leo: Zitrone ist im Korb. Ich schaffe es wahrscheinlich zehn Minuten später.
++[20.09.26, 17:57] Mara: Danke fürs Bescheidgeben. Ich fange in Ruhe mit der Soße an.
++[20.09.26, 18:04] Leo: Die Tomaten sehen übrigens aus, als wären sie selbst zum Essen eingeladen.
++[20.09.26, 18:08] Mara: Solange sie nicht die ganze Pasta für sich beanspruchen.
++[20.09.26, 18:56] Leo: Bin gleich da. Brauchst du beim Schnippeln noch Hilfe?
++[20.09.26, 19:00] Mara: Ja gern, das Basilikum wartet schon auf seinen großen Moment.
++[20.09.26, 19:03] Leo: Perfekt. Bis gleich!
++[20.09.26, 19:05] Mara: Bis gleich!`;
+diff --git a/test/sample.test.js b/test/sample.test.js
+new file mode 100644
+index 0000000..ee4b994
+--- /dev/null
++++ b/test/sample.test.js
+@@ -0,0 +1,40 @@
++import { test } from 'node:test';
++import assert from 'node:assert/strict';
++import { SAMPLE_CHAT } from '../js/sample.js';
++import { parseChat, participantsOf } from '../js/parse.js';
++import { chatStats } from '../js/stats.js';
++import { buildRequest, hasEnoughMessages, STATE_TOKEN_BUDGET } from '../js/questions.js';
++import { messageBalance } from '../js/vibes.js';
++import en from '../js/locales/en.js';
++import de from '../js/locales/de.js';
++import fr from '../js/locales/fr.js';
++import es from '../js/locales/es.js';
++
++test('fictional sample is an eligible two-person chat with local length and reply statistics', () => {
++  const messages = parseChat(SAMPLE_CHAT);
++  const people = participantsOf(messages).map(({ name }) => name);
++  assert.equal(messages.length, 40);
++  assert.deepEqual(people.sort(), ['Leo', 'Mara']);
++  assert.ok(messages.every(({ at }) => at !== null));
++  assert.ok(messages.every((message, i) => i === 0 || message.at >= messages[i - 1].at));
++  const stats = chatStats(messages);
++  for (const person of people) {
++    assert.equal(stats.get(person).messages, 20);
++    assert.ok(stats.get(person).textLength?.n >= 3);
++    assert.ok(stats.get(person).reply?.n >= 3);
++  }
++  assert.deepEqual(messageBalance(stats, people).shares, [0.5, 0.5]);
++  const { body } = buildRequest(messages, people, STATE_TOKEN_BUDGET);
++  assert.ok(hasEnoughMessages(body.state.messages, people));
++  assert.equal(body.state.messages.length, 40);
++});
++
++test('all languages explain the visual stages and four scales without suggesting a diagnosis', () => {
++  for (const locale of [de, en, fr, es]) {
++    for (const step of ['stageInput', 'stageResult', 'stageShare']) assert.ok(locale[step].trim());
++    assert.match(locale.scaleAccessible, /\{trait\}.*\{score\}.*\{level\}/);
++    for (const dimension of ['warmth', 'reciprocity', 'tension', 'clarity']) {
++      assert.ok(locale.traitExplainers[dimension].length > 20);
++    }
++  }
++});

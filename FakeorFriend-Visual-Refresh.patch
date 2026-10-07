@@ -1,0 +1,486 @@
+--- a/README.md
++++ b/README.md
+@@ -118,6 +118,17 @@
+ original card flow exports one 1080×1350 PNG; edited names and numeric local
+ highlights remain visible in its preview before sharing. This presentation
+ does not change the four Jev questions or their scoring rules.
++
++`css/polish.css` adds the final visual layer: a compact stage indicator,
++clearer sans-serif headings, sticker artwork in the landing view, stronger
++card contrast, and a horizontally scrollable timeline on narrow screens with
++the accessible data table still available below. The four loading steps are
++displayed once and then hold on the last stage while Jev finishes; the moving
++signal is explicitly *not* a percentage of analysis completed. The minimum
++display duration is 950 ms, and CSS removes ornamental movement when the user
++prefers reduced motion. Editing the chat while a result or request is visible
++clears the old result; a response for that superseded text is not displayed.
++No extra request, storage, or chat metadata is introduced by this styling.
+ 
+ Each person gets a **visual animal sticker for a counted pattern**, using only
+ the part of a parsed chat submitted to Jev. Both need at least three text
+--- /dev/null
++++ b/css/polish.css
+@@ -0,0 +1,168 @@
++/* A focused visual layer over the established component rules. */
++:root {
++  --paper: #171420;
++  --paper-raised: #292235;
++  --ink: #faf8ff;
++  --ink-soft: #e6ddec;
++  --ink-muted: #c7b8d1;
++  --rule: #746181;
++  --rule-soft: #51415e;
++  --accent: #dff86f;
++  --accent-blue: #bde9ff;
++  --accent-coral: #ffb29f;
++}
++html { scroll-behavior: smooth; }
++body {
++  background: radial-gradient(55rem 33rem at 95% 2%, #5137669e, transparent 77%),
++    radial-gradient(40rem 32rem at -20% 30%, #29536f4d, transparent 80%), var(--paper);
++  line-height: 1.6;
++}
++body, main, .masthead, .colophon { min-width: 0; }
++.masthead {
++  position: relative;
++  padding: 1rem clamp(.9rem, 2vw, 1.6rem);
++  border: 1px solid #b7a7c34b;
++  border-top: 0;
++  border-radius: 0 0 1.25rem 1.25rem;
++  background: #ffffff0b;
++  backdrop-filter: blur(12px);
++}
++.masthead strong { color: var(--ink); font: 800 1.4rem/1 var(--font-body); letter-spacing: -.055em; }
++.masthead strong::first-letter { color: var(--accent); }
++.masthead select { min-height: 2.8rem; padding-inline: .8rem; border-radius: .7rem; }
++
++.hero { position: relative; gap: clamp(1.5rem, 4vw, 3.2rem); padding-block: clamp(3rem, 7vw, 5.4rem) clamp(2rem, 4vw, 3rem); }
++.hero-heading, .hero-aside { min-width: 0; }
++.hero-overline { display: inline-block; margin: 0 0 1.1rem; padding: .45rem .8rem; border: 1px solid #bde9ff7a; border-radius: 999px; background: #bde9ff1b; color: var(--accent-blue); font: 700 .77rem/1.2 var(--font-mono); letter-spacing: .025em; }
++.hero h1 { max-width: 10ch; font: 800 clamp(3rem, 7.5vw, 6.9rem)/.98 var(--font-body); letter-spacing: -.075em; }
++.hero h1 em { display: inline; color: var(--accent); font-style: normal; }
++.hero-aside .lede { max-width: 35ch; font-size: clamp(1rem, 1.85vw, 1.22rem); line-height: 1.53; }
++.hero-art { width: min(100%, 21rem); aspect-ratio: 1.35; transform: none; }
++.hero-art::before { content: ''; position: absolute; inset: 10% 4%; border-radius: 50%; background: radial-gradient(circle, #cb9aff44, #84defa20 57%, transparent 72%); filter: blur(12px); }
++.hero-art span { font-family: var(--font-body); }
++.hero-art .bubble-one { left: 9%; top: 3%; width: 54%; height: 56%; background: var(--accent-blue); transform: rotate(-11deg); }
++.hero-art .bubble-two { right: 2%; bottom: 7%; width: 55%; height: 56%; background: var(--accent); transform: rotate(9deg); }
++.hero-art img { position: absolute; z-index: 2; width: 35%; height: auto; filter: drop-shadow(0 10px 16px #160e26aa); animation: sticker-float 4s ease-in-out infinite alternate; }
++.hero-mouse { left: 5%; top: 7%; transform: rotate(-8deg); }
++.hero-cat { right: 0; bottom: 4%; animation-delay: -2s !important; transform: rotate(7deg); }
++@keyframes sticker-float { to { translate: 0 -8px; } }
++
++.journey { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .45rem; margin: 0 0 1.35rem; }
++.journey-step { min-width: 0; display: flex; gap: .7rem; align-items: center; padding: .8rem 1rem; border: 1px solid var(--rule); border-radius: .9rem; background: #ffffff09; color: var(--ink-soft); font-size: .85rem; font-weight: 650; overflow-wrap: anywhere; }
++.journey-index { display: grid; place-items: center; flex: 0 0 2.1rem; height: 2.1rem; border-radius: .65rem; background: #ffffff13; color: var(--accent-blue); font: 700 .74rem var(--font-mono); }
++.journey-step.is-current { border-color: var(--accent); background: #dff86f18; color: var(--ink); box-shadow: inset 0 1px #f3ffa633; }
++.journey-step.is-current .journey-index { background: var(--accent); color: #1c1827; }
++
++.intake { margin-top: 0; background: radial-gradient(36rem 24rem at 100% 0%, #674c744a, transparent 70%), #292235; border-color: #b59bb768; }
++.intake-label b { font-family: var(--font-body); font-size: clamp(1.65rem, 4vw, 2.3rem); font-style: normal; }
++.intake-label > span:last-child { padding: .35rem .7rem; border-radius: 999px; background: #bde9ff1c; color: var(--accent-blue); }
++.intake textarea { min-height: 14rem; background: #191722; border-color: #9b88a68c; font: .94rem/1.6 var(--font-mono); transition: border-color .2s, box-shadow .2s; }
++.intake textarea:focus-visible { border-color: var(--accent-blue); box-shadow: 0 0 0 4px #bde9ff22; }
++.subjects:not(:empty) { padding: .75rem 0 .1rem; }
++.chip { padding: .35rem .8rem; border-color: #bde9ff75; background: #bde9ff1c; font-weight: 700; }
++.intake-bar { margin-top: 1.25rem; }
++.intake-bar .primary { box-shadow: 0 5px 0 #708039; }
++.intake-bar .primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 7px 0 #708039, 0 11px 25px #dff86f33; }
++.intake-bar .primary:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 2px 0 #708039; }
++.primary, .secondary { transition: background .18s ease, box-shadow .18s ease, transform .18s ease; }
++.data-notice { padding: 1rem 1.1rem; background: #1d2230; border-left-color: var(--accent-blue); }
++.key-storage { max-width: 78ch; line-height: 1.55; }
++
++.lab { position: relative; isolation: isolate; display: grid; grid-template-columns: minmax(7rem, 11rem) minmax(0, 1fr); gap: clamp(1.2rem, 4vw, 3rem); align-items: center; padding: clamp(1.3rem, 5vw, 3rem); border: 1px solid #bde9ff8c; border-radius: 1.4rem; background: radial-gradient(22rem 18rem at 0 50%, #38728e66, transparent 90%), linear-gradient(135deg, #292339, #233845); box-shadow: 0 20px 70px #100b1ca8; }
++.lab-visual { position: relative; aspect-ratio: 1; display: grid; place-items: center; }
++.lab-orbit { position: absolute; inset: 4%; border: 2px dashed var(--accent-blue); border-radius: 50%; animation: orbit 10s linear infinite; }
++.lab-orbit-two { inset: 18%; border-color: var(--accent); animation-direction: reverse; animation-duration: 7s; }
++.lab-symbol { z-index: 1; display: grid; place-items: center; width: 46%; aspect-ratio: 1; border-radius: 1rem; background: var(--accent); color: #242138; font-size: clamp(2rem, 6vw, 4rem); box-shadow: 0 0 35px #dff86f73; animation: lab-pulse 1.5s ease-in-out infinite alternate; }
++@keyframes orbit { to { transform: rotate(360deg); } }
++@keyframes lab-pulse { to { transform: scale(1.08); box-shadow: 0 0 50px #dff86fa8; } }
++.lab-copy { min-width: 0; }
++.lab-copy h2 { margin: .1rem 0 .5rem; font: 780 clamp(1.5rem, 4vw, 2.6rem)/1.12 var(--font-body); letter-spacing: -.035em; }
++.lab-intro { max-width: 56ch; color: var(--ink-soft); margin: 0 0 1.2rem; }
++.lab-progress { position: relative; height: .55rem; margin: 1rem 0 1.3rem; overflow: hidden; border-radius: 1rem; background: #ffffff2c; }
++.lab-progress span { position: absolute; inset-block: 0; width: 30%; border-radius: inherit; background: linear-gradient(90deg, var(--accent-blue), var(--accent)); animation: signal-sweep 1.3s ease-in-out infinite alternate; }
++@keyframes signal-sweep { to { transform: translateX(245%); } }
++.lab-log { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .45rem .8rem; margin: 0; padding: 0; list-style: none; font: 500 .84rem/1.4 var(--font-body); }
++.lab-log li { min-width: 0; padding: .55rem .7rem; border: 1px solid #ffffff2b; border-radius: .7rem; color: var(--ink-muted); overflow-wrap: anywhere; }
++.lab-log li::before { content: '○'; margin-right: .45rem; color: var(--accent-blue); }
++.lab-log li.is-active { color: var(--ink); border-color: var(--accent-blue); background: #bde9ff17; }
++.lab-log li.is-active::before { content: '✦'; }
++.lab-log li.is-done { color: var(--ink-soft); }
++.lab-log li.is-done::before { content: '✓'; color: var(--accent); }
++.visually-hidden { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
++
++.results { margin-top: clamp(2rem, 5vw, 4rem); }
++.results > .step-label { font-size: .84rem; }
++.connection-summary { background: radial-gradient(28rem 28rem at 100% 0%, #6673a055, transparent 80%), linear-gradient(145deg, #402d51, #2c243b 60%, #213744); border-color: #ab93b669; }
++.connection-summary::before { border-color: #ffffff3d; }
++.vibe-hero { gap: clamp(.9rem, 3vw, 2.2rem); }
++.vibe-hero .kicker { font-size: .78rem; }
++.connection-summary h2 { font-family: var(--font-body); font-weight: 800; letter-spacing: -.045em; }
++.vibe-hero img { filter: drop-shadow(0 20px 18px #100a1eaa); }
++.animal-sticker { border-radius: 1.2rem; border-color: #dff86f55; background: #ffffff10; box-shadow: inset 0 1px #ffffff2d; transition: transform .22s ease, border-color .22s ease, background .22s ease; }
++.animal-sticker:nth-child(2) { border-color: #bde9ff60; }
++.animal-sticker:hover { transform: translateY(-3px) rotate(-.8deg); border-color: var(--accent); background: #ffffff1a; }
++.animal-sticker img { filter: drop-shadow(0 7px 12px #100b1880); }
++.story-section { padding: clamp(1.2rem, 3vw, 1.8rem); border-color: #bde9ff88; background: linear-gradient(115deg, #203c50, #2a2c42 80%); }
++.story-section h3 { color: var(--accent); font-family: var(--font-body); font-size: clamp(1.4rem, 3vw, 1.9rem); }
++.reading-card { border-color: #ae9bb65b; background: #ffffff0f; }
++.reading-card:nth-child(2) { border-color: #bde9ff77; background: #bde9ff0b; }
++.reading-card h4, .reading-intro h3, .scales-heading, .cues-section > h3, .timeline-panel h3, .outlook-panel h3, .stats-heading { font-family: var(--font-body); letter-spacing: -.025em; }
++.scale { border-color: #8e789b88; background: #211d2e; }
++.scale-explainer { line-height: 1.5; }
++.cue-card, .pattern-card, .outlook-card { background: #ffffff10; border-color: #aa95b26e; transition: border-color .2s ease, transform .2s ease; }
++.cue-card:hover, .pattern-card:hover, .outlook-card:hover { border-color: var(--accent-blue); transform: translateY(-2px); }
++.cue-card h4, .outlook-card h4 { font-family: var(--font-body); }
++.timeline-panel, .outlook-panel, .vibe-panel, .plate { box-shadow: inset 0 1px #ffffff18; }
++.timeline-panel, .outlook-panel { border-color: #ae9bb66a; }
++.outlook-panel { background: linear-gradient(155deg, #2b2b47, #203544); }
++.outlook-bars { height: 6rem; }
++.outlook-bar { border-color: var(--accent); background: repeating-linear-gradient(135deg, #dff86f9a 0 4px, #dff86f39 4px 8px); }
++.idea-panel { background: linear-gradient(115deg, #334a54, #373147); }
++.plate-name { font-family: var(--font-body); font-size: clamp(1.4rem, 3vw, 2rem); }
++.counted dd { color: var(--accent); }
++.card-dialog { box-shadow: 0 30px 90px #0009; }
++.card-dialog canvas { max-width: 100%; height: auto; }
++.card-preview-details { overflow-wrap: anywhere; }
++.results.revealed .story-section, .results.revealed .reading-card { animation: card-appear .5s ease-out both; }
++.results.revealed .reading-card:nth-child(2) { animation-delay: .1s; }
++@keyframes card-appear { from { opacity: 0; transform: translateY(12px); } }
++
++@media (max-width: 820px) {
++  .hero { grid-template-columns: 1fr; }
++  .hero-aside { grid-template-columns: minmax(0, 1fr) minmax(7rem, 12rem); align-items: center; }
++}
++@media (max-width: 540px) {
++  .masthead { gap: .35rem; }
++  .masthead span:nth-child(2) { display: none; }
++  .hero { padding-top: 2.4rem; }
++  .hero h1 { font-size: clamp(2.7rem, 11.4vw, 4rem); }
++  .hero-art { display: block; margin: 0; }
++  .journey-step { flex-direction: column; align-items: flex-start; gap: .3rem; padding: .55rem; font-size: .76rem; line-height: 1.2; }
++  .journey-index { flex: 0 0 auto; width: 1.75rem; height: 1.75rem; }
++  .intake { padding: 1rem; }
++  .intake textarea { min-height: 13rem; }
++  .lab { grid-template-columns: 1fr; gap: .6rem; }
++  .lab-visual { width: 5.5rem; margin: 0 auto; }
++  .lab-symbol { font-size: 1.7rem; }
++  .lab-log { grid-template-columns: 1fr 1fr; }
++  .animal-sticker:hover, .cue-card:hover, .pattern-card:hover, .outlook-card:hover { transform: none; }
++  #timeline-content { overflow-x: auto; scrollbar-color: var(--accent-blue) transparent; }
++  #timeline-content svg { min-width: 580px; }
++}
++@media (max-width: 390px) {
++  .hero-aside { grid-template-columns: minmax(0, 1fr) 6rem; }
++  .hero-art { width: 6rem; aspect-ratio: 1; }
++  .hero-art img { width: 45%; }
++  .hero-art span { font-size: 1.2rem; }
++  .connection-summary, .timeline-panel, .outlook-panel { padding: 1rem; }
++  .outlook-grid, .cue-grid { grid-template-columns: 1fr; }
++}
++@media (max-width: 360px) {
++  .hero-aside { grid-template-columns: 1fr; }
++  .hero-art { display: none; }
++}
++@media (prefers-reduced-motion: reduce) {
++  html { scroll-behavior: auto; }
++  .hero-art img, .lab-orbit, .lab-symbol, .lab-progress span, .results.revealed .story-section, .results.revealed .reading-card { animation: none; }
++  .animal-sticker, .cue-card, .pattern-card, .outlook-card, .primary, .secondary { transition: none; }
++}
+--- a/index.html
++++ b/index.html
+@@ -13,6 +13,7 @@
+     />
+     <link rel="stylesheet" href="css/theme.css" />
+     <link rel="stylesheet" href="css/style.css" />
++    <link rel="stylesheet" href="css/polish.css" />
+     <script type="module" src="js/app.js"></script>
+   </head>
+   <body>
+@@ -25,11 +26,17 @@
+ 
+     <main>
+       <section class="hero">
+-        <h1 data-i18n-html="hero">How is your <em>connection</em>?</h1>
++        <div class="hero-heading"><p class="hero-overline" data-i18n="heroOverline"></p><h1 data-i18n-html="hero">How is your <em>connection</em>?</h1></div>
+         <div class="hero-aside"><p class="lede" data-i18n="lede"></p>
+-          <div class="hero-art" aria-hidden="true"><span class="bubble-one">✦</span><span class="bubble-two">↗</span><span class="art-orbit"></span></div>
+-        </div>
+-      </section>
++          <div class="hero-art" aria-hidden="true"><span class="bubble-one">✦</span><span class="bubble-two">↗</span><span class="art-orbit"></span><img class="hero-mouse" src="img/animals/mouse.svg" alt="" width="110" height="110" /><img class="hero-cat" src="img/animals/cat.svg" alt="" width="104" height="104" /></div>
++        </div>
++      </section>
++
++      <nav class="journey" aria-label="Analysis steps" data-i18n-attr="aria-label: flowLabel">
++        <span class="journey-step is-current" data-stage="input" aria-current="step"><span class="journey-index">01</span><span data-i18n="flowInput"></span></span>
++        <span class="journey-step" data-stage="analyse"><span class="journey-index">02</span><span data-i18n="flowAnalyse"></span></span>
++        <span class="journey-step" data-stage="result"><span class="journey-index">03</span><span data-i18n="flowResult"></span></span>
++      </nav>
+ 
+       <section class="intake">
+         <div class="intake-label"><span class="step-label" data-i18n="stageInput"></span><b data-i18n="exhibit">Your chat</b><span data-i18n="evidence">Two people</span></div>
+@@ -79,9 +86,16 @@
+         </div>
+       </section>
+ 
+-      <section id="lab" class="lab" aria-live="polite" hidden>
+-        <img id="lab-specimen" alt="" width="112" height="112" />
+-        <div id="lab-log" class="lab-log"></div>
++      <section id="lab" class="lab" aria-labelledby="lab-title" hidden>
++        <div class="lab-visual" aria-hidden="true"><span class="lab-orbit lab-orbit-one"></span><span class="lab-orbit lab-orbit-two"></span><span class="lab-symbol">✦</span></div>
++        <div class="lab-copy">
++          <p class="step-label" data-i18n="flowAnalyse"></p>
++          <h2 id="lab-title" data-i18n="labTitle"></h2>
++          <p class="lab-intro" data-i18n="labIntro"></p>
++          <div class="lab-progress" aria-hidden="true"><span></span></div>
++          <ol id="lab-log" class="lab-log"></ol>
++          <p id="lab-phase" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></p>
++        </div>
+       </section>
+ 
+       <section id="results" class="results" aria-live="polite" hidden>
+--- a/js/app.js
++++ b/js/app.js
+@@ -18,7 +18,7 @@
+ import { outlookOf } from './outlook.js';
+ import { renderOutlook } from './outlook-view.js';
+ 
+-const MIN_LAB_MS = 1800;
++const MIN_LAB_MS = 950;
+ const $ = (id) => document.getElementById(id);
+ const chat = $('chat');
+ const judgeButton = $('judge');
+@@ -32,10 +32,19 @@
+ let typedNames = [];
+ let lastVerdict = null;
+ let judging = false;
++let chatRevision = 0;
+ const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+ const fromTemplate = (id) => $(id).content.firstElementChild.cloneNode(true);
+ const isRawMode = () => detected.length < 2;
+ const candidates = () => isRawMode() ? typedNames : detected;
++function setStage(stage) {
++  for (const step of document.querySelectorAll('.journey-step')) {
++    const selected = step.dataset.stage === stage;
++    step.classList.toggle('is-current', selected);
++    if (selected) step.setAttribute('aria-current', 'step');
++    else step.removeAttribute('aria-current');
++  }
++}
+ 
+ function renderLanguagePicker() {
+   const picker = $('language');
+@@ -43,6 +52,11 @@
+   picker.addEventListener('change', () => {
+     setLanguage(picker.value);
+     translatePage();
++    if (!lab.hidden) {
++      [...$('lab-log').children].forEach((item, index) => { item.textContent = t('lab')[index]; });
++      const active = $('lab-log').querySelector('.is-active');
++      if (active) $('lab-phase').textContent = active.textContent;
++    }
+     renderSubjects();
+     if (lastVerdict) renderResults(lastVerdict, { scroll: false });
+   });
+@@ -55,6 +69,10 @@
+   judgeButton.disabled = judging || !canJudgeSubjects(people.length, people.length) || (!isRawMode() && !hasEnoughMessages(messages.map(({ author, text }) => ({ from: author, text })), people));
+ }
+ function onChatChanged() {
++  chatRevision++;
++  lastVerdict = null;
++  results.hidden = true;
++  setStage('input');
+   messages = parseChat(chat.value);
+   detected = participantsOf(messages).map((p) => p.name);
+   typedNames = [];
+@@ -77,16 +95,18 @@
+ }
+ function runLab() {
+   const log = $('lab-log');
+-  log.replaceChildren();
++  log.replaceChildren(...t('lab').map((label) => Object.assign(document.createElement('li'), { textContent: label })));
+   lab.hidden = false;
+-  $('lab-specimen').hidden = true;
+-  let line = 0;
+-  const addLine = () => {
+-    log.append(Object.assign(document.createElement('p'), { textContent: t('lab')[line++ % t('lab').length] }));
+-    if (log.children.length > 4) log.firstElementChild.remove();
++  setStage('analyse');
++  let current = -1;
++  const advance = () => {
++    if (current >= log.children.length - 1) return;
++    if (current >= 0) log.children[current].classList.replace('is-active', 'is-done');
++    log.children[++current].classList.add('is-active');
++    $('lab-phase').textContent = log.children[current].textContent;
+   };
+-  addLine();
+-  const interval = setInterval(addLine, 340);
++  advance();
++  const interval = setInterval(advance, 300);
+   return () => { clearInterval(interval); lab.hidden = true; };
+ }
+ async function judgeChat() {
+@@ -106,6 +126,7 @@
+     if (!rawMode && !hasEnoughMessages(request.body.state.messages, people)) {
+       showError(t('errors.tooFew')); return;
+     }
++    const judgedRevision = chatRevision;
+     keyForm.hidden = true;
+     lastVerdict = null;
+     results.hidden = true;
+@@ -113,6 +134,7 @@
+     try {
+       const started = performance.now();
+       const [response] = await Promise.all([askJev(apiKey, request.body), wait(MIN_LAB_MS)]);
++      if (judgedRevision !== chatRevision) return;
+       lastVerdict = {
+         people,
+         answers: readVerdicts(response.answers),
+@@ -125,11 +147,12 @@
+           truncated: request.truncated, ms: Math.round(performance.now() - started), model: response.model, cost: response.usage?.cost },
+       };
+       renderResults(lastVerdict);
++      setStage('result');
+     } catch (error) {
+       if (error.status === 401) { forgetApiKey(); keyForm.hidden = false; }
+       showError(error.status ? t('errors.jev', { status: error.status, reason: error.reason }) : error.message);
+     } finally { stopLab(); }
+-  } finally { judging = false; renderSubjects(); }
++  } finally { judging = false; if (!lastVerdict) setStage('input'); renderSubjects(); }
+ }
+ function fact(label, value, definition, detail) {
+   const item = fromTemplate('finding');
+@@ -319,7 +342,13 @@
+   const status = $('key-status'); status.dataset.i18n = 'keyCleared'; status.textContent = t('keyCleared'); status.hidden = false;
+ });
+ namesForm.addEventListener('submit', (event) => {
+-  event.preventDefault(); typedNames = [...new Set($('names').value.split(',').map((n) => n.trim()).filter(Boolean))]; renderSubjects();
++  event.preventDefault();
++  chatRevision++;
++  lastVerdict = null;
++  results.hidden = true;
++  setStage('input');
++  typedNames = [...new Set($('names').value.split(',').map((n) => n.trim()).filter(Boolean))];
++  renderSubjects();
+ });
+ keyForm.addEventListener('submit', (event) => {
+   event.preventDefault(); const key = $('key').value.trim();
+--- a/js/card.js
++++ b/js/card.js
+@@ -64,7 +64,7 @@
+   const ctx = canvas.getContext('2d');
+   canvas.width = 1080;
+   canvas.height = 1350;
+-  ctx.fillStyle = '#241822';
++  ctx.fillStyle = '#171420';
+   ctx.fillRect(0, 0, 1080, 1350);
+   const paint = (value, x, y, size, color = '#faf3f7', max = 900, weight = 700) => {
+     ctx.font = `${weight} ${size}px system-ui, sans-serif`;
+@@ -75,16 +75,16 @@
+   // The visible card and PNG are drawn from the same curated names, label and
+   // local numeric highlights. No transcript or external images are loaded.
+   const gradient = ctx.createLinearGradient(0, 0, 1080, 930);
+-  gradient.addColorStop(0, '#493052'); gradient.addColorStop(1, '#263746');
++  gradient.addColorStop(0, '#4d3467'); gradient.addColorStop(1, '#204559');
+   ctx.fillStyle = gradient; ctx.beginPath(); ctx.roundRect(48, 46, 984, 1250, 48); ctx.fill();
+-  ctx.strokeStyle = '#e9f05638'; ctx.lineWidth = 3;
++  ctx.strokeStyle = '#dff86f55'; ctx.lineWidth = 3;
+   for (const radius of [136, 196, 256]) { ctx.beginPath(); ctx.arc(986, 96, radius, 0, Math.PI * 2); ctx.stroke(); }
+-  paint('FakeorFriend', 94, 133, 46, '#e9f056');
++  paint('FakeorFriend', 94, 133, 46, '#dff86f');
+   ctx.fillStyle = '#8b728d'; ctx.fillRect(94, 166, 892, 2);
+   paint(t('summaryTitle'), 94, 228, 27, '#e1d2e3');
+   paint(t(`connection.${verdict.label}`), 94, 326, 61, '#faf3f7', 875, 800);
+   paint(t('connection.cardNote'), 94, 375, 24, '#e1d2e3', 880, 500);
+-  if (verdict.story) paint(t(`cardStory.${verdict.story}`, verdict.storyVars), 94, 420, 24, '#e9f056', 880, 600);
++  if (verdict.story) paint(t(`cardStory.${verdict.story}`, verdict.storyVars), 94, 420, 24, '#dff86f', 880, 600);
+   drawAnimal(ctx, 155, 455, verdict.animals?.[0]);
+   drawAnimal(ctx, 575, 455, verdict.animals?.[1]);
+   verdict.animals?.slice(0, 2).forEach((animal, i) => {
+@@ -102,7 +102,7 @@
+   });
+   ctx.fillStyle = '#867589'; ctx.fillRect(94, 1186, 892, 2);
+   paint(t('cardFooter'), 94, 1230, 23, '#e1d2e3', 880, 500);
+-  if (verdict.timeFact) paint(t('timeline.cardFact', verdict.timeFact), 94, 1270, 23, '#e9f056', 880, 500);
++  if (verdict.timeFact) paint(t('timeline.cardFact', verdict.timeFact), 94, 1270, 23, '#dff86f', 880, 500);
+ }
+ export function openCard(verdict) {
+   const dialog = $('card-dialog');
+--- a/js/locales/de.js
++++ b/js/locales/de.js
+@@ -3,8 +3,15 @@
+   "tagline": "Ein Blick auf euren Zweierchat",
+   "volume": "Bd. I · 2026",
+   "language": "Sprache",
++  "heroOverline": "Zwei Stimmen. Ein Chat. Viele Zwischentöne.",
++  "flowLabel": "So läuft der Vibe-Check",
++  "flowInput": "Chat wählen",
++  "flowAnalyse": "Vibe-Check",
++  "flowResult": "Ergebnis",
++  "labTitle": "Euer Vibe kommt gleich ✦",
++  "labIntro": "Wir zählen Chatmuster lokal und fragen Jev einmal nach vier Eindrücken zum Austausch. Die Karte entsteht danach direkt im Browser.",
+   "hero": "Wie läuft’s <em>zwischen euch</em>?",
+-  "lede": "Was geht zwischen euch? Checkt vier Seiten eures Chat-Ausschnitts, schaut auf echte Chat-Zahlen und nehmt eine Gesprächsidee mit. Ein spielerischer Blick, keine Diagnose.",
++  "lede": "Zwei Leute, ein Chat, jede Menge Zwischentöne. Entdeckt Sticker, echte Chatmuster und Ideen für euer nächstes Gespräch. Spielerisch, ohne Gedankenlesen.",
+   "stageInput": "01 / Chat auswählen",
+   "stageResult": "02 / Euer Vibe auf einen Blick",
+   "stageShare": "03 / Karte ansehen & teilen",
+--- a/js/locales/en.js
++++ b/js/locales/en.js
+@@ -3,8 +3,15 @@
+   "tagline": "A closer look at a two-person chat",
+   "volume": "Vol. I · 2026",
+   "language": "Language",
++  "heroOverline": "Two voices. One chat. So many little signals.",
++  "flowLabel": "How the vibe check works",
++  "flowInput": "Pick a chat",
++  "flowAnalyse": "Vibe check",
++  "flowResult": "Results",
++  "labTitle": "Your vibe is on its way ✦",
++  "labIntro": "We count chat patterns locally and ask Jev once for four impressions of the exchange. Your card is then made in the browser.",
+   "hero": "How is your <em>connection</em>?",
+-  "lede": "What's the vibe between you? Explore four sides of your chat excerpt, see the real chat numbers and take away one conversation idea. A playful look, not a diagnosis.",
++  "lede": "Two people, one chat, plenty between the lines. Explore stickers, real chat patterns and an idea for your next conversation. Playful, without mind reading.",
+   "stageInput": "01 / Pick a chat",
+   "stageResult": "02 / Your vibe at a glance",
+   "stageShare": "03 / Preview & share your card",
+--- a/js/locales/fr.js
++++ b/js/locales/fr.js
+@@ -3,8 +3,15 @@
+   "tagline": "Un regard sur une conversation à deux",
+   "volume": "Vol. I · 2026",
+   "language": "Langue",
++  "heroOverline": "Deux voix. Un chat. Mille nuances.",
++  "flowLabel": "Les étapes du regard sur le chat",
++  "flowInput": "Choisir un chat",
++  "flowAnalyse": "Explorer",
++  "flowResult": "Résultat",
++  "labTitle": "Votre résultat arrive ✦",
++  "labIntro": "Nous comptons les motifs du chat localement et demandons une seule fois à Jev quatre impressions sur l'échange. La carte est ensuite créée dans le navigateur.",
+   "hero": "Comment se passe votre <em>échange</em> ?",
+-  "lede": "Quelle ambiance entre vous ? Découvrez quatre aspects de cet extrait, des chiffres concrets et une idée pour discuter. Un regard ludique, pas un diagnostic.",
++  "lede": "Deux personnes, un chat et plein de nuances. Découvrez des stickers, des motifs mesurés et une idée pour votre prochaine discussion. Un jeu, sans lire dans les pensées.",
+   "stageInput": "01 / Choisir un chat",
+   "stageResult": "02 / Votre échange en bref",
+   "stageShare": "03 / Voir et partager la carte",
+--- a/js/locales/es.js
++++ b/js/locales/es.js
+@@ -3,8 +3,15 @@
+   "tagline": "Una mirada a un chat entre dos personas",
+   "volume": "Vol. I · 2026",
+   "language": "Idioma",
++  "heroOverline": "Dos voces. Un chat. Muchos matices.",
++  "flowLabel": "Cómo funciona el vistazo al chat",
++  "flowInput": "Elegir chat",
++  "flowAnalyse": "Explorar",
++  "flowResult": "Resultado",
++  "labTitle": "Ya llega vuestro resultado ✦",
++  "labIntro": "Contamos patrones del chat en el navegador y preguntamos una sola vez a Jev por cuatro impresiones del intercambio. Después la tarjeta se crea aquí mismo.",
+   "hero": "¿Cómo va vuestra <em>conexión</em>?",
+-  "lede": "¿Qué tal vuestra conexión? Explorad cuatro aspectos del chat, cifras reales y una idea para conversar. Una mirada divertida, no un diagnóstico.",
++  "lede": "Dos personas, un chat y un montón de matices. Explorad stickers, patrones reales y una idea para vuestra próxima charla. Un juego, sin leer la mente.",
+   "stageInput": "01 / Elegir un chat",
+   "stageResult": "02 / Vuestro chat de un vistazo",
+   "stageShare": "03 / Ver y compartir la tarjeta",

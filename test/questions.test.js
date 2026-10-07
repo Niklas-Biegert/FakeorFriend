@@ -5,18 +5,11 @@ import { buildRequest, readVerdicts, STATE_TOKEN_BUDGET } from '../js/questions.
 // Measured: one Jev token is ~2.06 UTF-8 bytes of state in any language.
 const stateTokens = (body) => new TextEncoder().encode(JSON.stringify(body.state)).length / 2.06;
 
-test('answers for each subject come back to the right person', () => {
-  const subjects = ['Ana', 'Ben'];
-  const { body } = buildRequest([{ author: 'Ana', text: 'hi' }], subjects);
-
-  // Answer every question with its own key, so any mix-up is visible.
-  const answers = Object.fromEntries(Object.keys(body.questions).map((key) => [key, key]));
-  const { culprit, people } = readVerdicts(answers, subjects);
-
-  assert.equal(culprit, 'culprit');
-  assert.equal(people[1].name, 'Ben');
-  assert.equal(people[1].answers.drama, 'p1_drama');
-  assert.match(body.questions.p1_drama.instructions, /Ben/);
+test('all interaction answers map to their own question', () => {
+  const { body } = buildRequest([{ author: 'Ana', text: 'hi' }], ['Ana', 'Ben']);
+  const answers = Object.fromEntries(Object.keys(body.questions).map((key) => [key, { score: 1 }]));
+  assert.deepEqual(readVerdicts(answers), answers);
+  assert.throws(() => readVerdicts({ warmth: { score: 2 } }), /incomplete/);
 });
 
 test('parsed timestamp and other local metadata are excluded from the Jev state', () => {
@@ -28,7 +21,7 @@ test('parsed timestamp and other local metadata are excluded from the Jev state'
 
 test('keeps only the newest messages when the chat is too long', () => {
   const longText = 'x'.repeat(10_000);
-  const messages = Array.from({ length: 10 }, (_, i) => ({ author: `P${i}`, text: longText }));
+  const messages = Array.from({ length: 10 }, (_, i) => ({ author: i % 2 ? 'P9' : 'P8', text: longText }));
   const { body, judgedCount } = buildRequest(messages, ['P8', 'P9']);
 
   assert.ok(judgedCount < messages.length);

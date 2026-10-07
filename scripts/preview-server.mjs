@@ -14,7 +14,7 @@ const security = {
   'X-Content-Type-Options': 'nosniff',
 };
 
-const banner = '<aside style="padding:.7rem 1rem;background:#edf4e8;color:#17281d;font:600 14px system-ui">Lokale Testvorschau · simulierte Jev-Antworten · keine API-Anfrage · Urteile: <strong id="preview-requests">0</strong></aside>';
+const banner = '<aside style="padding:.7rem 1rem;background:#edf4e8;color:#17281d;font:600 14px system-ui">FakeorFriend Testvorschau · simulierte Jev-Antworten · Beispielchat: festes Demo-Ergebnis · eigene Chats: keine echte Einschätzung · keine API-Anfrage · Auswertungen: <strong id="preview-requests">0</strong></aside>';
 
 async function responseFor(pathname) {
   if (pathname === '/js/key.js') return { code: 404, data: 'Key unavailable in preview', type: 'text/plain' };
@@ -59,6 +59,6 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const server = createPreviewServer();
   server.listen(0, '127.0.0.1', () => {
     const url = `http://127.0.0.1:${server.address().port}`;
-    process.stdout.write(`JudgeYou Testvorschau: ${url}\nNur lokal. Keine echten API-Schlüssel oder Jev-Anfragen. Mit Strg+C beenden.\n`);
+    process.stdout.write(`FakeorFriend Testvorschau: ${url}\nNur lokal. Keine echten API-Schlüssel oder Jev-Anfragen. Mit Strg+C beenden.\n`);
   });
 }

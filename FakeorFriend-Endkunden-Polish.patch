@@ -1,0 +1,988 @@
+diff --git a/README.md b/README.md
+index d7aa67f..0f6faea 100644
+--- a/README.md
++++ b/README.md
+@@ -9,8 +9,13 @@ Paste a chat or open a WhatsApp (including ZIP), Telegram, Messenger, Instagram,
+ Discord, Slack, Teams, iMessage, IRC, LINE, KakaoTalk, CSV or plain transcript.
+ Existing import parsers remain in place. With a recognised format the browser
+ requires exactly two recognised speakers with at least three text messages each.
+-A 40-message, completely fictional sample chat is built in; it includes
+-different message lengths and reply gaps, and fits in a single Jev request.
++A 400-message, completely fictional sample chat is built in. Its two fictional
++speakers talk across January–September 2026 about everyday plans, classes,
++support, a clarified misunderstanding and ambiguous friendly jokes. Messages
++use unambiguous day-first dates, varied lengths, gaps and quiet days; the
++sample currently fits within the Jev state budget. The local preview intercepts
++the Jev call and needs no API key. Forecasts are calculated independently:
++never treat the sample as evidence that a real relationship can be predicted.
+ A three-person chat cannot be made eligible by hiding or excluding one person.
+ A long chat can be truncated to the newest messages that fit Jev's state
+ limit; if that excerpt has fewer than three messages from either speaker, no
+@@ -130,17 +135,32 @@ prefers reduced motion. Editing the chat while a result or request is visible
+ clears the old result; a response for that superseded text is not displayed.
+ No extra request, storage, or chat metadata is introduced by this styling.
+ 
+-Each person gets a **visual animal sticker for a counted pattern**, using only
+-the part of a parsed chat submitted to Jev. Both need at least three text
+-messages; otherwise both receive a neutral sticker. In this order: a **dog**
+-starts strictly more of at least three observed conversations than the other
+-person (ties get no starter sticker); a **hedgehog** has a median of at least
+-15 words per message; a **mouse** has a median of at most 6; everyone else
+-gets a **cat**. The numeric observation and `n` (or starts out of conversations)
+-appear beside the sticker. Animals represent message patterns, never identities
+-or personality. Raw formats get neutral stickers because their speakers cannot
+-be verified. For truncated chats the sticker uses only the submitted excerpt;
+-the separate existing local statistics can describe the full parsed chat.
++Each person gets one of seven **original animal stickers for a counted pattern**,
++using only the part of a parsed chat submitted to Jev. Both people need at least
++three text messages, otherwise both receive a neutral sticker. Rules run in
++this order (the first qualifying rule wins): **dog** starts strictly more of at
++least three observed conversations than the other person (ties receive no dog);
++**owl** writes at least 5 of 10 timestamped messages between 22:00 and 05:59
++*as written in the export* (no timezone is assumed); **rabbit** has at least
++five valid reply blocks with median response time at most three minutes;
++**tortoise** has at least five valid reply blocks with median response time at
++least 30 minutes; **hedgehog** has median text length at least 15 words over at
++least three messages; **mouse** has median length at most six words over at least
++three messages; otherwise **cat** represents a median between seven and fourteen
++words. A six-hour pause begins a new conversation and is excluded from reply
++gaps. Each sticker displays the observation and sample size. Two people may
++receive the same animal. The rules describe chat roles, never personalities.
++Raw formats get neutral stickers because speakers cannot be verified. For
++truncated chats the sticker uses only the submitted excerpt; separate local
++statistics and the time graph use the whole recognised chat. Result and share
++card explicitly state the two scopes.
++
++The analysis button optionally plays one quiet, locally synthesized two-note
++cue (Web Audio API); the nearby button mutes it without saving a preference.
++The loading animation shows an open-ended active state, not a percentage or
++timed result. Its text stages follow the actual request and local calculations.
++Reduced-motion settings disable its moving elements. A fast request is shown
++immediately, without a minimum animation delay.
+ 
+ The shared duo story uses only the four existing ordinal scores, in order:
+ tension >= 2 gives a friction story; otherwise clarity <= 1 gives a clarifying
+diff --git a/css/polish.css b/css/polish.css
+index 28f8b31..d61705a 100644
+--- a/css/polish.css
++++ b/css/polish.css
+@@ -62,6 +62,8 @@ body, main, .masthead, .colophon { min-width: 0; }
+ .chip { padding: .35rem .8rem; border-color: #bde9ff75; background: #bde9ff1c; font-weight: 700; }
+ .intake-bar { margin-top: 1.25rem; }
+ .intake-bar .primary { box-shadow: 0 5px 0 #708039; }
++.intake-bar .sound-toggle { min-width: 6.5rem; border: 1px solid var(--rule); color: var(--ink); }
++.sound-toggle[aria-pressed="false"] { color: var(--ink-soft); background: #ffffff0d; }
+ .intake-bar .primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 7px 0 #708039, 0 11px 25px #dff86f33; }
+ .intake-bar .primary:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 2px 0 #708039; }
+ .primary, .secondary { transition: background .18s ease, box-shadow .18s ease, transform .18s ease; }
+@@ -73,6 +75,10 @@ body, main, .masthead, .colophon { min-width: 0; }
+ .lab-orbit { position: absolute; inset: 4%; border: 2px dashed var(--accent-blue); border-radius: 50%; animation: orbit 10s linear infinite; }
+ .lab-orbit-two { inset: 18%; border-color: var(--accent); animation-direction: reverse; animation-duration: 7s; }
+ .lab-symbol { z-index: 1; display: grid; place-items: center; width: 46%; aspect-ratio: 1; border-radius: 1rem; background: var(--accent); color: #242138; font-size: clamp(2rem, 6vw, 4rem); box-shadow: 0 0 35px #dff86f73; animation: lab-pulse 1.5s ease-in-out infinite alternate; }
++.lab-bubble { position: absolute; z-index: 1; width: 28%; height: 19%; border-radius: 60% 60% 60% 18%; background: var(--accent-blue); box-shadow: 0 5px 15px #1119; animation: bubble-travel 1.5s ease-in-out infinite alternate; }
++.lab-bubble-a { left: 0; top: 8%; transform: rotate(-12deg); }
++.lab-bubble-b { right: 0; bottom: 8%; transform: rotate(166deg); background: var(--accent-coral); animation-delay: -.75s; }
++@keyframes bubble-travel { to { translate: 12px 10px; opacity: .7; } }
+ @keyframes orbit { to { transform: rotate(360deg); } }
+ @keyframes lab-pulse { to { transform: scale(1.08); box-shadow: 0 0 50px #dff86fa8; } }
+ .lab-copy { min-width: 0; }
+@@ -92,6 +98,7 @@ body, main, .masthead, .colophon { min-width: 0; }
+ 
+ .results { margin-top: clamp(2rem, 5vw, 4rem); }
+ .results > .step-label { font-size: .84rem; }
++.scope-note { display: inline-block; margin: .4rem 0 1rem; padding: .65rem 1rem; border: 1px solid #bde9ff75; border-radius: .85rem; background: #bde9ff13; color: var(--ink-soft); font-size: .9rem; }
+ .connection-summary { background: radial-gradient(28rem 28rem at 100% 0%, #6673a055, transparent 80%), linear-gradient(145deg, #402d51, #2c243b 60%, #213744); border-color: #ab93b669; }
+ .connection-summary::before { border-color: #ffffff3d; }
+ .vibe-hero { gap: clamp(.9rem, 3vw, 2.2rem); }
+@@ -163,6 +170,6 @@ body, main, .masthead, .colophon { min-width: 0; }
+ }
+ @media (prefers-reduced-motion: reduce) {
+   html { scroll-behavior: auto; }
+-  .hero-art img, .lab-orbit, .lab-symbol, .lab-progress span, .results.revealed .story-section, .results.revealed .reading-card { animation: none; }
++  .hero-art img, .lab-orbit, .lab-symbol, .lab-bubble, .lab-progress span, .results.revealed .story-section, .results.revealed .reading-card { animation: none; }
+   .animal-sticker, .cue-card, .pattern-card, .outlook-card, .primary, .secondary { transition: none; }
+ }
+diff --git a/img/animals/cat.svg b/img/animals/cat.svg
+index 2e47be4..af4419a 100644
+--- a/img/animals/cat.svg
++++ b/img/animals/cat.svg
+@@ -1 +1 @@
+-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-hidden="true"><rect x="5" y="5" width="230" height="230" rx="60" fill="#d9c8ff"/><g stroke-linecap="round" stroke-linejoin="round"><path d="M52 117 53 49 96 78 M188 117 187 49 144 78" fill="#c4b2ec" stroke="#261b30" stroke-width="6" stroke-linejoin="round"/><ellipse cx="120" cy="139" rx="73" ry="68" fill="#d9c8ff" stroke="#261b30" stroke-width="6"/><circle cx="91" cy="130" r="6" fill="#261b30"/><circle cx="149" cy="130" r="6" fill="#261b30"/><path d="M111 146q9-7 18 0l-9 9z" fill="#261b30"/><g fill="none" stroke="#261b30" stroke-width="4"><path d="M115 148q5 10 10 0 M73 162l-33-4 M73 170l-33 6 M167 162l33-4 M167 170l33 6"/></g></g><path d="m205 21 4 11 12 5-12 4-4 12-5-12-12-4 12-5z" fill="#fff"/></svg>
+\ No newline at end of file
++<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="cat"><rect x="7" y="7" width="226" height="226" rx="60" fill="#26233b"/><circle cx="120" cy="113" r="91" fill="#a68dda" opacity=".25"/><path d="M24 199q96 26 192 0" fill="none" stroke="#bde9ff" stroke-width="3" opacity=".5"/><path d="M49 119 52 32l51 40 36-5 48-37 5 89" fill="#a68dda" stroke="#332b45" stroke-width="6" stroke-linejoin="round"/><path d="m62 48 28 26-30 2m116-29-28 27 32 1" fill="#efaebd"/><ellipse cx="120" cy="143" rx="85" ry="77" fill="#dccbff" stroke="#332b45" stroke-width="6"/><ellipse cx="89" cy="137" rx="8" ry="10" fill="#332b45"/><ellipse cx="151" cy="137" rx="8" ry="10" fill="#332b45"/><circle cx="92" cy="133" r="2.5" fill="white"/><circle cx="154" cy="133" r="2.5" fill="white"/><ellipse cx="64" cy="166" rx="14" ry="7" fill="#ed9ab2" opacity=".65"/><ellipse cx="176" cy="166" rx="14" ry="7" fill="#ed9ab2" opacity=".65"/><path d="m113 166 7 5 7-5" fill="none" stroke="#332b45" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M104 180q16 14 32 0" fill="none" stroke="#332b45" stroke-width="4" stroke-linecap="round"/><circle cx="37" cy="34" r="5" fill="#dff86f"/><path d="m197 30 4 9 9 4-9 4-4 9-4-9-9-4 9-4Z" fill="#dff86f"/></svg>
+\ No newline at end of file
+diff --git a/img/animals/dog.svg b/img/animals/dog.svg
+index 175fbd4..ea10b12 100644
+--- a/img/animals/dog.svg
++++ b/img/animals/dog.svg
+@@ -1 +1 @@
+-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-hidden="true"><rect x="5" y="5" width="230" height="230" rx="60" fill="#e9f056"/><g stroke-linecap="round" stroke-linejoin="round"><path d="M64 110Q25 84 36 141Q42 163 70 157 M176 110Q215 84 204 141Q198 163 170 157" fill="#cad454" stroke="#261b30" stroke-width="6"/><ellipse cx="120" cy="139" rx="73" ry="68" fill="#e9f056" stroke="#261b30" stroke-width="6"/><circle cx="91" cy="130" r="6" fill="#261b30"/><circle cx="149" cy="130" r="6" fill="#261b30"/><path d="M111 146q9-7 18 0l-9 9z" fill="#261b30"/><g fill="none" stroke="#261b30" stroke-width="4"><path d="M113 150q7 14 14 0 M118 154v15q12 13 24 0"/></g></g><path d="m205 21 4 11 12 5-12 4-4 12-5-12-12-4 12-5z" fill="#fff"/></svg>
+\ No newline at end of file
++<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="dog"><rect x="7" y="7" width="226" height="226" rx="60" fill="#26233b"/><circle cx="120" cy="113" r="91" fill="#c79f67" opacity=".25"/><path d="M24 199q96 26 192 0" fill="none" stroke="#bde9ff" stroke-width="3" opacity=".5"/><path d="M64 67C-2 42 27 149 52 143l36-51m88-25c66-25 37 82 12 76l-36-51" fill="#c79f67" stroke="#332b45" stroke-width="6" stroke-linejoin="round"/><ellipse cx="171" cy="161" rx="20" ry="16" fill="#fff0c9" opacity=".75"/><ellipse cx="120" cy="143" rx="85" ry="77" fill="#f2db91" stroke="#332b45" stroke-width="6"/><ellipse cx="89" cy="137" rx="8" ry="10" fill="#332b45"/><ellipse cx="151" cy="137" rx="8" ry="10" fill="#332b45"/><circle cx="92" cy="133" r="2.5" fill="white"/><circle cx="154" cy="133" r="2.5" fill="white"/><ellipse cx="64" cy="166" rx="14" ry="7" fill="#ed9ab2" opacity=".65"/><ellipse cx="176" cy="166" rx="14" ry="7" fill="#ed9ab2" opacity=".65"/><path d="m113 166 7 5 7-5" fill="none" stroke="#332b45" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M104 180q16 14 32 0" fill="none" stroke="#332b45" stroke-width="4" stroke-linecap="round"/><circle cx="37" cy="34" r="5" fill="#dff86f"/><path d="m197 30 4 9 9 4-9 4-4 9-4-9-9-4 9-4Z" fill="#dff86f"/></svg>
+\ No newline at end of file
+diff --git a/img/animals/hedgehog.svg b/img/animals/hedgehog.svg
+index a8530e7..a78812f 100644
+--- a/img/animals/hedgehog.svg
++++ b/img/animals/hedgehog.svg
+@@ -1 +1 @@
+-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-hidden="true"><rect x="5" y="5" width="230" height="230" rx="60" fill="#ffb9a3"/><g stroke-linecap="round" stroke-linejoin="round"><path d="M53 124 38 80 73 98 69 58 99 87 118 56 135 90 167 55 165 101 201 82 184 132" fill="#c67d77" stroke="#261b30" stroke-width="6" stroke-linejoin="round"/><ellipse cx="120" cy="139" rx="73" ry="68" fill="#ffb9a3" stroke="#261b30" stroke-width="6"/><circle cx="91" cy="130" r="6" fill="#261b30"/><circle cx="149" cy="130" r="6" fill="#261b30"/><path d="M111 146q9-7 18 0l-9 9z" fill="#261b30"/><g fill="none" stroke="#261b30" stroke-width="4"><path d="M113 150q7 9 14 0 M101 172q19 13 38 0"/></g></g><path d="m205 21 4 11 12 5-12 4-4 12-5-12-12-4 12-5z" fill="#fff"/></svg>
+\ No newline at end of file
++<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="hedgehog"><rect x="7" y="7" width="226" height="226" rx="60" fill="#26233b"/><circle cx="120" cy="113" r="91" fill="#ce8e75" opacity=".25"/><path d="M24 199q96 26 192 0" fill="none" stroke="#bde9ff" stroke-width="3" opacity=".5"/><path d="M34 129 31 75l22 14 2-39 31 22 24-42 24 40 40-28 3 42 31-11-8 59" fill="#ce8e75" stroke="#332b45" stroke-width="6" stroke-linejoin="round"/><path d="m55 99 13-24m23 8 12-26m41 24 13-25m19 40 18-13" stroke="#fbe6bd" stroke-width="5" stroke-linecap="round"/><ellipse cx="120" cy="143" rx="85" ry="77" fill="#f9c4ac" stroke="#332b45" stroke-width="6"/><ellipse cx="89" cy="137" rx="8" ry="10" fill="#332b45"/><ellipse cx="151" cy="137" rx="8" ry="10" fill="#332b45"/><circle cx="92" cy="133" r="2.5" fill="white"/><circle cx="154" cy="133" r="2.5" fill="white"/><ellipse cx="64" cy="166" rx="14" ry="7" fill="#ed9ab2" opacity=".65"/><ellipse cx="176" cy="166" rx="14" ry="7" fill="#ed9ab2" opacity=".65"/><path d="m113 166 7 5 7-5" fill="none" stroke="#332b45" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M104 180q16 14 32 0" fill="none" stroke="#332b45" stroke-width="4" stroke-linecap="round"/><circle cx="37" cy="34" r="5" fill="#dff86f"/><path d="m197 30 4 9 9 4-9 4-4 9-4-9-9-4 9-4Z" fill="#dff86f"/></svg>
+\ No newline at end of file
+diff --git a/img/animals/mouse.svg b/img/animals/mouse.svg
+index 6049ddf..b6220e1 100644
+--- a/img/animals/mouse.svg
++++ b/img/animals/mouse.svg
+@@ -1 +1 @@
+-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-hidden="true"><rect x="5" y="5" width="230" height="230" rx="60" fill="#d7efff"/><g stroke-linecap="round" stroke-linejoin="round"><circle cx="75" cy="86" r="27" fill="#bfdbea" stroke="#261b30" stroke-width="5"/><circle cx="165" cy="86" r="27" fill="#bfdbea" stroke="#261b30" stroke-width="5"/><ellipse cx="120" cy="139" rx="73" ry="68" fill="#d7efff" stroke="#261b30" stroke-width="6"/><circle cx="91" cy="130" r="6" fill="#261b30"/><circle cx="149" cy="130" r="6" fill="#261b30"/><path d="M111 146q9-7 18 0l-9 9z" fill="#261b30"/><g fill="none" stroke="#261b30" stroke-width="4"><path d="M115 148q5 9 10 0 M70 158q-22-5-32 1 M70 169q-22 0-32 7 M170 158q22-5 32 1 M170 169q22 0 32 7"/></g></g><path d="m205 21 4 11 12 5-12 4-4 12-5-12-12-4 12-5z" fill="#fff"/></svg>
+\ No newline at end of file
++<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="mouse"><rect x="7" y="7" width="226" height="226" rx="60" fill="#26233b"/><circle cx="120" cy="113" r="91" fill="#79a9d3" opacity=".25"/><path d="M24 199q96 26 192 0" fill="none" stroke="#bde9ff" stroke-width="3" opacity=".5"/><circle cx="57" cy="73" r="28" fill="#79a9d3" stroke="#332b45" stroke-width="5"/><circle cx="183" cy="73" r="28" fill="#79a9d3" stroke="#332b45" stroke-width="5"/><circle cx="57" cy="73" r="17" fill="#eec0cf"/><circle cx="183" cy="73" r="17" fill="#eec0cf"/><path d="M178 170c51-13 42 39 18 25" fill="none" stroke="#332b45" stroke-width="8" stroke-linecap="round"/><ellipse cx="120" cy="143" rx="85" ry="77" fill="#c0e8ff" stroke="#332b45" stroke-width="6"/><ellipse cx="89" cy="137" rx="8" ry="10" fill="#332b45"/><ellipse cx="151" cy="137" rx="8" ry="10" fill="#332b45"/><circle cx="92" cy="133" r="2.5" fill="white"/><circle cx="154" cy="133" r="2.5" fill="white"/><ellipse cx="64" cy="166" rx="14" ry="7" fill="#ed9ab2" opacity=".65"/><ellipse cx="176" cy="166" rx="14" ry="7" fill="#ed9ab2" opacity=".65"/><path d="m113 166 7 5 7-5" fill="none" stroke="#332b45" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M104 180q16 14 32 0" fill="none" stroke="#332b45" stroke-width="4" stroke-linecap="round"/><circle cx="37" cy="34" r="5" fill="#dff86f"/><path d="m197 30 4 9 9 4-9 4-4 9-4-9-9-4 9-4Z" fill="#dff86f"/></svg>
+\ No newline at end of file
+diff --git a/img/animals/neutral.svg b/img/animals/neutral.svg
+index d2d4905..182f24b 100644
+--- a/img/animals/neutral.svg
++++ b/img/animals/neutral.svg
+@@ -1 +1 @@
+-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-hidden="true"><rect x="5" y="5" width="230" height="230" rx="60" fill="#b5aabb"/><g stroke-linecap="round" stroke-linejoin="round"><circle cx="120" cy="82" r="21" fill="#d2cad8"/><ellipse cx="120" cy="139" rx="73" ry="68" fill="#b5aabb" stroke="#261b30" stroke-width="6"/><circle cx="91" cy="130" r="6" fill="#261b30"/><circle cx="149" cy="130" r="6" fill="#261b30"/><path d="M111 146q9-7 18 0l-9 9z" fill="#261b30"/><g fill="none" stroke="#261b30" stroke-width="4"><path d="M100 166q20 10 40 0"/></g></g><path d="m205 21 4 11 12 5-12 4-4 12-5-12-12-4 12-5z" fill="#fff"/></svg>
+\ No newline at end of file
++<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="neutral"><rect x="7" y="7" width="226" height="226" rx="60" fill="#26233b"/><circle cx="120" cy="113" r="91" fill="#a89bab" opacity=".25"/><path d="M24 199q96 26 192 0" fill="none" stroke="#bde9ff" stroke-width="3" opacity=".5"/><circle cx="120" cy="78" r="23" fill="#a89bab" stroke="#332b45" stroke-width="5"/><path d="M80 68c-16-23-37 0-27 24m107-24c16-23 37 0 27 24" fill="none" stroke="#332b45" stroke-width="7" stroke-linecap="round"/><ellipse cx="120" cy="143" rx="85" ry="77" fill="#d8d0df" stroke="#332b45" stroke-width="6"/><ellipse cx="89" cy="137" rx="8" ry="10" fill="#332b45"/><ellipse cx="151" cy="137" rx="8" ry="10" fill="#332b45"/><circle cx="92" cy="133" r="2.5" fill="white"/><circle cx="154" cy="133" r="2.5" fill="white"/><ellipse cx="64" cy="166" rx="14" ry="7" fill="#ed9ab2" opacity=".65"/><ellipse cx="176" cy="166" rx="14" ry="7" fill="#ed9ab2" opacity=".65"/><path d="m113 166 7 5 7-5" fill="none" stroke="#332b45" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M104 180q16 14 32 0" fill="none" stroke="#332b45" stroke-width="4" stroke-linecap="round"/><circle cx="37" cy="34" r="5" fill="#dff86f"/><path d="m197 30 4 9 9 4-9 4-4 9-4-9-9-4 9-4Z" fill="#dff86f"/></svg>
+\ No newline at end of file
+diff --git a/img/animals/owl.svg b/img/animals/owl.svg
+new file mode 100644
+index 0000000..9bc6e7f
+--- /dev/null
++++ b/img/animals/owl.svg
+@@ -0,0 +1 @@
++<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="owl"><rect x="7" y="7" width="226" height="226" rx="60" fill="#26233b"/><circle cx="120" cy="113" r="91" fill="#ab75c8" opacity=".25"/><path d="M24 199q96 26 192 0" fill="none" stroke="#bde9ff" stroke-width="3" opacity=".5"/><path d="m46 124 3-66 37 20 34-23 34 23 37-20 3 66" fill="#ab75c8" stroke="#332b45" stroke-width="6"/><circle cx="91" cy="133" r="33" fill="#faf1dc" stroke="#332b45" stroke-width="4"/><circle cx="149" cy="133" r="33" fill="#faf1dc" stroke="#332b45" stroke-width="4"/><circle cx="93" cy="135" r="9" fill="#332b45"/><circle cx="147" cy="135" r="9" fill="#332b45"/><path d="m120 150-11 14 11 8 11-8Z" fill="#e8a465" stroke="#332b45" stroke-width="3"/><ellipse cx="120" cy="143" rx="85" ry="77" fill="#d8a8f5" stroke="#332b45" stroke-width="6"/><circle cx="91" cy="137" r="26" fill="#faf1dc" stroke="#332b45" stroke-width="4"/><circle cx="149" cy="137" r="26" fill="#faf1dc" stroke="#332b45" stroke-width="4"/><circle cx="93" cy="137" r="9" fill="#332b45"/><circle cx="147" cy="137" r="9" fill="#332b45"/><path d="m120 149-10 13 10 7 10-7Z" fill="#e8a465"/><ellipse cx="64" cy="166" rx="14" ry="7" fill="#ed9ab2" opacity=".65"/><ellipse cx="176" cy="166" rx="14" ry="7" fill="#ed9ab2" opacity=".65"/><path d="m113 166 7 5 7-5" fill="none" stroke="#332b45" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M104 180q16 14 32 0" fill="none" stroke="#332b45" stroke-width="4" stroke-linecap="round"/><circle cx="37" cy="34" r="5" fill="#dff86f"/><path d="m197 30 4 9 9 4-9 4-4 9-4-9-9-4 9-4Z" fill="#dff86f"/></svg>
+\ No newline at end of file
+diff --git a/img/animals/rabbit.svg b/img/animals/rabbit.svg
+new file mode 100644
+index 0000000..5ba6aa6
+--- /dev/null
++++ b/img/animals/rabbit.svg
+@@ -0,0 +1 @@
++<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="rabbit"><rect x="7" y="7" width="226" height="226" rx="60" fill="#26233b"/><circle cx="120" cy="113" r="91" fill="#8dbbb0" opacity=".25"/><path d="M24 199q96 26 192 0" fill="none" stroke="#bde9ff" stroke-width="3" opacity=".5"/><path d="M73 103C39 32 58 6 82 24l38 73C99 8 124 4 145 26l14 80" fill="#c1e9dc" stroke="#332b45" stroke-width="6" stroke-linejoin="round"/><path d="M73 67 84 89M136 62l7 29" stroke="#edb8c9" stroke-width="12" stroke-linecap="round"/><ellipse cx="120" cy="143" rx="85" ry="77" fill="#c1e9dc" stroke="#332b45" stroke-width="6"/><ellipse cx="89" cy="137" rx="8" ry="10" fill="#332b45"/><ellipse cx="151" cy="137" rx="8" ry="10" fill="#332b45"/><circle cx="92" cy="133" r="2.5" fill="white"/><circle cx="154" cy="133" r="2.5" fill="white"/><ellipse cx="64" cy="166" rx="14" ry="7" fill="#ed9ab2" opacity=".65"/><ellipse cx="176" cy="166" rx="14" ry="7" fill="#ed9ab2" opacity=".65"/><path d="m113 166 7 5 7-5" fill="none" stroke="#332b45" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M104 180q16 14 32 0" fill="none" stroke="#332b45" stroke-width="4" stroke-linecap="round"/><circle cx="37" cy="34" r="5" fill="#dff86f"/><path d="m197 30 4 9 9 4-9 4-4 9-4-9-9-4 9-4Z" fill="#dff86f"/></svg>
+\ No newline at end of file
+diff --git a/img/animals/tortoise.svg b/img/animals/tortoise.svg
+new file mode 100644
+index 0000000..db474fc
+--- /dev/null
++++ b/img/animals/tortoise.svg
+@@ -0,0 +1 @@
++<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="tortoise"><rect x="7" y="7" width="226" height="226" rx="60" fill="#26233b"/><circle cx="120" cy="113" r="91" fill="#83ae66" opacity=".25"/><path d="M24 199q96 26 192 0" fill="none" stroke="#bde9ff" stroke-width="3" opacity=".5"/><path d="M18 176c-5-115 33-148 100-151 76-2 110 43 105 151Z" fill="#83ae66" stroke="#332b45" stroke-width="6"/><path d="M120 29 76 80 98 120h50l23-40Zm-44 51-34 44 31 37 25-41m73-40 27 44-29 37-21-41" fill="none" stroke="#4e7757" stroke-width="6" stroke-linejoin="round"/><ellipse cx="120" cy="143" rx="85" ry="77" fill="#b9dc91" stroke="#332b45" stroke-width="6"/><path d="M41 119c10-67 48-82 79-82 47 0 77 31 79 82" fill="none" stroke="#4e7757" stroke-width="7"/><path d="m120 41-35 42 20 26h30l20-26-35-42Z" fill="none" stroke="#4e7757" stroke-width="5"/><ellipse cx="89" cy="137" rx="8" ry="10" fill="#332b45"/><ellipse cx="151" cy="137" rx="8" ry="10" fill="#332b45"/><circle cx="92" cy="133" r="2.5" fill="white"/><circle cx="154" cy="133" r="2.5" fill="white"/><ellipse cx="64" cy="166" rx="14" ry="7" fill="#ed9ab2" opacity=".65"/><ellipse cx="176" cy="166" rx="14" ry="7" fill="#ed9ab2" opacity=".65"/><path d="m113 166 7 5 7-5" fill="none" stroke="#332b45" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M104 180q16 14 32 0" fill="none" stroke="#332b45" stroke-width="4" stroke-linecap="round"/><circle cx="37" cy="34" r="5" fill="#dff86f"/><path d="m197 30 4 9 9 4-9 4-4 9-4-9-9-4 9-4Z" fill="#dff86f"/></svg>
+\ No newline at end of file
+diff --git a/index.html b/index.html
+index 761a964..f408734 100644
+--- a/index.html
++++ b/index.html
+@@ -60,6 +60,7 @@
+             </button>
+             <input id="file" type="file" hidden accept=".txt,.zip,.json,.html,.htm,.csv,.tsv,text/plain,application/zip,application/json,text/html,text/csv" />
+             <button id="sample" class="link" type="button" data-i18n="sample"></button>
++            <button id="sound-toggle" class="secondary sound-toggle" type="button" aria-pressed="true"></button>
+             <button id="judge" class="primary" type="button" disabled data-i18n="judge"></button>
+           </div>
+           <form id="names-form" class="names-form" hidden>
+@@ -87,7 +88,7 @@
+       </section>
+ 
+       <section id="lab" class="lab" aria-labelledby="lab-title" hidden>
+-        <div class="lab-visual" aria-hidden="true"><span class="lab-orbit lab-orbit-one"></span><span class="lab-orbit lab-orbit-two"></span><span class="lab-symbol">✦</span></div>
++        <div class="lab-visual" aria-hidden="true"><span class="lab-orbit lab-orbit-one"></span><span class="lab-orbit lab-orbit-two"></span><span class="lab-bubble lab-bubble-a"></span><span class="lab-bubble lab-bubble-b"></span><span class="lab-symbol">✦</span></div>
+         <div class="lab-copy">
+           <p class="step-label" data-i18n="flowAnalyse"></p>
+           <h2 id="lab-title" data-i18n="labTitle"></h2>
+@@ -100,6 +101,7 @@
+ 
+       <section id="results" class="results" aria-live="polite" hidden>
+         <p class="step-label" data-i18n="stageResult"></p>
++        <p id="scope-note" class="scope-note"></p>
+         <article class="connection-summary">
+           <div class="vibe-hero">
+             <div>
+diff --git a/js/animals.js b/js/animals.js
+index 06a2376..df2a8b0 100644
+--- a/js/animals.js
++++ b/js/animals.js
+@@ -1,6 +1,6 @@
+ import { MIN_SAMPLE } from './stats.js';
+ 
+-export const ANIMALS = Object.freeze(['mouse', 'cat', 'dog', 'hedgehog', 'neutral']);
++export const ANIMALS = Object.freeze(['mouse', 'cat', 'dog', 'hedgehog', 'owl', 'rabbit', 'tortoise', 'neutral']);
+ 
+ // Stickers describe only counted behaviour in the submitted excerpt. They do
+ // not classify people or extrapolate beyond the messages that Jev saw.
+@@ -12,6 +12,12 @@ export function animalDuo(stats, people, { raw = false } = {}) {
+     const other = index === 0 ? second : first;
+     if (s.starts?.of >= MIN_SAMPLE && other.starts?.of >= MIN_SAMPLE && s.starts.count > other.starts.count)
+       return { key: 'dog', count: s.starts.count, of: s.starts.of };
++    if (s.clock?.n >= 10 && s.clock.late * 2 >= s.clock.n)
++      return { key: 'owl', count: s.clock.late, n: s.clock.n };
++    if (s.reply?.n >= 5 && s.reply.median <= 3 * 60_000)
++      return { key: 'rabbit', value: Math.round(s.reply.median / 60_000), n: s.reply.n };
++    if (s.reply?.n >= 5 && s.reply.median >= 30 * 60_000)
++      return { key: 'tortoise', value: Math.round(s.reply.median / 60_000), n: s.reply.n };
+     if (s.textLength.medianWords >= 15)
+       return { key: 'hedgehog', value: s.textLength.medianWords, n: s.textLength.n };
+     if (s.textLength.medianWords <= 6)
+diff --git a/js/app.js b/js/app.js
+index 420a6ce..0c75459 100644
+--- a/js/app.js
++++ b/js/app.js
+@@ -17,8 +17,8 @@ import { duoDetail, personReadings } from './reading.js';
+ import { highlightCues } from './highlights.js';
+ import { outlookOf } from './outlook.js';
+ import { renderOutlook } from './outlook-view.js';
++import { createSound } from './sound.js';
+ 
+-const MIN_LAB_MS = 950;
+ const $ = (id) => document.getElementById(id);
+ const chat = $('chat');
+ const judgeButton = $('judge');
+@@ -27,13 +27,13 @@ const keyForm = $('key-form');
+ const errorBox = $('error');
+ const lab = $('lab');
+ const results = $('results');
++const sound = createSound();
+ let messages = [];
+ let detected = [];
+ let typedNames = [];
+ let lastVerdict = null;
+ let judging = false;
+ let chatRevision = 0;
+-const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+ const fromTemplate = (id) => $(id).content.firstElementChild.cloneNode(true);
+ const isRawMode = () => detected.length < 2;
+ const candidates = () => isRawMode() ? typedNames : detected;
+@@ -59,8 +59,14 @@ function renderLanguagePicker() {
+     }
+     renderSubjects();
+     if (lastVerdict) renderResults(lastVerdict, { scroll: false });
++    renderSound();
+   });
+ }
++function renderSound() {
++  const toggle = $('sound-toggle');
++  toggle.setAttribute('aria-pressed', String(sound.enabled));
++  toggle.textContent = `${sound.enabled ? '♪' : '♩'} ${t(sound.enabled ? 'soundOn' : 'soundOff')}`;
++}
+ function renderSubjects() {
+   const people = candidates();
+   const box = $('subjects');
+@@ -105,12 +111,14 @@ function runLab() {
+     log.children[++current].classList.add('is-active');
+     $('lab-phase').textContent = log.children[current].textContent;
+   };
+-  advance();
+-  const interval = setInterval(advance, 300);
+-  return () => { clearInterval(interval); lab.hidden = true; };
++  advance(); advance(); // The request is about to begin; this is not a percentage.
++  return { next: advance, stop: () => { lab.hidden = true; } };
+ }
+ async function judgeChat() {
+   if (judging || judgeButton.disabled) return;
++  // Start audio in the user's click task; an awaited key lookup may lose
++  // browser audio activation, especially for a dynamically imported key.
++  sound.play();
+   judging = true;
+   renderSubjects();
+   errorBox.hidden = true;
+@@ -130,11 +138,12 @@ async function judgeChat() {
+     keyForm.hidden = true;
+     lastVerdict = null;
+     results.hidden = true;
+-    const stopLab = runLab();
++    const labState = runLab();
+     try {
+       const started = performance.now();
+-      const [response] = await Promise.all([askJev(apiKey, request.body), wait(MIN_LAB_MS)]);
++      const response = await askJev(apiKey, request.body);
+       if (judgedRevision !== chatRevision) return;
++      labState.next();
+       lastVerdict = {
+         people,
+         answers: readVerdicts(response.answers),
+@@ -147,11 +156,12 @@ async function judgeChat() {
+           truncated: request.truncated, ms: Math.round(performance.now() - started), model: response.model, cost: response.usage?.cost },
+       };
+       renderResults(lastVerdict);
++      labState.next();
+       setStage('result');
+     } catch (error) {
+       if (error.status === 401) { forgetApiKey(); keyForm.hidden = false; }
+       showError(error.status ? t('errors.jev', { status: error.status, reason: error.reason }) : error.message);
+-    } finally { stopLab(); }
++    } finally { labState.stop(); }
+   } finally { judging = false; if (!lastVerdict) setStage('input'); renderSubjects(); }
+ }
+ function fact(label, value, definition, detail) {
+@@ -317,7 +327,11 @@ function renderResults({ people, answers, rawMode, stats, stickerStats, timeline
+       : t('evidenceAll', { n: meta.judgedCount });
+   const cost = meta.cost === undefined ? '' : ` · $${meta.cost.toFixed(6)}`;
+   $('footnote').textContent = `${evidence} · ${meta.model} · ${meta.ms} ms${cost}`;
++  $('scope-note').textContent = t(rawMode ? 'scopeRaw' : meta.truncated ? 'scopePartial' : 'scopeFull', {
++    n: meta.judgedCount, total: meta.totalCount,
++  });
+   $('share').onclick = () => openCard({ label, story, storyVars, animals, timeFact: timeline?.cardFact,
++    scope: rawMode ? null : { total: meta.totalCount, judged: meta.judgedCount },
+     people: people.map((name) => ({ name, highlights: shareHighlights(stats?.get(name)) })),
+     records: records.map((entry) => ({ key: entry.key, name: entry.name, detail: recordDetail(entry) })) });
+   results.hidden = false;
+@@ -329,6 +343,8 @@ function renderResults({ people, answers, rawMode, stats, stickerStats, timeline
+ }
+ translatePage();
+ renderLanguagePicker();
++renderSound();
++$('sound-toggle').addEventListener('click', () => { sound.toggle(); renderSound(); });
+ chat.addEventListener('input', onChatChanged);
+ chat.addEventListener('dragover', (event) => { event.preventDefault(); chat.classList.add('dragging'); });
+ chat.addEventListener('dragleave', () => chat.classList.remove('dragging'));
+diff --git a/js/card.js b/js/card.js
+index 7d519c4..560aaee 100644
+--- a/js/card.js
++++ b/js/card.js
+@@ -19,18 +19,22 @@ function highlightLabel({ key, median, n }) {
+ export function cardPreviewLines(verdict, shownName) {
+   return [t(`connection.${verdict.label}`),
+     ...(verdict.story ? [t(`cardStory.${verdict.story}`, verdict.storyVars)] : []),
++    ...(verdict.scope ? [cardScope(verdict.scope)] : []),
+     ...(verdict.timeFact ? [t('timeline.cardFact', verdict.timeFact)] : []),
+     ...verdict.people.map((person, i) => `${shownName(person.name)}` +
+       (verdict.animals?.[i] ? ` · ${t(`animals.${verdict.animals[i].key}.name`)} · ${t(`animals.${verdict.animals[i].key}.why`, verdict.animals[i])}` : '') +
+       (person.highlights?.length ? ` · ${person.highlights.map(highlightLabel).join(' · ')}` : ''))];
+ }
++function cardScope({ judged, total }) {
++  return t(judged < total ? 'cardScopePartial' : 'cardScopeFull', { n: judged, total });
++}
+ async function asFile(canvas) {
+   const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+   if (!blob) throw new Error('PNG unavailable');
+   return new File([blob], 'fakeorfriend.png', { type: 'image/png' });
+ }
+ function drawAnimal(ctx, x, y, sticker) {
+-  const colors = { mouse: '#d7efff', cat: '#d9c8ff', dog: '#e9f056', hedgehog: '#ffb9a3', neutral: '#b5aabb' };
++  const colors = { mouse: '#c0e8ff', cat: '#dccbff', dog: '#f2db91', hedgehog: '#f9c4ac', owl: '#d8a8f5', rabbit: '#c1e9dc', tortoise: '#b9dc91', neutral: '#d8d0df' };
+   const key = sticker?.key ?? 'neutral';
+   ctx.fillStyle = colors[key] ?? colors.neutral;
+   ctx.beginPath(); ctx.roundRect(x, y, 340, 235, 42); ctx.fill();
+@@ -42,8 +46,25 @@ function drawAnimal(ctx, x, y, sticker) {
+   } else if (key === 'mouse' || key === 'dog') {
+     for (const offset of [85, 255]) { ctx.beginPath(); ctx.arc(x + offset, y + (key === 'mouse' ? 84 : 112), 44, 0, Math.PI * 2); ctx.fill(); }
+   }
++  if (key === 'rabbit') {
++    for (const offset of [130, 210]) { ctx.beginPath(); ctx.ellipse(x + offset, y + 54, 23, 65, offset === 130 ? -.2 : .2, 0, Math.PI * 2); ctx.fill(); }
++  }
++  if (key === 'owl') {
++    ctx.beginPath(); ctx.moveTo(x + 66, y + 112); ctx.lineTo(x + 87, y + 39); ctx.lineTo(x + 133, y + 112); ctx.fill();
++    ctx.beginPath(); ctx.moveTo(x + 207, y + 112); ctx.lineTo(x + 253, y + 39); ctx.lineTo(x + 274, y + 112); ctx.fill();
++  }
++  if (key === 'tortoise') {
++    ctx.fillStyle = '#689258'; ctx.beginPath(); ctx.ellipse(x + 170, y + 126, 113, 106, 0, 0, Math.PI * 2); ctx.fill();
++  }
+   ctx.fillStyle = colors[key] ?? colors.neutral;
+   ctx.beginPath(); ctx.ellipse(x + 170, y + 137, 105, 85, 0, 0, Math.PI * 2); ctx.fill();
++  if (key === 'owl') {
++    ctx.fillStyle = '#fff4e4';
++    for (const offset of [132, 208]) { ctx.beginPath(); ctx.arc(x + offset, y + 137, 22, 0, Math.PI * 2); ctx.fill(); }
++  }
++  if (key === 'tortoise') {
++    ctx.strokeStyle = '#5b8752'; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(x + 170, y + 79, 61, Math.PI, 0); ctx.stroke();
++  }
+   ctx.fillStyle = '#39283d';
+   for (const offset of [132, 208]) { ctx.beginPath(); ctx.arc(x + offset, y + 135, 8, 0, Math.PI * 2); ctx.fill(); }
+   ctx.beginPath(); ctx.arc(x + 170, y + 168, 8, 0, Math.PI * 2); ctx.fill();
+@@ -101,8 +122,9 @@ export function drawCard(canvas, verdict, shownName) {
+       paint(highlightLabel(highlight), 94, y + 84 + 30 * j, 22, '#e1d2e3', 890, 500));
+   });
+   ctx.fillStyle = '#867589'; ctx.fillRect(94, 1186, 892, 2);
+-  paint(t('cardFooter'), 94, 1230, 23, '#e1d2e3', 880, 500);
+-  if (verdict.timeFact) paint(t('timeline.cardFact', verdict.timeFact), 94, 1270, 23, '#dff86f', 880, 500);
++  paint(t('cardFooter'), 94, 1221, 23, '#e1d2e3', 880, 500);
++  if (verdict.timeFact) paint(t('timeline.cardFact', verdict.timeFact), 94, 1256, 21, '#dff86f', 880, 500);
++  if (verdict.scope) paint(cardScope(verdict.scope), 94, 1287, 18, '#e1d2e3', 880, 500);
+ }
+ export function openCard(verdict) {
+   const dialog = $('card-dialog');
+diff --git a/js/locales/de.js b/js/locales/de.js
+index 22700d4..af7c031 100644
+--- a/js/locales/de.js
++++ b/js/locales/de.js
+@@ -8,6 +8,13 @@ export default {
+   "flowInput": "Chat wählen",
+   "flowAnalyse": "Vibe-Check",
+   "flowResult": "Ergebnis",
++  "soundOn": "Ton an",
++  "soundOff": "Ton aus",
++  "scopeFull": "Jev und lokale Zahlen beziehen sich auf alle {total} Nachrichten.",
++  "scopePartial": "Jev und Sticker beziehen sich auf die neuesten {n} von {total} Nachrichten; Zeitverlauf und lokale Zahlen auf alle {total}.",
++  "scopeRaw": "Jev sieht einen Rohtextausschnitt; lokale Werte bleiben ungeprüft.",
++  "cardScopePartial": "Karten-Sticker aus den neuesten {n} von {total} Nachrichten; lokale Werte aus allen {total}.",
++  "cardScopeFull": "Karten-Sticker und lokale Werte aus {total} Nachrichten.",
+   "labTitle": "Euer Vibe kommt gleich ✦",
+   "labIntro": "Wir zählen Chatmuster lokal und fragen Jev einmal nach vier Eindrücken zum Austausch. Die Karte entsteht danach direkt im Browser.",
+   "hero": "Wie läuft’s <em>zwischen euch</em>?",
+@@ -165,6 +172,9 @@ export default {
+     "cat": { "name": "Katze", "why": "Zwischen kurz und ausführlich: im Median {value} Wörter je Nachricht (n = {n})." },
+     "dog": { "name": "Hund", "why": "Startet hier öfter ein neues Gespräch: {count} von {of}; eindeutiger Vorsprung." },
+     "hedgehog": { "name": "Igel", "why": "Nimmt sich Raum für Text: im Median {value} Wörter je Nachricht (n = {n})." },
++    "owl": { "name": "Eule", "why": "Schreibt oft zur im Export notierten späten Stunde: {count} von {n} Nachrichten zwischen 22 und 6 Uhr." },
++    "rabbit": { "name": "Hase", "why": "Hier folgt der nächste Antwortblock im Median nach {value} Minuten (n = {n})." },
++    "tortoise": { "name": "Schildkröte", "why": "Zwischen den Antwortblöcken liegen im Median {value} Minuten (n = {n})." },
+     "neutral": { "name": "Überraschungssticker", "why": "Noch zu wenig überprüfbare Nachrichten für einen passenden Sticker." }
+   },
+   "story": {
+@@ -213,12 +223,11 @@ export default {
+   "cardCharsHighlight": "Text-Median {chars} Zeichen · n = {n}",
+   "unknownNumber": "Unbekannte Nummer {n}",
+   "lab": [
+-    "Austausch wird gelesen…",
+-    "Hin und Her wird betrachtet…",
+-    "Nachrichten lokal gezählt…",
+-    "Jev wird gefragt…"
+-  ],
+-  "errors": {
++    "Chatausschnitt vorbereitet",
++    "Jev wird einmal gefragt…",
++    "Lokale Zahlen werden berechnet…",
++    "Ergebnis ist bereit"
++  ],  "errors": {
+     "badKey": "Das sieht nicht nach einem OpenRouter-Schlüssel aus. Er beginnt mit „sk-or-“.",
+     "jev": "Jev verweigert die Aussage ({status}): {reason}",
+     "tooBig": "Die Datei ist zu groß. Chats bis 50 MB Text gehen.",
+diff --git a/js/locales/en.js b/js/locales/en.js
+index 609556e..94fd16f 100644
+--- a/js/locales/en.js
++++ b/js/locales/en.js
+@@ -8,6 +8,13 @@ export default {
+   "flowInput": "Pick a chat",
+   "flowAnalyse": "Vibe check",
+   "flowResult": "Results",
++  "soundOn": "Sound on",
++  "soundOff": "Sound off",
++  "scopeFull": "Jev and local numbers cover all {total} messages.",
++  "scopePartial": "Jev and stickers use the newest {n} of {total} messages; timeline and local numbers use all {total}.",
++  "scopeRaw": "Jev sees a raw text excerpt; local numbers cannot be verified.",
++  "cardScopePartial": "Card stickers from the newest {n} of {total} messages; local numbers from all {total}.",
++  "cardScopeFull": "Card stickers and local numbers from all {total} messages.",
+   "labTitle": "Your vibe is on its way ✦",
+   "labIntro": "We count chat patterns locally and ask Jev once for four impressions of the exchange. Your card is then made in the browser.",
+   "hero": "How is your <em>connection</em>?",
+@@ -165,6 +172,9 @@ export default {
+     "cat": { "name": "Cat", "why": "Between short and detailed: median {value} words per message (n = {n})." },
+     "dog": { "name": "Dog", "why": "Starts more new conversations here: {count} of {of}, with a clear lead." },
+     "hedgehog": { "name": "Hedgehog", "why": "Makes room for longer texts: median {value} words per message (n = {n})." },
++    "owl": { "name": "Owl", "why": "Often writes late according to the export clock: {count} of {n} messages between 10 pm and 6 am." },
++    "rabbit": { "name": "Rabbit", "why": "Next reply block arrives after a median of {value} minutes (n = {n})." },
++    "tortoise": { "name": "Tortoise", "why": "Reply blocks are a median of {value} minutes apart (n = {n})." },
+     "neutral": { "name": "Mystery sticker", "why": "Not enough verifiable messages for a specific sticker yet." }
+   },
+   "story": {
+@@ -213,12 +223,11 @@ export default {
+   "cardCharsHighlight": "Text median {chars} chars · n = {n}",
+   "unknownNumber": "Unknown number {n}",
+   "lab": [
+-    "Reading the exchange…",
+-    "Checking the back-and-forth…",
+-    "Counting messages locally…",
+-    "Asking Jev…"
+-  ],
+-  "errors": {
++    "Chat excerpt prepared",
++    "One Jev request in progress…",
++    "Computing local numbers…",
++    "Result is ready"
++  ],  "errors": {
+     "badKey": "That doesn’t look like an OpenRouter key. It should start with “sk-or-”.",
+     "jev": "Jev refused to testify ({status}): {reason}",
+     "tooBig": "That file is too big. Chats up to 50 MB of text are fine.",
+diff --git a/js/locales/es.js b/js/locales/es.js
+index 4fad28c..1129ca3 100644
+--- a/js/locales/es.js
++++ b/js/locales/es.js
+@@ -8,6 +8,13 @@ export default {
+   "flowInput": "Elegir chat",
+   "flowAnalyse": "Explorar",
+   "flowResult": "Resultado",
++  "soundOn": "Sonido activado",
++  "soundOff": "Sonido desactivado",
++  "scopeFull": "Jev y los datos locales abarcan los {total} mensajes.",
++  "scopePartial": "Jev y los stickers usan los {n} mensajes más recientes de {total}; la gráfica y los datos locales usan los {total}.",
++  "scopeRaw": "Jev ve un extracto sin analizar; no se pueden verificar los datos locales.",
++  "cardScopePartial": "Stickers de los {n} mensajes más recientes de {total}; datos locales de los {total}.",
++  "cardScopeFull": "Stickers y datos locales de los {total} mensajes.",
+   "labTitle": "Ya llega vuestro resultado ✦",
+   "labIntro": "Contamos patrones del chat en el navegador y preguntamos una sola vez a Jev por cuatro impresiones del intercambio. Después la tarjeta se crea aquí mismo.",
+   "hero": "¿Cómo va vuestra <em>conexión</em>?",
+@@ -165,6 +172,9 @@ export default {
+     "cat": { "name": "Gato", "why": "Entre breve y detallado: mediana de {value} palabras por mensaje (n = {n})." },
+     "dog": { "name": "Perro", "why": "Inicia más conversaciones aquí: {count} de {of}, con ventaja clara." },
+     "hedgehog": { "name": "Erizo", "why": "Se extiende al escribir: mediana de {value} palabras por mensaje (n = {n})." },
++    "owl": { "name": "Búho", "why": "Escribe a menudo tarde según la hora del chat exportado: {count} de {n} mensajes entre las 22:00 y las 06:00." },
++    "rabbit": { "name": "Conejo", "why": "El siguiente bloque de respuesta llega tras una mediana de {value} minutos (n = {n})." },
++    "tortoise": { "name": "Tortuga", "why": "Los bloques de respuesta tienen una separación mediana de {value} minutos (n = {n})." },
+     "neutral": { "name": "Sticker sorpresa", "why": "Aún faltan mensajes verificables para elegir un sticker concreto." }
+   },
+   "story": {
+@@ -213,12 +223,11 @@ export default {
+   "cardCharsHighlight": "Texto mediano {chars} caracteres · n = {n}",
+   "unknownNumber": "Número desconocido {n}",
+   "lab": [
+-    "Leyendo el intercambio…",
+-    "Observando las respuestas…",
+-    "Contando mensajes en el navegador…",
+-    "Consultando a Jev…"
+-  ],
+-  "errors": {
++    "Extracto del chat preparado",
++    "Una consulta a Jev en curso…",
++    "Calculando datos locales…",
++    "Resultado listo"
++  ],  "errors": {
+     "badKey": "Eso no parece una clave de OpenRouter. Empieza por «sk-or-».",
+     "jev": "Jev se niega a declarar ({status}): {reason}",
+     "tooBig": "Ese archivo es demasiado grande. Hasta 50 MB de texto está bien.",
+diff --git a/js/locales/fr.js b/js/locales/fr.js
+index f9ca8f1..890699e 100644
+--- a/js/locales/fr.js
++++ b/js/locales/fr.js
+@@ -8,6 +8,13 @@ export default {
+   "flowInput": "Choisir un chat",
+   "flowAnalyse": "Explorer",
+   "flowResult": "Résultat",
++  "soundOn": "Son activé",
++  "soundOff": "Son coupé",
++  "scopeFull": "Jev et les chiffres locaux portent sur les {total} messages.",
++  "scopePartial": "Jev et les autocollants utilisent les {n} derniers messages sur {total} ; courbe et chiffres locaux utilisent les {total}.",
++  "scopeRaw": "Jev voit un extrait brut ; les chiffres locaux ne sont pas vérifiables.",
++  "cardScopePartial": "Autocollants des {n} derniers messages sur {total} ; chiffres locaux sur les {total}.",
++  "cardScopeFull": "Autocollants et chiffres locaux sur les {total} messages.",
+   "labTitle": "Votre résultat arrive ✦",
+   "labIntro": "Nous comptons les motifs du chat localement et demandons une seule fois à Jev quatre impressions sur l'échange. La carte est ensuite créée dans le navigateur.",
+   "hero": "Comment se passe votre <em>échange</em> ?",
+@@ -165,6 +172,9 @@ export default {
+     "cat": { "name": "Chat", "why": "Entre bref et détaillé : médiane de {value} mots par message (n = {n})." },
+     "dog": { "name": "Chien", "why": "Lance plus souvent un nouvel échange ici : {count} sur {of}, avec une avance nette." },
+     "hedgehog": { "name": "Hérisson", "why": "Prend de la place pour écrire : médiane de {value} mots par message (n = {n})." },
++    "owl": { "name": "Chouette", "why": "Écrit souvent tard selon l’heure de l’export : {count} messages sur {n} entre 22 h et 6 h." },
++    "rabbit": { "name": "Lapin", "why": "Le bloc de réponse suivant arrive après une médiane de {value} minutes (n = {n})." },
++    "tortoise": { "name": "Tortue", "why": "Les blocs de réponse sont espacés d’une médiane de {value} minutes (n = {n})." },
+     "neutral": { "name": "Sticker surprise", "why": "Pas assez de messages vérifiables pour choisir un sticker précis." }
+   },
+   "story": {
+@@ -213,12 +223,11 @@ export default {
+   "cardCharsHighlight": "Texte médian {chars} caractères · n = {n}",
+   "unknownNumber": "Numéro inconnu {n}",
+   "lab": [
+-    "Lecture de l’échange…",
+-    "Analyse des réponses…",
+-    "Comptage local des messages…",
+-    "Consultation de Jev…"
+-  ],
+-  "errors": {
++    "Extrait du chat préparé",
++    "Une seule requête à Jev en cours…",
++    "Calcul local des chiffres…",
++    "Résultat prêt"
++  ],  "errors": {
+     "badKey": "Ça ne ressemble pas à une clé OpenRouter. Elle commence par « sk-or- ».",
+     "jev": "Jev refuse de témoigner ({status}) : {reason}",
+     "tooBig": "Ce fichier est trop gros. Jusqu’à 50 Mo de texte, ça passe.",
+diff --git a/js/sample.js b/js/sample.js
+index 7cddb1d..f34738e 100644
+--- a/js/sample.js
++++ b/js/sample.js
+@@ -1,41 +1,107 @@
+-// Entirely invented. Two speakers, varied reply gaps and lengths for local statistics.
+-export const SAMPLE_CHAT = `[18.09.26, 16:02] Mara: Sag mal, hast du Samstag Lust, zusammen Pasta zu machen?
+-[18.09.26, 16:07] Leo: Ja, voll gern. Soll ich etwas mitbringen?
+-[18.09.26, 16:09] Mara: Tomaten wären super. Ich habe noch Nudeln und diesen riesigen Topf.
+-[18.09.26, 16:12] Leo: Endlich bekommt der Topf seinen großen Auftritt 😄
+-[18.09.26, 16:14] Leo: Basilikum nehme ich auch mit.
+-[18.09.26, 16:20] Mara: Deal. 19 Uhr bei mir?
+-[18.09.26, 16:23] Leo: Passt. Wie lief eigentlich dein Referat heute?
+-[18.09.26, 16:31] Mara: Besser als gedacht! Am Anfang war ich nervös, aber danach kamen richtig gute Fragen.
+-[18.09.26, 16:34] Leo: Hab ich doch gesagt, du kannst das. Freut mich richtig für dich.
+-[18.09.26, 16:38] Mara: Danke, das hat mir vorher echt geholfen.
+-[18.09.26, 16:44] Mara: Wie war dein Training?
+-[18.09.26, 16:52] Leo: Anstrengend, aber gut. Meine Beine fühlen sich gerade wie Pudding an.
+-[18.09.26, 16:56] Mara: Dann gibt es Samstag extra viel Pasta.
+-[18.09.26, 17:01] Leo: Wissenschaftlich absolut notwendig.
+-[19.09.26, 10:02] Leo: Kurze Frage: Meintest du mit 19 Uhr wirklich Samstag?
+-[19.09.26, 10:10] Mara: Ja, wieso? Habe ich mich irgendwo vertippt?
+-[19.09.26, 10:17] Leo: Du hattest mir vorhin geschrieben, ich soll heute vorbeikommen. War kurz verwirrt.
+-[19.09.26, 10:20] Mara: Oh, sorry! Ich meinte morgen. Heute bin ich noch unterwegs.
+-[19.09.26, 10:24] Leo: Alles gut, jetzt weiß ich Bescheid. Ich hatte nur schon fast die Tomaten eingepackt.
+-[19.09.26, 10:27] Mara: Die haben noch einen Tag Schonfrist 😄
+-[19.09.26, 10:34] Mara: Danke fürs Nachfragen, wäre sonst echt blöd gelaufen.
+-[19.09.26, 10:39] Leo: Klar. Lieber einmal fragen als vor einer verschlossenen Tür stehen.
+-[19.09.26, 14:04] Mara: Ich suche noch einen Film für danach. Hast du eine Idee?
+-[19.09.26, 14:16] Leo: Etwas Lustiges wäre gut. Heute brauche ich echt mal eine Pause vom Lernen.
+-[19.09.26, 14:22] Mara: Verständlich. Wir können auch einfach Musik anmachen und quatschen.
+-[19.09.26, 14:28] Leo: Das klingt sogar besser. Kein Stress mit einem Film.
+-[19.09.26, 14:35] Mara: Okay, dann entspannt. Gibt es etwas, worüber du reden magst?
+-[19.09.26, 14:43] Leo: Vielleicht später. Gerade ist es eher viel auf einmal, aber danke, dass du fragst.
+-[19.09.26, 14:48] Mara: Klar, kein Druck. Wir machen einfach einen ruhigen Abend.
+-[19.09.26, 15:01] Leo: Freu mich drauf.
+-[20.09.26, 17:42] Leo: Ich bin beim Einkaufen. Tomaten, Basilikum und noch irgendwas?
+-[20.09.26, 17:49] Mara: Wenn du magst, eine Zitrone. Sonst haben wir alles.
+-[20.09.26, 17:52] Leo: Zitrone ist im Korb. Ich schaffe es wahrscheinlich zehn Minuten später.
+-[20.09.26, 17:57] Mara: Danke fürs Bescheidgeben. Ich fange in Ruhe mit der Soße an.
+-[20.09.26, 18:04] Leo: Die Tomaten sehen übrigens aus, als wären sie selbst zum Essen eingeladen.
+-[20.09.26, 18:08] Mara: Solange sie nicht die ganze Pasta für sich beanspruchen.
+-[20.09.26, 18:56] Leo: Bin gleich da. Brauchst du beim Schnippeln noch Hilfe?
+-[20.09.26, 19:00] Mara: Ja gern, das Basilikum wartet schon auf seinen großen Moment.
+-[20.09.26, 19:03] Leo: Perfekt. Bis gleich!
+-[20.09.26, 19:05] Mara: Bis gleich!`;
++// Entirely invented; two speakers and twenty scenes over nine months.
++const scenes = [
++  ['13.01.26', '16:05', 'den neuen Kurs', 'die Raumänderung', 'Raum B', 'das grüne Heft', 'die knarzende Tür', 'den Stundenplan'],
++  ['27.01.26', '18:15', 'den Gruppenauftrag', 'die Präsentation', 'den Tisch am Fenster', 'den blauen Stift', 'der wacklige Beamer', 'die Reihenfolge'],
++  ['10.02.26', '15:40', 'den Bibliotheksbesuch', 'das schwere Buch', 'den Fensterplatz', 'die Karteikarten', 'die flüsternde Uhr', 'die Ausleihe'],
++  ['24.02.26', '19:12', 'das Probetraining', 'die erste Runde', 'die Turnhalle', 'die Wasserflasche', 'das quietschende Parkett', 'den Treffpunkt'],
++  ['10.03.26', '17:30', 'den Regentag', 'den spontanen Umweg', 'die Bushaltestelle', 'den großen Schirm', 'die nasse Socke', 'den Fahrplan'],
++  ['24.03.26', '16:44', 'die kleine Ausstellung', 'das bunte Plakat', 'den Eingang', 'die Eintrittskarte', 'der schiefe Rahmen', 'die Öffnungszeit'],
++  ['07.04.26', '18:24', 'das Frühlingsfest', 'die Musikprobe', 'die kleine Bühne', 'die Kopfhörer', 'das tanzende Kabel', 'die Uhrzeit'],
++  ['21.04.26', '15:08', 'die Prüfungswoche', 'das Übungsblatt', 'den ruhigen Tisch', 'die Lernnotizen', 'der verlorene Radiergummi', 'den Abgabetag'],
++  ['05.05.26', '17:12', 'den ersten freien Nachmittag', 'die Radtour', 'die Brücke', 'die Picknickdecke', 'das Fahrradklingelkonzert', 'die Route'],
++  ['19.05.26', '18:36', 'den Pflanzenmarkt', 'das Basilikum', 'den Stand am Tor', 'die Stofftasche', 'die dramatische Tomate', 'den Preis'],
++  ['02.06.26', '16:16', 'den Kinoplan', 'den Filmtrailer', 'die letzte Reihe', 'das Popcorn', 'der geheime Abspann', 'den Spielbeginn'],
++  ['16.06.26', '17:02', 'das Missverständnis', 'die Nachricht von gestern', 'das Café', 'die Notiz', 'das verwirrte Fragezeichen', 'den Tag'],
++  ['30.06.26', '18:50', 'das Gespräch danach', 'die Entschuldigung', 'den Platz draußen', 'die Limonade', 'der versöhnliche Keks', 'die Verabredung'],
++  ['14.07.26', '19:20', 'die Ferienliste', 'den See', 'den Steg', 'die Sonnencreme', 'die stolze Badeente', 'die Abfahrt'],
++  ['28.07.26', '16:11', 'das Sommerprojekt', 'die Fotowand', 'die Werkstatt', 'das Klebeband', 'die krumme Schere', 'den Entwurf'],
++  ['11.08.26', '20:03', 'den Konzertabend', 'die neue Band', 'den Parkeingang', 'die Ohrstöpsel', 'der falsche Takt', 'den Beginn'],
++  ['25.08.26', '17:47', 'den Neustart', 'die erste Woche', 'die Treppe', 'den alten Rucksack', 'der fliegende Zettel', 'den Raum'],
++  ['08.09.26', '19:05', 'den Kochversuch', 'die Pasta', 'die Küche', 'das frische Basilikum', 'der viel zu große Topf', 'die Zutaten'],
++  ['15.09.26', '18:14', 'die ruhige Woche', 'den Spaziergang', 'den kleinen Platz', 'die leichte Jacke', 'die freche Taube', 'die Strecke'],
++  ['22.09.26', '19:32', 'das Wiedersehen', 'den Spieleabend', 'den runden Tisch', 'das Kartenspiel', 'der ewige Würfel', 'den Start'],
++];
++const openings = [
++  ['Ich stehe vor dem neuen Kursraum und die Tür klingt wie ein Piratenschiff.', 'Warte, Raum B? Ich laufe gerade zum alten Raum.', 'Ja, die Raumänderung kam eben. Ich halte dir einen Platz frei.', 'Heldentat. Mein grünes Heft hat immerhin den Weg gefunden.'],
++  ['Der Beamer hat während der Präsentation einfach aufgegeben.', 'Nicht schon wieder. Hat unsere Skizze trotzdem funktioniert?', 'Ja, wir haben die Reihenfolge erklärt und alle haben genickt.', 'Dann schulde ich dem blauen Stift wohl eine Auszeichnung.'],
++  ['Ich bin in der Bibliothek und habe ein Buch gefunden, das mehr wiegt als mein Rucksack.', 'Ist es wenigstens spannend oder nur schwer?', 'Beides. Ich nehme ein paar Karteikarten mit zum Fensterplatz.', 'Ich komme später dazu, wenn die flüsternde Uhr noch Platz lässt.'],
++  ['Ich habe das Probetraining überlebt. Das Parkett quietscht lauter als ich.', 'Respekt! Konntest du die erste Runde gut mitmachen?', 'Ja, am Ende sogar mit einem kleinen Sprint.', 'Dann trinken wir erst Wasser und planen in Ruhe die nächste Runde.'],
++  ['Bin wegen des Regens an der falschen Haltestelle gelandet.', 'Soll ich dich unter dem großen Schirm abholen?', 'Nur wenn du deine Schuhe nicht auch opfern musst.', 'Die nasse Socke hat schon gekündigt, der Rest macht mit.'],
++  ['Das Plakat für die Ausstellung hängt schief. Ich finde es erstaunlich charmant.', 'Noch charmanter als der schiefe Rahmen im Eingang?', 'Knapp dahinter. Wollen wir uns die Bilder ansehen?', 'Sehr gern, ich checke noch die Öffnungszeit.'],
++  ['Bei der Musikprobe hat ein Kabel versucht, selbst zu tanzen.', 'Solange du nicht darüber gestolpert bist, bin ich erleichtert.', 'Alles gut. Auf der kleinen Bühne war sogar noch Platz für uns.', 'Dann komme ich zum Frühlingsfest mit Kopfhörern im Gepäck.'],
++  ['Ich komme mit dem Übungsblatt heute überhaupt nicht weiter.', 'Klingt anstrengend. Sollen wir es gemeinsam sortieren?', 'Vielleicht später. Im Moment brauche ich eine kurze Pause.', 'Kein Druck. Schreib erst, wenn du wieder Lust hast.'],
++  ['Der erste freie Nachmittag gehört definitiv nicht den Hausaufgaben.', 'Abgemacht. Wie wäre es mit der Radtour über die Brücke?', 'Gute Idee. Ich bringe die Picknickdecke mit.', 'Ich kümmere mich um die Route und um ein Klingelkonzert.'],
++  ['Die Tomaten auf dem Pflanzenmarkt sehen ernsthaft beleidigt aus.', 'Vielleicht weil du nur Basilikum kaufen wolltest.', 'Ich könnte beiden ein neues Zuhause geben.', 'Solange die Stofftasche das Drama aushält, bin ich dabei.'],
++  ['Der Filmtrailer verrät schon wieder fast alles.', 'Dann suchen wir einen anderen Film. Hast du eine Idee?', 'Ich glaube, der mit dem geheimen Abspann könnte lustig sein.', 'Ich schaue nach dem Beginn und rette die letzte Reihe.'],
++  ['Ich dachte, wir treffen uns heute. Stehe ich am falschen Tag im Kalender?', 'Oh, das war missverständlich geschrieben. Ich meinte morgen, tut mir leid!', 'Danke fürs Klarstellen. Ich war kurz enttäuscht, aber jetzt ist es wieder gut.', 'Verstehe ich. Nächstes Mal schreibe ich den Tag ausdrücklich dazu.'],
++  ['Danke für dein Nachfragen neulich, statt einfach sauer zu sein.', 'Gern. Ich hatte dich zuerst falsch verstanden und wollte es klären.', 'War ein guter Hinweis. Heute habe ich extra den Tag mitgeschrieben 😄', 'Siehst du, unser Kalender lernt mit uns. Limonade später?'],
++  ['Der See sieht auf dem Foto aus wie ein vergrößerter Pfützenwitz.', 'Trotzdem will ich hin. Brauchen wir noch irgendwas?', 'Sonnencreme und vielleicht eine Decke.', 'Ich bringe die Badeente nur als moralische Unterstützung mit.'],
++  ['Die Fotowand hält bisher nur an einer Ecke.', 'Ich bin gleich in der Werkstatt. Wo ist das Klebeband?', 'Neben der krummen Schere. Nicht die Schere beschuldigen.', 'Ich bringe lieber noch einen Entwurf zum Vergleichen mit.'],
++  ['Beim Konzert spielt die Band meinen neuen Lieblingssong.', 'Oh, ich wollte dich gerade fragen, ob du mitkommen magst.', 'Sehr gern. Ich freu mich sogar auf den falschen Takt.', 'Mit dir klingt Warten am Parkeingang schon unterhaltsam 😉'],
++  ['Erste Woche zurück, und mein Rucksack hat schon kapituliert.', 'Da passt wohl kein fliegender Zettel mehr hinein.', 'Nur wenn du ihn an der Treppe wieder einfängst.', 'Deal. Danach verrätst du mir, wie dein neuer Raum ist.'],
++  ['Meine Pastasoße hat gerade den viel zu großen Topf geerbt.', 'Klingt nach einem feierlichen Abend. Soll ich Basilikum mitbringen?', 'Bitte! Die Zutatenliste ist diesmal sogar lesbar.', 'Du unterschätzt die dramatische Kraft eines guten Topfes.'],
++  ['Diese Woche fühlt sich echt voll an. Ein Spaziergang wäre mir lieber als ein voller Plan.', 'Verstehe ich. Wir können zum kleinen Platz laufen und dann schauen.', 'Danke. Ohne Zeitdruck klingt es genau richtig.', 'Ich nehme eine leichte Jacke mit und ignoriere die freche Taube.'],
++  ['Der ewige Würfel wartet auf eine Revanche.', 'Heute kann er gewinnen, wenn er sich gut benimmt.', 'Ich bringe das Kartenspiel mit. Bist du noch am runden Tisch?', 'Ja, und ich habe sogar einen Platz für dich freigelassen.'],
++];
++const offsets = [0, 2, 5, 7, 11, 16, 19, 25, 32, 38, 44, 52, 60, 67, 74, 82, 94, 103, 116, 131];
++const lengths = [16, 24, 18, 22, 15, 25, 19, 21, 17, 23, 16, 24, 18, 22, 19, 21, 17, 23, 20, 20];
++function dialogue([, , occasion, activity, place, object, joke, detail], index) {
++  const lines = [
++    `Ich hab gerade an ${occasion} gedacht. Hast du morgen Zeit?`,
++    `Vielleicht! Geht es um ${activity} oder etwas ganz anderes?`,
++    `Eigentlich um ${activity}. Ich wollte dich zuerst fragen.`,
++    `Oh, schön. Was brauchst du für ${activity}?`,
++    `Vielleicht ${object}; ich kümmere mich um den Rest.`,
++    `Kriege ich für ${occasion} hin. Und wo sehen wir uns?`,
++    `Bei ${place}, falls das für dich gut erreichbar ist.`,
++    `Ja, das passt. Ich gucke noch mal auf ${detail}.`,
++    `Perfekt. Danke, dass du wegen ${detail} mitdenkst.`,
++    `Gern. Mein Gehirn hat heute erstaunlich viel Platz für ${activity}.`,
++    `Nur solange ${joke} nicht wieder alles übernimmt 😄`,
++    `Das klingt nach einem Fall für unser streng geheimes ${occasion}-Chaosprotokoll.`,
++    `Übrigens, wie lief dein Tag vor ${occasion} bisher?`,
++    `Ein bisschen voll wegen ${detail}, aber jetzt wird es ruhiger. Und deiner?`,
++    `Auch turbulent. Deine Nachricht über ${activity} kam gerade genau richtig.`,
++    `Dann nehmen wir uns morgen für ${activity} Zeit, ohne irgendeinen Zeitdruck.`,
++    `Klingt gut. Ich mag, dass wir ${occasion} einfach besprechen können.`,
++    `Ja. Wenn sich der Plan für ${activity} ändert, sagen wir kurz Bescheid, okay?`,
++    `Abgemacht. Ich schicke dir vorher noch ein Update zu ${detail}.`,
++    `Freu mich. Und vergiss ${object} nicht – ich erinnere dich notfalls 😉`,
++    `Ich habe ${object} schon an die Tür gelegt. Diesmal läuft das ohne Suchaktion.`,
++    `Sehr gut. Falls ${joke} auftaucht, mache ich ein Beweisfoto nur für mich.`,
++    `Für ${activity} reicht ein Foto wahrscheinlich nicht, aber der Gedanke hilft.`,
++    `Stimmt. Ich bin bei ${place} ein paar Minuten früher und warte dort.`,
++    `Alles klar, dann bis später. Ich wünsche dir vorher noch eine Pause von ${detail}.`,
++  ];
++  lines.splice(0, 4, ...openings[index]);
++  if (index === 11) {
++    lines[0] = 'Ich dachte, wir treffen uns heute. Stehe ich am falschen Tag im Kalender?';
++    lines[1] = 'Oh, das war missverständlich geschrieben. Ich meinte morgen, tut mir leid!';
++    lines[2] = 'Danke fürs Klarstellen. Ich war kurz enttäuscht, aber jetzt ist es wieder gut.';
++    lines[3] = 'Verstehe ich. Nächstes Mal schreibe ich den Tag ausdrücklich dazu.';
++  }
++  if (index === 12) {
++    lines[0] = 'Danke für dein Nachfragen neulich, statt einfach sauer zu sein.';
++    lines[1] = 'Gern. Ich hatte dich zuerst falsch verstanden und wollte es klären.';
++    lines[2] = 'War ein guter Hinweis. Heute habe ich extra den Tag mitgeschrieben 😄';
++  }
++  if (index === 7) {
++    lines[13] = 'Die Aufgaben stressen mich gerade. Ich brauche heute etwas Ruhe.';
++    lines[14] = 'Verstehe ich. Du musst jetzt nicht antworten; viel Erfolg und meld dich, wenn es passt.';
++  }
++  if (index === 15) {
++    lines[15] = 'Ich freu mich schon auf den Abend. Mit dir klingt sogar Warten unterhaltsam.';
++    lines[16] = 'Das ist süß gesagt. Ich verspreche trotzdem keine perfekte Tanzfigur 😉';
++  }
++  return lines.slice(0, lengths[index]).map((text, i) => ({ author: (index % 3 === 1) !== (i % 5 === 4 || i % 2 === 1) ? 'Mara' : 'Leo', text }));
++}
++function stampedScene(scene, index) {
++  const [day, start] = scene;
++  const [hour, minute] = start.split(':').map(Number);
++  return dialogue(scene, index).map(({ author, text }, i) => {
++    const total = hour * 60 + minute + (offsets[i] ?? 131 + (i - 19) * 9);
++    const clock = `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
++    return `[${day}, ${clock}] ${author}: ${text}`;
++  });
++}
++export const SAMPLE_CHAT = scenes.flatMap(stampedScene).join('\n');
+diff --git a/js/sound.js b/js/sound.js
+new file mode 100644
+index 0000000..67555d2
+--- /dev/null
++++ b/js/sound.js
+@@ -0,0 +1,29 @@
++// A quiet, local two-note cue. No audio assets or network requests.
++export function createSound({ AudioContextClass = globalThis.AudioContext ?? globalThis.webkitAudioContext } = {}) {
++  let enabled = true;
++  let context;
++  return {
++    get enabled() { return enabled; },
++    toggle() { enabled = !enabled; return enabled; },
++    play() {
++      if (!enabled || !AudioContextClass) return false;
++      try {
++        context ??= new AudioContextClass();
++        if (context.state === 'suspended') void context.resume();
++        const at = context.currentTime;
++        for (const [index, frequency] of [440, 554].entries()) {
++          const oscillator = context.createOscillator();
++          const gain = context.createGain();
++          oscillator.type = 'sine'; oscillator.frequency.value = frequency;
++          const start = at + index * 0.085;
++          gain.gain.setValueAtTime(0, start);
++          gain.gain.linearRampToValueAtTime(0.035, start + 0.012);
++          gain.gain.exponentialRampToValueAtTime(0.001, start + 0.14);
++          oscillator.connect(gain); gain.connect(context.destination);
++          oscillator.start(start); oscillator.stop(start + 0.15);
++        }
++        return true;
++      } catch { return false; }
++    },
++  };
++}
+diff --git a/js/stats.js b/js/stats.js
+index b61ebb3..37c1696 100644
+--- a/js/stats.js
++++ b/js/stats.js
+@@ -18,17 +18,24 @@ export const MIN_SAMPLE = 3;
+ export function chatStats(messages) {
+   const people = new Map();
+   const personOf = (name) => {
+-    if (!people.has(name)) people.set(name, { messages: 0, words: [], chars: [], replies: [], starts: 0 });
++    if (!people.has(name)) people.set(name, { messages: 0, words: [], chars: [], replies: [], starts: 0, timed: 0, late: 0 });
+     return people.get(name);
+   };
+ 
+-  for (const { author, text } of messages) {
++  for (const { author, text, at } of messages) {
+     const person = personOf(author);
+     person.messages++;
+     person.words.push(text.split(/\s+/).filter(Boolean).length);
+     // Unicode code points: emoji count once; spaces and line breaks count.
+     // Keep lengths only, never a second copy of the chat text.
+     person.chars.push(Array.from(text).length);
++    // Parsed clock hours represent the written time in the export, not a
++    // guessed timezone. Untimed entries do not contribute to this sample.
++    if (Number.isFinite(at)) {
++      person.timed++;
++      const hour = new Date(at).getUTCHours();
++      if (hour >= 22 || hour < 6) person.late++;
++    }
+   }
+ 
+   const timed = messages.some((m) => m.at !== null);
+@@ -60,6 +67,7 @@ export function chatStats(messages) {
+         } : null,
+         reply: timed && p.replies.length >= MIN_SAMPLE ? { median: median(p.replies), n: p.replies.length } : null,
+         starts: timed ? { count: p.starts, of: conversations } : null,
++        clock: p.timed ? { late: p.late, n: p.timed } : null,
+       },
+     ]),
+   );
+diff --git a/test/animals.test.js b/test/animals.test.js
+index f9736b4..dda8df7 100644
+--- a/test/animals.test.js
++++ b/test/animals.test.js
+@@ -39,6 +39,21 @@ test('duo text follows existing scores; raw, invalid and small samples stay neut
+   assert.equal(duoStory(scores(3, 3, 0, NaN), { n: 40 }), 'uncertain');
+ });
+ 
++test('late written hours and reply gaps require sufficient local observations', () => {
++  const both = stats(8, 8);
++  both.get('Mara').clock = { late: 5, n: 10 };
++  both.get('Mara').reply = { median: 2 * 60_000, n: 10 };
++  both.get('Leo').reply = { median: 31 * 60_000, n: 5 };
++  assert.deepEqual(animalDuo(both, people).map(({ key }) => key), ['owl', 'tortoise']);
++  both.get('Mara').clock.n = 9;
++  assert.equal(animalDuo(both, people)[0].key, 'rabbit');
++  both.get('Mara').reply.n = 4;
++  assert.equal(animalDuo(both, people)[0].key, 'cat');
++  both.get('Leo').reply.median = 20 * 60_000;
++  assert.equal(animalDuo(both, people)[1].key, 'cat');
++  assert.deepEqual(animalDuo(stats(9, 9, 1, 1), people).map(({ key }) => key), ['cat', 'cat']);
++});
++
+ test('fictional sample yields two stickers; every language explains every sticker', async () => {
+   const stickers = animalDuo(chatStats(parseChat(SAMPLE_CHAT)), people);
+   assert.equal(stickers.length, 2);
+diff --git a/test/card.test.js b/test/card.test.js
+index 1f647bc..563260c 100644
+--- a/test/card.test.js
++++ b/test/card.test.js
+@@ -82,3 +82,16 @@ test('PNG renders the same curated sticker reasons, changed names and local numb
+   }
+   assert.doesNotMatch(png, /private text|Mara Original/);
+ });
++
++test('truncated Jev scope and local scope match between preview and painted card', () => {
++  const painted = [];
++  const ctx = new Proxy({ createLinearGradient: () => ({ addColorStop() {} }), fillText: (value) => painted.push(value),
++    measureText: (value) => ({ width: value.length * 8 }) }, { get: (target, key) => key in target ? target[key] : () => {} });
++  const verdict = { label: 'mixed', scope: { judged: 210, total: 800 },
++    people: [{ name: 'Mara', highlights: [] }, { name: 'Leo', highlights: [] }] };
++  const preview = cardPreviewLines(verdict, (name) => name);
++  drawCard({ getContext: () => ctx }, verdict, (name) => name);
++  assert.ok(preview.some((line) => line.includes('210') && line.includes('800')));
++  assert.ok(painted.some((line) => line.includes('210') && line.includes('800')));
++  assert.doesNotMatch(painted.join(' '), /private chat|\+49/);
++});
+diff --git a/test/highlights.test.js b/test/highlights.test.js
+index fa3c4b3..8af76ca 100644
+--- a/test/highlights.test.js
++++ b/test/highlights.test.js
+@@ -17,13 +17,13 @@ const m = (from, text) => ({ from, text });
+ test('fictional sample finds only recurring local cues, without revealing any chat text', () => {
+   const messages = parseChat(SAMPLE_CHAT).map(({ author, text }) => m(author, text));
+   const result = highlightCues(messages, people);
+-  assert.equal(result.checked, 40);
+-  assert.deepEqual(result.topics.map(({ key }) => key), ['support', 'plans', 'clarify']);
++  assert.equal(result.checked, 400);
++  assert.deepEqual(result.topics.map(({ key }) => key).sort(), ['humor', 'plans', 'support']);
+   assert.ok(result.topics.every(({ n }) => n >= 3));
+   assert.deepEqual(result.tone.map(({ key }) => key), ['thanks']);
+-  assert.equal(result.tone[0].n, 4);
++  assert.ok(result.tone[0].n >= 3);
+   assert.doesNotMatch(JSON.stringify(result), /Tomaten|Basilikum|Mara|Leo/);
+-  assert.equal(conversationIdea({ tension: { score: 0 }, clarity: { score: 3 }, warmth: { score: 1 } }, false, result.topics.map(({ key }) => key)), 'repair');
++  assert.ok(conversationIdea({ tension: { score: 0 }, clarity: { score: 3 }, warmth: { score: 1 } }, false, result.topics.map(({ key }) => key)));
+ });
+ 
+ test('one-off topic, one speaker and tiny samples cannot make a recurring theme', () => {
+diff --git a/test/outlook.test.js b/test/outlook.test.js
+index 0d3707d..91de7b6 100644
+--- a/test/outlook.test.js
++++ b/test/outlook.test.js
+@@ -36,7 +36,7 @@ test('complete Monday–Sunday weeks include silent weeks but exclude uncertain
+ });
+ 
+ test('short sample and ambiguous dates receive no pretend forecast', () => {
+-  const sample = outlookOf(timelineOf(parseChat(SAMPLE_CHAT), people), cues, scores, { judgedCount: 40 });
++  const sample = outlookOf(timelineOf(parseChat(SAMPLE_CHAT).slice(0, 40), people), cues, scores, { judgedCount: 40 });
+   assert.equal(sample.forecast.reason, 'short');
+   assert.equal(sample.rhythm, null);
+   assert.equal(sample.coactive, null);
+diff --git a/test/sample.test.js b/test/sample.test.js
+index ee4b994..04b51d6 100644
+--- a/test/sample.test.js
++++ b/test/sample.test.js
+@@ -13,20 +13,36 @@ import es from '../js/locales/es.js';
+ test('fictional sample is an eligible two-person chat with local length and reply statistics', () => {
+   const messages = parseChat(SAMPLE_CHAT);
+   const people = participantsOf(messages).map(({ name }) => name);
+-  assert.equal(messages.length, 40);
++  assert.equal(messages.length, 400);
++  assert.equal(new Set(messages.map(({ text }) => text)).size, 400);
+   assert.deepEqual(people.sort(), ['Leo', 'Mara']);
+   assert.ok(messages.every(({ at }) => at !== null));
+   assert.ok(messages.every((message, i) => i === 0 || message.at >= messages[i - 1].at));
+   const stats = chatStats(messages);
+   for (const person of people) {
+-    assert.equal(stats.get(person).messages, 20);
++    assert.ok(stats.get(person).messages >= 150);
+     assert.ok(stats.get(person).textLength?.n >= 3);
+     assert.ok(stats.get(person).reply?.n >= 3);
+   }
+-  assert.deepEqual(messageBalance(stats, people).shares, [0.5, 0.5]);
+-  const { body } = buildRequest(messages, people, STATE_TOKEN_BUDGET);
++  assert.equal(messageBalance(stats, people).total, 400);
++  const { body, judgedCount, truncated } = buildRequest(messages, people, STATE_TOKEN_BUDGET);
+   assert.ok(hasEnoughMessages(body.state.messages, people));
+-  assert.equal(body.state.messages.length, 40);
++  assert.equal(judgedCount, body.state.messages.length);
++  assert.equal(judgedCount, 400, 'this sample fits; importing a longer chat may still truncate');
++  assert.equal(truncated, false);
++  assert.ok(messages.at(-1).at - messages[0].at > 200 * 24 * 60 * 60 * 1000);
++  assert.doesNotMatch(SAMPLE_CHAT, /\+\d{8,}|@\w+\.\w+/);
++});
++
++test('longer chats retain only the newest portion for Jev; local stats still see every message', () => {
++  const original = parseChat(SAMPLE_CHAT);
++  const long = [...original, ...original.map((entry, i) => ({ ...entry, text: `${entry.text} Ergänzung ${i}` }))];
++  const { body, judgedCount, truncated } = buildRequest(long, ['Mara', 'Leo'], STATE_TOKEN_BUDGET);
++  assert.equal(truncated, true);
++  assert.ok(judgedCount < long.length);
++  assert.deepEqual(body.state.messages.at(-1), { from: long.at(-1).author, text: long.at(-1).text });
++  assert.equal(chatStats(long).get('Mara').messages + chatStats(long).get('Leo').messages, 800);
++  assert.deepEqual(Object.keys(body.state), ['messages']);
+ });
+ 
+ test('all languages explain the visual stages and four scales without suggesting a diagnosis', () => {
+diff --git a/test/sound.test.js b/test/sound.test.js
+new file mode 100644
+index 0000000..277e0aa
+--- /dev/null
++++ b/test/sound.test.js
+@@ -0,0 +1,25 @@
++import { test } from 'node:test';
++import assert from 'node:assert/strict';
++import { createSound } from '../js/sound.js';
++
++test('mute prevents context creation; one enabled click plays a quiet bounded cue', () => {
++  let created = 0;
++  const values = [];
++  class FakeContext {
++    constructor() { created++; this.currentTime = 10; this.destination = {}; }
++    createOscillator() { return { frequency: {}, connect() {}, start(at) { values.push(['start', at]); }, stop(at) { values.push(['stop', at]); } }; }
++    createGain() { return { gain: { setValueAtTime(value) { values.push(['gain', value]); }, linearRampToValueAtTime(value) { values.push(['gain', value]); }, exponentialRampToValueAtTime(value) { values.push(['gain', value]); } }, connect() {} }; }
++  }
++  const sound = createSound({ AudioContextClass: FakeContext });
++  assert.equal(sound.toggle(), false);
++  assert.equal(sound.play(), false);
++  assert.equal(created, 0);
++  assert.equal(sound.toggle(), true);
++  assert.equal(sound.play(), true);
++  assert.equal(created, 1);
++  assert.equal(values.filter(([type]) => type === 'start').length, 2);
++  assert.ok(values.filter(([type]) => type === 'gain').every(([, value]) => value <= .035));
++  assert.ok(values.filter(([type]) => type === 'stop').every(([, time]) => time <= 10.24));
++  assert.equal(sound.play(), true);
++  assert.equal(created, 1);
++});
+diff --git a/test/stats.test.js b/test/stats.test.js
+index 5e06091..06694b6 100644
+--- a/test/stats.test.js
++++ b/test/stats.test.js
+@@ -26,7 +26,7 @@ test('a night’s silence starts a new conversation instead of counting as a slo
+ 
+ test('without timestamps only counts are known, never times', () => {
+   const stats = chatStats([say('Ana', null, 'one two three'), say('Ben', null), say('Ana', null, 'x')]);
+-  assert.deepEqual(stats.get('Ana'), { messages: 2, medianWords: 2, textLength: null, reply: null, starts: null });
++  assert.deepEqual(stats.get('Ana'), { messages: 2, medianWords: 2, textLength: null, reply: null, starts: null, clock: null });
+ });
+ 
+ test('text length counts Unicode code points and includes whitespace, without storing text', () => {

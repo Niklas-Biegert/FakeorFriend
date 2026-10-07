@@ -18,17 +18,24 @@ export const MIN_SAMPLE = 3;
 export function chatStats(messages) {
   const people = new Map();
   const personOf = (name) => {
-    if (!people.has(name)) people.set(name, { messages: 0, words: [], chars: [], replies: [], starts: 0 });
+    if (!people.has(name)) people.set(name, { messages: 0, words: [], chars: [], replies: [], starts: 0, timed: 0, late: 0 });
     return people.get(name);
   };
 
-  for (const { author, text } of messages) {
+  for (const { author, text, at } of messages) {
     const person = personOf(author);
     person.messages++;
     person.words.push(text.split(/\s+/).filter(Boolean).length);
     // Unicode code points: emoji count once; spaces and line breaks count.
     // Keep lengths only, never a second copy of the chat text.
     person.chars.push(Array.from(text).length);
+    // Parsed clock hours represent the written time in the export, not a
+    // guessed timezone. Untimed entries do not contribute to this sample.
+    if (Number.isFinite(at)) {
+      person.timed++;
+      const hour = new Date(at).getUTCHours();
+      if (hour >= 22 || hour < 6) person.late++;
+    }
   }
 
   const timed = messages.some((m) => m.at !== null);
@@ -60,6 +67,7 @@ export function chatStats(messages) {
         } : null,
         reply: timed && p.replies.length >= MIN_SAMPLE ? { median: median(p.replies), n: p.replies.length } : null,
         starts: timed ? { count: p.starts, of: conversations } : null,
+        clock: p.timed ? { late: p.late, n: p.timed } : null,
       },
     ]),
   );

@@ -1,0 +1,414 @@
+diff --git a/README.md b/README.md
+index 0466dfb..78c8e4f 100644
+--- a/README.md
++++ b/README.md
+@@ -27,7 +27,7 @@ One Jev Decisions request returns four structured scores from 0 to 3 for the
+ messages in the submitted excerpt: mutual warmth, back-and-forth, visible
+ tension, and clarity. Brief replies or long pauses alone do not imply tension.
+ The displayed levels translate the four ordinal score levels; they are not
+-personality probabilities. No Jev prose, suspect, animal type, Menace Index,
++personality probabilities. No Jev prose, suspect, personality animal type, Menace Index,
+ Green/Red percentage, or "toxic" diagnosis is produced.
+ 
+ For recognised chats, the overall *excerpt label* follows this rule, in order:
+@@ -51,6 +51,27 @@ original card flow exports one 1080×1350 PNG; edited names and numeric local
+ highlights remain visible in its preview before sharing. This presentation
+ does not change the four Jev questions or their scoring rules.
+ 
++Each person gets a **visual animal sticker for a counted pattern**, using only
++the part of a parsed chat submitted to Jev. Both need at least three text
++messages; otherwise both receive a neutral sticker. In this order: a **dog**
++starts strictly more of at least three observed conversations than the other
++person (ties get no starter sticker); a **hedgehog** has a median of at least
++15 words per message; a **mouse** has a median of at most 6; everyone else
++gets a **cat**. The numeric observation and `n` (or starts out of conversations)
++appear beside the sticker. Animals represent message patterns, never identities
++or personality. Raw formats get neutral stickers because their speakers cannot
++be verified. For truncated chats the sticker uses only the submitted excerpt;
++the separate existing local statistics can describe the full parsed chat.
++
++The shared duo story uses only the four existing ordinal scores, in order:
++tension >= 2 gives a friction story; otherwise clarity <= 1 gives a clarifying
++story; otherwise warmth and reciprocity >= 2 give a warm story; otherwise it
++describes an everyday excerpt. Raw or invalid scores, or fewer than six sent
++messages, give a neutral story. Relevant scores and the observed message count
++are shown; future-sounding lines are explicitly speculative. The mission uses
++the existing `conversationIdea` rules. A short CSS reveal animates the sticker
++duo without delaying results; reduced-motion settings remove the animation.
++
+ The result shows an original two-chat-bubble illustration for each of the
+ four possible labels, a two-axis map of Jev's **warmth** (horizontal, 0–3)
+ and **visible tension** (vertical, 0–3), and a local bar chart of each
+@@ -93,7 +114,8 @@ The notice above the button explains both cases before any request is made.
+ This app does not log the chat, but cannot promise what external providers,
+ browser extensions or the device store.
+ 
+-The image card uses only its excerpt label, names you can edit, and up to two
++The image card uses only its excerpt label, sticker IDs and their numeric
++rules, ordinal scores, submitted message count, names you can edit, and up to two
+ local numeric highlights per person (only if `n >= 3`). By default phone
+ numbers are replaced and full names shortened to their first word. The visible
+ preview lists the card contents before download or Web Share. The page does not
+@@ -138,6 +160,7 @@ needs a separate deployment decision and a review of its data flow.
+ - `js/questions.js`: bounded state and four Jev questions.
+ - `js/verdict.js`: excerpt label rule.
+ - `js/vibes.js`: map position, factual count shares and conversation idea.
++- `js/animals.js`: local sticker selection and bounded story from existing scores.
+ - `js/app.js`: input and result flow.
+ - `js/card.js`: the single image preview, download and Web Share flow.
+ - `js/locales/`: English, German, French and Spanish strings.
+diff --git a/css/style.css b/css/style.css
+index 795265e..42e1ad3 100644
+--- a/css/style.css
++++ b/css/style.css
+@@ -1190,3 +1190,45 @@ textarea:focus-visible, input:focus-visible, button:focus-visible, .track:focus-
+   .card-dialog { width: calc(100% - 1rem); padding: 1rem; }
+ }
+ @media (max-width: 360px) { .hero-aside { grid-template-columns: 1fr; } .hero-art { display: none; } .counted { grid-template-columns: 1fr; } }
++
++/* Reveal the two stickers together, then keep every control immediately usable. */
++.duo-section { margin-top: 1.4rem; }
++.duo-section h3, .story-section h3, .stats-heading { margin: 0 0 .75rem; font: 800 clamp(1.35rem, 4vw, 1.85rem)/1.15 var(--font-display); }
++.animal-duo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .9rem; }
++.animal-sticker { min-width: 0; display: grid; grid-template-columns: 5rem minmax(0, 1fr); align-content: center; align-items: center; gap: .15rem .7rem; padding: .7rem; border: 1px solid var(--rule); border-radius: 1rem; background: #302235; }
++.animal-sticker img { grid-row: span 2; width: 5rem; height: 5rem; border-radius: .85rem; }
++.animal-sticker strong { overflow-wrap: anywhere; line-height: 1.25; }
++.animal-sticker p { min-width: 0; margin: 0; color: var(--ink-soft); font-size: .82rem; line-height: 1.35; }
++.duo-caveat { margin: .7rem 0 0; color: var(--ink-muted); font-size: .8rem; }
++.story-section { margin-top: 1.3rem; padding: clamp(1rem, 3vw, 1.4rem); border: 1px solid var(--rule); border-radius: 1.2rem; background: #283642; }
++.story-section h3 { color: var(--accent); }
++.story-section p { max-width: 65ch; margin: 0; line-height: 1.6; }
++.results.revealed .animal-sticker { animation: sticker-pop .55s cubic-bezier(.2,1.5,.5,1) both; }
++.results.revealed .animal-sticker:nth-child(2) { animation-delay: .14s; }
++@keyframes sticker-pop { from { opacity: 0; transform: translateY(15px) rotate(-6deg) scale(.86); } to { opacity: 1; transform: none; } }
++.idea-panel { grid-column: auto; margin-top: 1rem; }
++.stats-heading { margin: 2rem 0 1rem; }
++.records { margin-top: 0; border-top-color: var(--rule); gap: .6rem; }
++.record { border: 1px solid var(--rule); border-radius: 1rem; background: var(--paper-raised); padding: 1rem; gap: .35rem; }
++.record strong, .record small { display: block; line-height: 1.3; }
++.plate-name { line-height: 1.2; margin-bottom: .5rem; }
++.plate .counted { margin-top: auto; padding-top: 1.2rem; gap: .65rem; }
++.counted .finding { display: grid; align-content: start; gap: .2rem; padding: .75rem; border: 1px solid var(--rule); border-radius: .8rem; min-width: 0; }
++.counted .finding dt { order: 0; font-size: .77rem; line-height: 1.3; }
++.counted .finding dd { order: 1; font-size: 1.05rem; line-height: 1.3; }
++.counted .finding small { order: 2; line-height: 1.3; }
++.method-note { margin-top: 1.5rem; }
++.technical-details { margin: 1rem 0 0; color: var(--ink-muted); font-size: .78rem; }
++.technical-details summary { cursor: pointer; }
++.technical-details .footnote { margin: .5rem 0; overflow-wrap: anywhere; }
++.results-foot { justify-content: flex-end; }
++.share-action { gap: .5rem; }
++.card-preview-details { line-height: 1.6; }
++@media (max-width: 690px) { .animal-duo { grid-template-columns: 1fr; } }
++@media (max-width: 390px) {
++  .animal-sticker { grid-template-columns: 4.2rem minmax(0,1fr); }
++  .animal-sticker img { width: 4.2rem; height: 4.2rem; }
++  .counted { grid-template-columns: repeat(2,minmax(0,1fr)); }
++  .counted .finding { padding: .55rem; }
++}
++@media (prefers-reduced-motion: reduce) { .results.revealed .animal-sticker { animation: none; } }
+diff --git a/index.html b/index.html
+index 43aa245..424522b 100644
+--- a/index.html
++++ b/index.html
+@@ -95,6 +95,12 @@
+             </div>
+             <img id="vibe-sticker" src="img/vibes/uncertain.svg" width="240" height="196" alt="" />
+           </div>
++          <div class="duo-section" aria-labelledby="duo-title">
++            <h3 id="duo-title" data-i18n="duoTitle"></h3>
++            <div id="animal-duo" class="animal-duo"></div>
++            <p data-i18n="animalMeaning" class="duo-caveat"></p>
++          </div>
++          <div class="story-section"><h3 id="story-title"></h3><p id="story-body"></p></div>
+           <div id="connection-scales" class="measures"></div>
+         </article>
+         <div class="vibe-gallery">
+@@ -115,11 +121,14 @@
+             <p data-i18n="visual.balanceIntro"></p>
+             <div id="balance-bars" class="balance-bars"></div>
+           </section>
+-          <section class="vibe-panel idea-panel" aria-labelledby="idea-title">
+-            <h3 id="idea-title" data-i18n="visual.ideaTitle"></h3>
+-            <p id="conversation-idea"></p>
+-          </section>
+         </div>
++        <section class="vibe-panel idea-panel" aria-labelledby="idea-title">
++          <h3 id="idea-title" data-i18n="visual.ideaTitle"></h3>
++          <p id="conversation-idea"></p>
++        </section>
++        <h3 class="stats-heading" data-i18n="statsTitle"></h3>
++        <div id="records" class="records"></div>
++        <div id="plates" class="plates"></div>
+         <details class="method-note">
+           <summary data-i18n="visual.methodTitle"></summary>
+           <p data-i18n="visual.methodIntro"></p>
+@@ -127,12 +136,10 @@
+           <p><a href="https://openstax.org/books/psychology-2e/pages/12-7-prosocial-behavior" target="_blank" rel="noreferrer" data-i18n="visual.bookLink2"></a></p>
+           <p><a href="https://pubmed.ncbi.nlm.nih.gov/36834137/" target="_blank" rel="noreferrer" data-i18n="visual.studyLink"></a></p>
+         </details>
+-        <div id="records" class="records"></div>
+-        <div id="plates" class="plates"></div>
+         <div class="results-foot">
+-          <p id="footnote" class="footnote"></p>
+           <div class="share-action"><span class="step-label" data-i18n="stageShare"></span><button id="share" class="primary" type="button" data-i18n="share"></button></div>
+         </div>
++        <details class="technical-details"><summary data-i18n="technicalTitle"></summary><p id="footnote" class="footnote"></p></details>
+       </section>
+     </main>
+ 
+diff --git a/js/card.js b/js/card.js
+index 33bcbd4..d3e4344 100644
+--- a/js/card.js
++++ b/js/card.js
+@@ -17,14 +17,37 @@ function highlightLabel({ key, median, n }) {
+     : t('cardCharsHighlight', { chars: formatNumber(median), n: formatNumber(n) });
+ }
+ export function cardPreviewLines(verdict, shownName) {
+-  return [t(`connection.${verdict.label}`), ...verdict.people.map((person) =>
+-    `${shownName(person.name)}${person.highlights?.length ? ` · ${person.highlights.map(highlightLabel).join(' · ')}` : ''}`)];
++  return [t(`connection.${verdict.label}`),
++    ...(verdict.story ? [t(`cardStory.${verdict.story}`, verdict.storyVars)] : []),
++    ...verdict.people.map((person, i) => `${shownName(person.name)}` +
++      (verdict.animals?.[i] ? ` · ${t(`animals.${verdict.animals[i].key}.name`)} · ${t(`animals.${verdict.animals[i].key}.why`, verdict.animals[i])}` : '') +
++      (person.highlights?.length ? ` · ${person.highlights.map(highlightLabel).join(' · ')}` : ''))];
+ }
+ async function asFile(canvas) {
+   const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+   if (!blob) throw new Error('PNG unavailable');
+   return new File([blob], 'fakeorfriend.png', { type: 'image/png' });
+ }
++function drawAnimal(ctx, x, y, sticker) {
++  const colors = { mouse: '#d7efff', cat: '#d9c8ff', dog: '#e9f056', hedgehog: '#ffb9a3', neutral: '#b5aabb' };
++  const key = sticker?.key ?? 'neutral';
++  ctx.fillStyle = colors[key] ?? colors.neutral;
++  ctx.beginPath(); ctx.roundRect(x, y, 340, 235, 42); ctx.fill();
++  ctx.fillStyle = '#39283d';
++  if (key === 'cat') {
++    for (const offset of [85, 255]) { ctx.beginPath(); ctx.moveTo(x + offset - 35, y + 100); ctx.lineTo(x + offset, y + 32); ctx.lineTo(x + offset + 35, y + 100); ctx.fill(); }
++  } else if (key === 'hedgehog') {
++    for (let i = 0; i < 7; i++) { const left = x + 65 + i * 35; ctx.beginPath(); ctx.moveTo(left, y + 105); ctx.lineTo(left + 17, y + 35 + (i % 2) * 18); ctx.lineTo(left + 36, y + 105); ctx.fill(); }
++  } else if (key === 'mouse' || key === 'dog') {
++    for (const offset of [85, 255]) { ctx.beginPath(); ctx.arc(x + offset, y + (key === 'mouse' ? 84 : 112), 44, 0, Math.PI * 2); ctx.fill(); }
++  }
++  ctx.fillStyle = colors[key] ?? colors.neutral;
++  ctx.beginPath(); ctx.ellipse(x + 170, y + 137, 105, 85, 0, 0, Math.PI * 2); ctx.fill();
++  ctx.fillStyle = '#39283d';
++  for (const offset of [132, 208]) { ctx.beginPath(); ctx.arc(x + offset, y + 135, 8, 0, Math.PI * 2); ctx.fill(); }
++  ctx.beginPath(); ctx.arc(x + 170, y + 168, 8, 0, Math.PI * 2); ctx.fill();
++  ctx.lineWidth = 5; ctx.strokeStyle = '#39283d'; ctx.beginPath(); ctx.arc(x + 170, y + 175, 23, 0.2, Math.PI - 0.2); ctx.stroke();
++}
+ function drawCard(canvas, verdict, shownName) {
+   const ctx = canvas.getContext('2d');
+   canvas.width = 1080;
+@@ -47,28 +70,13 @@ function drawCard(canvas, verdict, shownName) {
+   paint(t('summaryTitle'), 94, 228, 27, '#e1d2e3');
+   paint(t(`connection.${verdict.label}`), 94, 326, 61, '#faf3f7', 875, 800);
+   paint(t('connection.cardNote'), 94, 375, 24, '#e1d2e3', 880, 500);
+-  const colors = {
+-    friendly: ['#e9f056', '#d7efff'], mixed: ['#d7efff', '#e9f056'],
+-    strained: ['#ffb9a3', '#d7efff'], uncertain: ['#d7efff', '#c9b4c5'],
+-  };
+-  const [first, second] = colors[verdict.label] ?? colors.uncertain;
+-  ctx.fillStyle = first;
+-  ctx.beginPath(); ctx.roundRect(155, 440, 340, 210, 55); ctx.fill();
+-  ctx.fillStyle = second;
+-  ctx.beginPath(); ctx.roundRect(575, 490, 340, 210, 55); ctx.fill();
+-  ctx.fillStyle = '#251823';
+-  for (const [x, y] of [[255, 520], [373, 520], [675, 565], [793, 565]]) {
+-    ctx.beginPath(); ctx.arc(x, y, 12, 0, Math.PI * 2); ctx.fill();
+-  }
+-  ctx.lineWidth = 9; ctx.strokeStyle = '#251823';
+-  for (const [x, y] of [[245, 565], [665, 610]]) {
+-    ctx.beginPath();
+-    if (verdict.label === 'strained') { ctx.moveTo(x, y + 16); ctx.lineTo(x + 140, y + 16); }
+-    else { ctx.moveTo(x, y); ctx.quadraticCurveTo(x + 70, y + 60, x + 140, y); }
+-    ctx.stroke();
+-  }
++  if (verdict.story) paint(t(`cardStory.${verdict.story}`, verdict.storyVars), 94, 420, 24, '#e9f056', 880, 600);
++  drawAnimal(ctx, 155, 455, verdict.animals?.[0]);
++  drawAnimal(ctx, 575, 455, verdict.animals?.[1]);
++  verdict.animals?.slice(0, 2).forEach((animal, i) =>
++    paint(t(`animals.${animal.key}.name`), i ? 575 : 155, 738, 26, '#faf3f7', 340));
+   verdict.people.forEach((person, i) => {
+-    const y = 790 + i * 195;
++    const y = 840 + i * 195;
+     ctx.fillStyle = '#867589'; ctx.fillRect(94, y - 36, 892, 2);
+     paint(shownName(person.name), 94, y + 22, 51, '#faf3f7', 890, 800);
+     person.highlights.slice(0, 2).forEach((highlight, j) =>
+diff --git a/js/locales/de.js b/js/locales/de.js
+index 95521c9..863c4e6 100644
+--- a/js/locales/de.js
++++ b/js/locales/de.js
+@@ -8,6 +8,25 @@ export default {
+   "stageInput": "01 / Chat auswählen",
+   "stageResult": "02 / Euer Vibe auf einen Blick",
+   "stageShare": "03 / Karte ansehen & teilen",
++  "duoTitle": "Euer Sticker-Duo",
++  "statsTitle": "Zahlen statt Gedankenlesen",
++  "cardStory": { "warm": "Wärme {warmth}/3 · Hin und Her {reciprocity}/3 · n = {n}", "friction": "Spannung {tension}/3 · n = {n} Nachrichten", "clarify": "Verständlichkeit {clarity}/3 · n = {n} Nachrichten", "everyday": "Wärme {warmth}/3 · Hin und Her {reciprocity}/3 · n = {n}", "uncertain": "Sprechende oder Stichprobe nicht überprüfbar" },
++  "technicalTitle": "Technische Angaben zum Ausschnitt",
++  "animalMeaning": "Sticker zeigen gezählte Muster in diesem Ausschnitt, keine Charaktereigenschaften.",
++  "animals": {
++    "mouse": { "name": "Maus", "why": "Kurz und knackig: im Median {value} Wörter je Nachricht (n = {n})." },
++    "cat": { "name": "Katze", "why": "Zwischen kurz und ausführlich: im Median {value} Wörter je Nachricht (n = {n})." },
++    "dog": { "name": "Hund", "why": "Startet hier öfter ein neues Gespräch: {count} von {of}; eindeutiger Vorsprung." },
++    "hedgehog": { "name": "Igel", "why": "Nimmt sich Raum für Text: im Median {value} Wörter je Nachricht (n = {n})." },
++    "neutral": { "name": "Überraschungssticker", "why": "Noch zu wenig überprüfbare Nachrichten für einen passenden Sticker." }
++  },
++  "story": {
++    "warm": { "title": "Da kommt was zurück ✦", "body": "Wärme {warmth}/3 und Hin und Her {reciprocity}/3: Beide greifen im Ausschnitt wiederholt etwas voneinander auf. Das könnte sich nach Nähe anfühlen – was außerhalb dieser {n} Nachrichten zwischen euch ist, bleibt offen." },
++    "friction": { "title": "Kurz mal Luft holen ⚡", "body": "Sichtbare Spannung {tension}/3: In diesen {n} Nachrichten taucht Reibung auf. Vielleicht lohnt sich eine direkte Frage mehr als noch eine Interpretation zwischen den Zeilen; was dahintersteckt, verrät der Chat nicht." },
++    "clarify": { "title": "Da fehlt ein Untertitel ↗", "body": "Verständlichkeit {clarity}/3: Manche Antworten im Ausschnitt lassen mehrere Lesarten zu. Ein kurzes Nachfragen könnte mehr klären als ein Gedankenfilm über diese {n} Nachrichten." },
++    "everyday": { "title": "Noch nicht die ganze Story ✦", "body": "In diesen {n} Nachrichten ist keine eindeutige Richtung sichtbar: Wärme {warmth}/3, Hin und Her {reciprocity}/3, Spannung {tension}/3. Vielleicht entwickelt sich etwas; vielleicht ist es einfach euer Alltag – der Chat allein entscheidet das nicht." },
++    "uncertain": { "title": "Noch keine Story erfinden ✦", "body": "Hier fehlen überprüfbare Sprecher oder genug Nachrichten für ein Sticker-Duo. Die vier Skalen beziehen sich nur auf den eingereichten Text; über euer Verhältnis sagen sie nichts Sicheres." }
++  },
+   "scaleAccessible": "{trait}: Stufe {score} von 3 – {level}.",
+   "traitExplainers": { "warmth": "Wie oft zeigen beide freundliche oder unterstützende Reaktionen?", "reciprocity": "Greifen beide auf, was die andere Person schreibt?", "tension": "Gibt es sichtbare Reibung im Ausschnitt?", "clarity": "Ist aus dem Text erkennbar, was jeweils gemeint ist?" },
+   "exhibit": "Euer Chat",
+@@ -166,9 +185,9 @@ export default {
+     "bookLink2": "Lehrbuch: OpenStax, Psychology 2e, Kapitel 12.7"
+   },
+   "ideas": {
+-    "pause": "Legt bei einer Meinungsverschiedenheit kurz eine Pause ein und fragt danach: „Was war dir dabei wichtig?“",
+-    "clarify": "Frag einmal freundlich nach: „Wie hast du das gemeint?“ – gerade Text kann missverständlich sein.",
+-    "appreciate": "Schickt euch eine kleine Nachricht darüber, was ihr an eurem Austausch mögt.",
+-    "open": "Frag die andere Person nach einem Thema, das sie gerade beschäftigt – ohne Antwortdruck."
++    "pause": "Erst durchatmen, dann: „Was war dir dabei wichtig?“ Wenn der Ausschnitt Reibung zeigt, kann eine offene Frage mehr bringen als der nächste Konter.",
++    "clarify": "Frag locker: „Wie hast du das gemeint?“ Im Text fehlen Tonfall und Gesichtsausdruck; das kann eine schräge Lesart auflösen.",
++    "appreciate": "Sag eine kleine Sache, die du an eurem Austausch magst. Wenn ihr schon freundlich aufeinander eingeht, macht das den Moment sichtbar – ohne Erwartungsdruck.",
++    "open": "Frag nach einem Thema, das die andere Person gerade beschäftigt. So öffnet sich ein Gespräch, ohne dass eine Antwort geschuldet ist."
+   }
+ };
+diff --git a/js/locales/en.js b/js/locales/en.js
+index 40ca3a5..a4836b6 100644
+--- a/js/locales/en.js
++++ b/js/locales/en.js
+@@ -8,6 +8,25 @@ export default {
+   "stageInput": "01 / Pick a chat",
+   "stageResult": "02 / Your vibe at a glance",
+   "stageShare": "03 / Preview & share your card",
++  "duoTitle": "Your sticker duo",
++  "statsTitle": "Numbers, no mind-reading",
++  "cardStory": { "warm": "Warmth {warmth}/3 · back-and-forth {reciprocity}/3 · n = {n}", "friction": "Visible tension {tension}/3 · n = {n} messages", "clarify": "Clarity {clarity}/3 · n = {n} messages", "everyday": "Warmth {warmth}/3 · back-and-forth {reciprocity}/3 · n = {n}", "uncertain": "Speakers or sample cannot be verified" },
++  "technicalTitle": "Technical excerpt details",
++  "animalMeaning": "Stickers show counted patterns in this excerpt only, not personality traits.",
++  "animals": {
++    "mouse": { "name": "Mouse", "why": "Short and sweet: median {value} words per message (n = {n})." },
++    "cat": { "name": "Cat", "why": "Between short and detailed: median {value} words per message (n = {n})." },
++    "dog": { "name": "Dog", "why": "Starts more new conversations here: {count} of {of}, with a clear lead." },
++    "hedgehog": { "name": "Hedgehog", "why": "Makes room for longer texts: median {value} words per message (n = {n})." },
++    "neutral": { "name": "Mystery sticker", "why": "Not enough verifiable messages for a specific sticker yet." }
++  },
++  "story": {
++    "warm": { "title": "That energy goes both ways ✦", "body": "Warmth {warmth}/3 and back-and-forth {reciprocity}/3: both build on each other in this excerpt. That might feel like closeness, but these {n} messages cannot tell us where your connection goes." },
++    "friction": { "title": "Time for a breather ⚡", "body": "Visible tension {tension}/3: friction shows up in these {n} messages. A direct question might beat reading between the lines; this chat cannot explain what happened outside it." },
++    "clarify": { "title": "Missing subtitles here ↗", "body": "Clarity {clarity}/3: some exchanges leave room for several interpretations. Asking once could clear up more than a long spiral about these {n} messages." },
++    "everyday": { "title": "The story is still open ✦", "body": "These {n} messages have no clear direction: warmth {warmth}/3, back-and-forth {reciprocity}/3, tension {tension}/3. Something could grow, or this could just be an ordinary day; the chat cannot decide." },
++    "uncertain": { "title": "No story to invent yet ✦", "body": "Speakers cannot be verified or there are too few messages for a duo. The four scales cover the submitted text only, not your relationship beyond it." }
++  },
+   "scaleAccessible": "{trait}: level {score} out of 3 – {level}.",
+   "traitExplainers": { "warmth": "Do both people respond with friendliness or support?", "reciprocity": "Do both build on what the other person says?", "tension": "Is there visible friction in this excerpt?", "clarity": "Is it clear from the text what each person means?" },
+   "exhibit": "Your chat",
+@@ -166,9 +185,9 @@ export default {
+     "bookLink2": "Textbook: OpenStax, Psychology 2e, section 12.7"
+   },
+   "ideas": {
+-    "pause": "If you disagree, take a short pause, then ask: “What mattered most to you about that?”",
+-    "clarify": "Try asking kindly: “What did you mean by that?” Text can be easy to misread.",
+-    "appreciate": "Send each other one small thing you appreciate about your chats.",
+-    "open": "Ask what’s on their mind lately, without pressuring them to reply."
++    "pause": "Take a breath, then ask: “What mattered most to you about that?” When this excerpt shows friction, an open question may do more than another comeback.",
++    "clarify": "Ask: “What did you mean by that?” Text has no tone of voice; one question might clear up a strange reading.",
++    "appreciate": "Name one small thing you like about talking together. If you already respond warmly, this makes it visible without demanding anything back.",
++    "open": "Ask what has been on the other person’s mind. It opens a conversation without requiring an answer."
+   }
+ };
+diff --git a/js/locales/es.js b/js/locales/es.js
+index 0949565..6bc073e 100644
+--- a/js/locales/es.js
++++ b/js/locales/es.js
+@@ -8,6 +8,25 @@ export default {
+   "stageInput": "01 / Elegir un chat",
+   "stageResult": "02 / Vuestro chat de un vistazo",
+   "stageShare": "03 / Ver y compartir la tarjeta",
++  "duoTitle": "Vuestro dúo de stickers",
++  "statsTitle": "Cifras sin leer la mente",
++  "cardStory": { "warm": "Calidez {warmth}/3 · diálogo {reciprocity}/3 · n = {n}", "friction": "Tensión visible {tension}/3 · n = {n} mensajes", "clarify": "Claridad {clarity}/3 · n = {n} mensajes", "everyday": "Calidez {warmth}/3 · diálogo {reciprocity}/3 · n = {n}", "uncertain": "Hablantes o muestra sin verificar" },
++  "technicalTitle": "Detalles técnicos del fragmento",
++  "animalMeaning": "Los stickers muestran patrones contados en este fragmento, no rasgos de personalidad.",
++  "animals": {
++    "mouse": { "name": "Ratón", "why": "Corto y claro: mediana de {value} palabras por mensaje (n = {n})." },
++    "cat": { "name": "Gato", "why": "Entre breve y detallado: mediana de {value} palabras por mensaje (n = {n})." },
++    "dog": { "name": "Perro", "why": "Inicia más conversaciones aquí: {count} de {of}, con ventaja clara." },
++    "hedgehog": { "name": "Erizo", "why": "Se extiende al escribir: mediana de {value} palabras por mensaje (n = {n})." },
++    "neutral": { "name": "Sticker sorpresa", "why": "Aún faltan mensajes verificables para elegir un sticker concreto." }
++  },
++  "story": {
++    "warm": { "title": "Hay respuesta por los dos lados ✦", "body": "Calidez {warmth}/3 y diálogo {reciprocity}/3: ambos retoman lo que dice el otro en este fragmento. Podría sentirse como cercanía, pero estos {n} mensajes no dicen hacia dónde va vuestra relación." },
++    "friction": { "title": "Un respiro primero ⚡", "body": "Tensión visible {tension}/3: hay roces en estos {n} mensajes. Una pregunta directa puede ayudar más que leer entre líneas; el chat no explica lo que ocurre fuera de él." },
++    "clarify": { "title": "Faltan subtítulos ↗", "body": "Claridad {clarity}/3: algunas respuestas admiten varias interpretaciones. Preguntar una vez podría aclarar más que darle vueltas a estos {n} mensajes." },
++    "everyday": { "title": "La historia sigue abierta ✦", "body": "Estos {n} mensajes no marcan una dirección clara: calidez {warmth}/3, diálogo {reciprocity}/3 y tensión {tension}/3. Podría surgir algo o ser un día normal; el chat no decide." },
++    "uncertain": { "title": "Todavía no inventemos historias ✦", "body": "No se pueden verificar los hablantes o faltan mensajes para un dúo. Las cuatro escalas hablan solo del texto enviado, no de vuestra relación." }
++  },
+   "scaleAccessible": "{trait}: nivel {score} de 3 – {level}.",
+   "traitExplainers": { "warmth": "¿Responden ambos con amabilidad o apoyo?", "reciprocity": "¿Cada uno retoma lo que dice el otro?", "tension": "¿Hay roces visibles en este fragmento?", "clarity": "¿Se entiende en el texto lo que quiere decir cada uno?" },
+   "exhibit": "Vuestro chat",
+@@ -166,9 +185,9 @@ export default {
+     "bookLink2": "Libro: OpenStax, Psychology 2e, apartado 12.7"
+   },
+   "ideas": {
+-    "pause": "Si no estáis de acuerdo, haced una pausa breve y preguntad: «¿Qué era importante para ti?»",
+-    "clarify": "Preguntad con amabilidad: «¿Qué querías decir?» Un texto puede interpretarse mal.",
+-    "appreciate": "Decid una pequeña cosa que os guste de vuestra forma de hablar.",
+-    "open": "Preguntad qué le ronda la cabeza a la otra persona, sin presionarla para responder."
++    "pause": "Respirad y preguntad: «¿Qué era importante para ti?» Si este fragmento muestra roces, una pregunta abierta puede ayudar más que otra réplica.",
++    "clarify": "Preguntad: «¿Qué querías decir?» El texto no tiene tono de voz; una pregunta puede aclarar un malentendido.",
++    "appreciate": "Decid algo pequeño que os guste de vuestras charlas. Si ya os respondéis con calidez, lo hace visible sin exigir nada a cambio.",
++    "open": "Preguntad qué tiene la otra persona en mente. Abre una charla sin obligar a responder."
+   }
+ };
+diff --git a/js/locales/fr.js b/js/locales/fr.js
+index 8a6ebf6..ff90c13 100644
+--- a/js/locales/fr.js
++++ b/js/locales/fr.js
+@@ -8,6 +8,25 @@ export default {
+   "stageInput": "01 / Choisir un chat",
+   "stageResult": "02 / Votre échange en bref",
+   "stageShare": "03 / Voir et partager la carte",
++  "duoTitle": "Votre duo de stickers",
++  "statsTitle": "Des chiffres, pas de lecture de pensées",
++  "cardStory": { "warm": "Chaleur {warmth}/3 · échange {reciprocity}/3 · n = {n}", "friction": "Tension visible {tension}/3 · n = {n} messages", "clarify": "Clarté {clarity}/3 · n = {n} messages", "everyday": "Chaleur {warmth}/3 · échange {reciprocity}/3 · n = {n}", "uncertain": "Personnes ou échantillon non vérifiables" },
++  "technicalTitle": "Détails techniques de l'extrait",
++  "animalMeaning": "Les stickers montrent seulement des habitudes comptées dans cet extrait, pas des traits de caractère.",
++  "animals": {
++    "mouse": { "name": "Souris", "why": "Court et direct : médiane de {value} mots par message (n = {n})." },
++    "cat": { "name": "Chat", "why": "Entre bref et détaillé : médiane de {value} mots par message (n = {n})." },
++    "dog": { "name": "Chien", "why": "Lance plus souvent un nouvel échange ici : {count} sur {of}, avec une avance nette." },
++    "hedgehog": { "name": "Hérisson", "why": "Prend de la place pour écrire : médiane de {value} mots par message (n = {n})." },
++    "neutral": { "name": "Sticker surprise", "why": "Pas assez de messages vérifiables pour choisir un sticker précis." }
++  },
++  "story": {
++    "warm": { "title": "Ça se répond ✦", "body": "Chaleur {warmth}/3 et échanges {reciprocity}/3 : chacun rebondit sur l'autre dans cet extrait. Cela pourrait évoquer de la proximité, mais ces {n} messages ne disent pas où va votre lien." },
++    "friction": { "title": "On respire un coup ⚡", "body": "Tension visible {tension}/3 : ces {n} messages contiennent des frictions. Une question directe pourrait aider davantage que de lire entre les lignes ; ce chat n'explique pas le contexte extérieur." },
++    "clarify": { "title": "Il manque les sous-titres ↗", "body": "Clarté {clarity}/3 : certains échanges permettent plusieurs interprétations. Poser une question peut éclaircir davantage qu'imaginer la suite de ces {n} messages." },
++    "everyday": { "title": "L'histoire reste ouverte ✦", "body": "Ces {n} messages n'indiquent aucune direction nette : chaleur {warmth}/3, échanges {reciprocity}/3, tension {tension}/3. Quelque chose pourrait évoluer ; ce peut aussi être une journée ordinaire." },
++    "uncertain": { "title": "N'inventons pas d'histoire ✦", "body": "Les personnes ne peuvent pas être vérifiées, ou les messages sont trop peu nombreux pour un duo. Les quatre échelles portent sur ce texte seulement." }
++  },
+   "scaleAccessible": "{trait} : niveau {score} sur 3 – {level}.",
+   "traitExplainers": { "warmth": "Les deux personnes réagissent-elles avec gentillesse ou soutien ?", "reciprocity": "Chacune rebondit-elle sur les propos de l’autre ?", "tension": "Y a-t-il des frictions visibles dans cet extrait ?", "clarity": "Le texte permet-il de comprendre ce que chacun veut dire ?" },
+   "exhibit": "Votre chat",
+@@ -166,9 +185,9 @@ export default {
+     "bookLink2": "Manuel : OpenStax, Psychology 2e, section 12.7"
+   },
+   "ideas": {
+-    "pause": "En cas de désaccord, faites une courte pause puis demandez : « Qu’est-ce qui comptait pour toi ? »",
+-    "clarify": "Demandez gentiment : « Qu’est-ce que tu voulais dire ? » Un texte peut être mal compris.",
+-    "appreciate": "Envoyez-vous une petite chose que vous appréciez dans vos échanges.",
+-    "open": "Demandez ce qui préoccupe l’autre ces jours-ci, sans exiger de réponse."
++    "pause": "Respirez, puis demandez : « Qu’est-ce qui comptait pour toi ? » Si cet extrait montre des frictions, une question ouverte peut aider plus qu'une réplique.",
++    "clarify": "Demandez : « Qu’est-ce que tu voulais dire ? » Le texte n'a pas de ton de voix ; une question peut dissiper un malentendu.",
++    "appreciate": "Dites une petite chose que vous aimez dans vos échanges. Quand vous vous répondez avec chaleur, cela le rend visible sans rien exiger en retour.",
++    "open": "Demandez ce qui occupe l'esprit de l'autre. Cela ouvre la discussion sans imposer une réponse."
+   }
+ };

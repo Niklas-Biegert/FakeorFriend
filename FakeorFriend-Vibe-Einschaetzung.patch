@@ -1,0 +1,358 @@
+--- a/README.md
++++ b/README.md
+@@ -16,6 +16,12 @@
+ sample currently fits within the Jev state budget. The local preview intercepts
+ the Jev call and needs no API key. Forecasts are calculated independently:
+ never treat the sample as evidence that a real relationship can be predicted.
++In the local preview, **only the exact fictional 400-message sample** receives
++scripted demonstration scores (warmth 3, reciprocity 3, tension 0, clarity 2).
++Any changed or user-supplied chat receives the generic mock scores of 1/3
++instead: the preview cannot judge a real chat. Both variants label the model
++as a simulation and make no Jev or OpenRouter call. For an actual structured
++assessment outside the preview, the app needs a real provider response.
+ A three-person chat cannot be made eligible by hiding or excluding one person.
+ A long chat can be truncated to the newest messages that fit Jev's state
+ limit; if that excerpt has fewer than three messages from either speaker, no
+@@ -34,6 +40,12 @@
+ The displayed levels translate the four ordinal score levels; they are not
+ personality probabilities. No Jev prose, suspect, personality animal type, Menace Index,
+ Green/Red percentage, or "toxic" diagnosis is produced.
++The prominent duo text is a **playful, nonbinding reading of how this excerpt
++sounds**, not a relationship type inferred from the messages. Warmth and
++reciprocity can suggest familiarity but cannot distinguish friendship from
++romance; ambiguity alone cannot establish distance or hidden feelings. The
++four existing ordinal scores and exactly one request still drive the real
++result. The share card uses a matching cautious, curated sentence.
+ 
+ For recognised chats, the overall *excerpt label* follows this rule, in order:
+ 
+--- a/index.html
++++ b/index.html
+@@ -109,7 +109,7 @@
+             <p data-i18n="animalMeaning" class="duo-caveat"></p>
+           </div>
+           <section class="story-section vibe-spotlight" aria-labelledby="story-title">
+-            <div class="vibe-copy"><p class="spotlight-index" data-i18n="spotlight.second"></p><p class="vibe-tag" id="connection-label"></p><h2 id="story-title"></h2><p id="story-body"></p></div>
++            <div class="vibe-copy"><p class="spotlight-index" data-i18n="spotlight.second"></p><p class="vibe-tag" id="connection-label"></p><h2 id="story-title"></h2><p id="story-body"></p><p class="vibe-disclaimer" data-i18n="spotlight.disclaimer"></p></div>
+             <img id="vibe-sticker" src="img/vibes/uncertain.svg" width="160" height="130" alt="" />
+           </section>
+           <section class="moment-spotlight" aria-labelledby="moment-heading">
+--- a/css/polish.css
++++ b/css/polish.css
+@@ -171,7 +171,8 @@
+ .spotlight-shell .vibe-copy { min-width: 0; }
+ .spotlight-shell .vibe-tag { display: inline-block; width: fit-content; margin: .25rem 0 .2rem; padding: .2rem .55rem; border: 1px solid #bde9ff8a; border-radius: 99px; font: 650 .79rem/1.35 var(--font-body); color: var(--accent-blue); }
+ .spotlight-shell .vibe-spotlight h2 { margin: .3rem 0 .55rem; color: var(--accent); font-size: clamp(1.35rem, 3vw, 2rem); }
+-.spotlight-shell .vibe-spotlight p:last-child { max-width: 55ch; font-size: 1rem; line-height: 1.57; }
++.spotlight-shell #story-body { max-width: 55ch; font-size: 1rem; line-height: 1.57; }
++.spotlight-shell .vibe-disclaimer { max-width: 55ch; margin: .8rem 0 0; color: var(--ink-muted); font-size: .83rem; line-height: 1.45; }
+ .spotlight-shell .vibe-spotlight img { width: 100%; height: auto; filter: drop-shadow(0 10px 16px #151126aa); }
+ .moment-spotlight { margin-top: 1rem; padding: clamp(1.05rem, 3vw, 1.7rem); border: 1px solid #dff86f99; border-radius: 1.2rem; background: linear-gradient(118deg, #3d3f3f, #283942); }
+ .moment-spotlight h2 { margin: .1rem 0 .8rem; font-size: clamp(1.3rem, 3vw, 1.75rem); }
+--- a/js/locales/de.js
++++ b/js/locales/de.js
+@@ -5,6 +5,7 @@
+     "animals": "Welches Tier seid ihr hier?",
+     "second": "02 / Euer Vibe",
+     "vibe": "Euer Vibe",
++    "disclaimer": "Spielerische Einschätzung dieses Chat-Ausschnitts · ohne Gewähr. Kein Urteil über euer Verhältnis außerhalb des Chats.",
+     "third": "03 / Ein echter Chat-Fakt",
+     "moment": "Der Chat-Moment",
+     "guide": "Neugierig? Öffne unten die Zahlen und Erklärungen.",
+@@ -29,10 +30,10 @@
+     }
+   },
+   "cardVibe": {
+-    "warm": "Hier klingt der Austausch oft freundlich und gegenseitig. Das gilt nur für diesen Ausschnitt.",
+-    "friction": "Hier gibt es im Ausschnitt erkennbare Reibung. Der Kontext außerhalb des Chats bleibt offen.",
+-    "clarify": "Manches im Ausschnitt lässt mehrere Lesarten zu. Eine freundliche Nachfrage kann helfen.",
+-    "everyday": "Der Ausschnitt zeigt einen alltäglichen Mix. Er erzählt nicht die ganze Geschichte.",
++    "warm": "Euer Austausch wirkt hier freundlich und vertraut; ob Freundschaft oder mehr, bleibt offen.",
++    "friction": "Euer Austausch wirkt hier stellenweise angespannt. Was das für euer Verhältnis bedeutet, bleibt offen.",
++    "clarify": "Euer Kontakt ist hier schwer einzuordnen: Mehrdeutige Nachrichten verraten nicht, was jemand wirklich meint.",
++    "everyday": "Euer Kontakt wirkt hier eher alltäglich; welches Verhältnis dahintersteht, zeigt dieser Ausschnitt nicht.",
+     "uncertain": "Für eine gemeinsame Lesart fehlen überprüfbare Chatdaten."
+   },
+   "title": "FakeorFriend · Wie läuft’s zwischen euch?",
+@@ -214,10 +215,10 @@
+     "neutral": { "name": "Überraschungssticker", "why": "Hier fehlen überprüfbare Nachrichten für eine Tierrolle." }
+   },
+   "story": {
+-    "warm": { "title": "Da kommt was zurück ✦", "body": "Wärme {warmth}/3 und Hin und Her {reciprocity}/3: Beide greifen im Ausschnitt wiederholt etwas voneinander auf. Das könnte sich nach Nähe anfühlen – was außerhalb dieser {n} Nachrichten zwischen euch ist, bleibt offen." },
+-    "friction": { "title": "Kurz mal Luft holen ⚡", "body": "Sichtbare Spannung {tension}/3: In diesen {n} Nachrichten taucht Reibung auf. Vielleicht lohnt sich eine direkte Frage mehr als noch eine Interpretation zwischen den Zeilen; was dahintersteckt, verrät der Chat nicht." },
+-    "clarify": { "title": "Da fehlt ein Untertitel ↗", "body": "Verständlichkeit {clarity}/3: Manche Antworten im Ausschnitt lassen mehrere Lesarten zu. Ein kurzes Nachfragen könnte mehr klären als ein Gedankenfilm über diese {n} Nachrichten." },
+-    "everyday": { "title": "Noch nicht die ganze Story ✦", "body": "In diesen {n} Nachrichten ist keine eindeutige Richtung sichtbar: Wärme {warmth}/3, Hin und Her {reciprocity}/3, Spannung {tension}/3. Vielleicht entwickelt sich etwas; vielleicht ist es einfach euer Alltag – der Chat allein entscheidet das nicht." },
++    "warm": { "title": "Ihr habt einen Draht zueinander ✦", "body": "Wärme {warmth}/3 und Hin und Her {reciprocity}/3: Euer Austausch in diesen {n} Nachrichten wirkt freundlich und eingespielt. Das kann ein vertrautes Verhältnis andeuten; genauso gut können es zwei Menschen sein, die einfach gern und unkompliziert schreiben." },
++    "friction": { "title": "Gerade etwas Spannung zwischen euch ⚡", "body": "Spannung {tension}/3: In diesen {n} Nachrichten reibt sich euer Austausch spürbar. Das könnte ein ungeklärtes Thema sein – oder ein einzelner schwieriger Moment, der längst vorbei ist." },
++    "clarify": { "title": "Euer Kontakt: schwer zu lesen ↗", "body": "Verständlichkeit {clarity}/3: In diesen {n} Nachrichten bleibt manches zwischen euch mehrdeutig. Vielleicht gibt es unausgesprochene Fragen; vielleicht fehlt im Text einfach der Tonfall – euer Verhältnis lässt sich so nicht festlegen." },
++    "everyday": { "title": "Euer Verhältnis bleibt offen ✦", "body": "In diesen {n} Nachrichten wechseln sich Alltag und Austausch ab (Wärme {warmth}/3, Hin und Her {reciprocity}/3). Das kann zu Freundschaft, Kennenlernen oder einfach einem normalen Chat passen; was euch verbindet, zeigt der Ausschnitt nicht eindeutig." },
+     "uncertain": { "title": "Noch keine Story erfinden ✦", "body": "Hier fehlen überprüfbare Sprecher oder genug Nachrichten für ein Sticker-Duo. Die vier Skalen beziehen sich nur auf den eingereichten Text; über euer Verhältnis sagen sie nichts Sicheres." }
+   },
+   "scaleAccessible": "{trait}: Stufe {score} von 3 – {level}.",
+@@ -274,7 +275,7 @@
+   },
+   "connection": {
+     "friendly": "Überwiegend herzlicher Austausch",
+-    "mixed": "Gemischter oder alltäglicher Austausch",
++    "mixed": "Euer Verhältnis: noch offen",
+     "strained": "Spürbare Reibung in diesem Ausschnitt",
+     "uncertain": "Zu wenig überprüfbarer Kontext",
+     "note": "Ein Eindruck aus den gezeigten Nachrichten, kein Maß für eure echte Beziehung. Schweigen und kurze Antworten belegen keine Feindseligkeit.",
+--- a/js/locales/en.js
++++ b/js/locales/en.js
+@@ -5,6 +5,7 @@
+     "animals": "Which chat animals are you?",
+     "second": "02 / Your vibe",
+     "vibe": "Your vibe",
++    "disclaimer": "A playful reading of this chat excerpt · no guarantees. It cannot judge your relationship beyond the messages.",
+     "third": "03 / One real chat fact",
+     "moment": "The chat moment",
+     "guide": "Curious? Open the numbers and explanations below.",
+@@ -29,10 +30,10 @@
+     }
+   },
+   "cardVibe": {
+-    "warm": "This excerpt often sounds friendly and reciprocal. It says nothing certain beyond these messages.",
+-    "friction": "Some friction is visible in this excerpt. What happened outside the chat remains open.",
+-    "clarify": "Some messages allow more than one reading. A friendly question might help.",
+-    "everyday": "This excerpt is a mix of everyday exchanges. It is not the whole story.",
++    "warm": "Your exchange feels friendly and familiar here; friendship or anything else remains open.",
++    "friction": "Your exchange feels tense at times here. What that means for your relationship remains open.",
++    "clarify": "Your connection is hard to read here: ambiguous messages cannot reveal what someone really means.",
++    "everyday": "Your contact feels fairly everyday here; this excerpt cannot identify your relationship.",
+     "uncertain": "There is not enough verifiable chat data for a joint reading."
+   },
+   "title": "FakeorFriend · How is your connection?",
+@@ -214,10 +215,10 @@
+     "neutral": { "name": "Mystery sticker", "why": "Not enough verifiable messages for a chat-animal role yet." }
+   },
+   "story": {
+-    "warm": { "title": "That energy goes both ways ✦", "body": "Warmth {warmth}/3 and back-and-forth {reciprocity}/3: both build on each other in this excerpt. That might feel like closeness, but these {n} messages cannot tell us where your connection goes." },
+-    "friction": { "title": "Time for a breather ⚡", "body": "Visible tension {tension}/3: friction shows up in these {n} messages. A direct question might beat reading between the lines; this chat cannot explain what happened outside it." },
+-    "clarify": { "title": "Missing subtitles here ↗", "body": "Clarity {clarity}/3: some exchanges leave room for several interpretations. Asking once could clear up more than a long spiral about these {n} messages." },
+-    "everyday": { "title": "The story is still open ✦", "body": "These {n} messages have no clear direction: warmth {warmth}/3, back-and-forth {reciprocity}/3, tension {tension}/3. Something could grow, or this could just be an ordinary day; the chat cannot decide." },
++    "warm": { "title": "You two have a rhythm ✦", "body": "Warmth {warmth}/3 and back-and-forth {reciprocity}/3: in these {n} messages your exchange feels friendly and in sync. That could suggest familiarity; it could just as easily be two people who enjoy an easy conversation." },
++    "friction": { "title": "A little tension between you ⚡", "body": "Visible tension {tension}/3: these {n} messages show some friction in your exchange. It might be an unresolved issue, or just one awkward moment that has already passed." },
++    "clarify": { "title": "Your connection: hard to read ↗", "body": "Clarity {clarity}/3: parts of these {n} messages leave room for different readings. Maybe a question remains unspoken; maybe text simply loses the tone of voice. The chat cannot settle your relationship." },
++    "everyday": { "title": "What connects you is still open ✦", "body": "These {n} messages mix ordinary updates and conversation (warmth {warmth}/3, back-and-forth {reciprocity}/3). That could fit friendship, getting to know each other, or simply an everyday chat; the excerpt does not decide." },
+     "uncertain": { "title": "No story to invent yet ✦", "body": "Speakers cannot be verified or there are too few messages for a duo. The four scales cover the submitted text only, not your relationship beyond it." }
+   },
+   "scaleAccessible": "{trait}: level {score} out of 3 – {level}.",
+@@ -274,7 +275,7 @@
+   },
+   "connection": {
+     "friendly": "Mostly warm exchange",
+-    "mixed": "Mixed or everyday exchange",
++    "mixed": "Your connection: still open",
+     "strained": "Noticeable friction in this excerpt",
+     "uncertain": "Not enough verifiable context",
+     "note": "An impression of the messages shown, not a measure of your real relationship. Silence and brief replies do not prove hostility.",
+--- a/js/locales/fr.js
++++ b/js/locales/fr.js
+@@ -5,6 +5,7 @@
+     "animals": "Quels animaux du chat êtes-vous ?",
+     "second": "02 / Votre ambiance",
+     "vibe": "Votre ambiance",
++    "disclaimer": "Lecture ludique de cet extrait · sans garantie. Ce n’est pas un jugement sur votre relation hors du chat.",
+     "third": "03 / Un fait du chat",
+     "moment": "Le moment du chat",
+     "guide": "Envie d’en voir plus ? Ouvrez les chiffres et explications ci-dessous.",
+@@ -29,10 +30,10 @@
+     }
+   },
+   "cardVibe": {
+-    "warm": "Cet extrait paraît souvent cordial et réciproque. Il ne permet aucune certitude au-delà du chat.",
+-    "friction": "Des frictions sont visibles dans cet extrait. Le contexte hors du chat reste inconnu.",
+-    "clarify": "Certains messages ont plusieurs sens possibles. Une question aimable pourrait aider.",
+-    "everyday": "Cet extrait mélange des échanges ordinaires. Il ne raconte pas toute l’histoire.",
++    "warm": "Votre échange paraît amical et complice ici ; amitié ou autre chose, cela reste ouvert.",
++    "friction": "Votre échange paraît parfois tendu ici. Ce que cela signifie pour votre relation reste ouvert.",
++    "clarify": "Votre lien est difficile à lire ici : des messages ambigus ne révèlent pas les intentions de l’autre.",
++    "everyday": "Votre contact paraît plutôt ordinaire ici ; cet extrait ne définit pas votre relation.",
+     "uncertain": "Les données vérifiables manquent pour une lecture commune."
+   },
+   "title": "FakeorFriend · Comment échangez-vous ?",
+@@ -214,10 +215,10 @@
+     "neutral": { "name": "Sticker surprise", "why": "Pas assez de messages vérifiables pour attribuer un animal." }
+   },
+   "story": {
+-    "warm": { "title": "Ça se répond ✦", "body": "Chaleur {warmth}/3 et échanges {reciprocity}/3 : chacun rebondit sur l'autre dans cet extrait. Cela pourrait évoquer de la proximité, mais ces {n} messages ne disent pas où va votre lien." },
+-    "friction": { "title": "On respire un coup ⚡", "body": "Tension visible {tension}/3 : ces {n} messages contiennent des frictions. Une question directe pourrait aider davantage que de lire entre les lignes ; ce chat n'explique pas le contexte extérieur." },
+-    "clarify": { "title": "Il manque les sous-titres ↗", "body": "Clarté {clarity}/3 : certains échanges permettent plusieurs interprétations. Poser une question peut éclaircir davantage qu'imaginer la suite de ces {n} messages." },
+-    "everyday": { "title": "L'histoire reste ouverte ✦", "body": "Ces {n} messages n'indiquent aucune direction nette : chaleur {warmth}/3, échanges {reciprocity}/3, tension {tension}/3. Quelque chose pourrait évoluer ; ce peut aussi être une journée ordinaire." },
++    "warm": { "title": "Vous avez trouvé un rythme ✦", "body": "Chaleur {warmth}/3 et échanges {reciprocity}/3 : dans ces {n} messages, votre conversation paraît amicale et fluide. Cela pourrait évoquer de la complicité ; ce pourrait aussi être simplement deux personnes qui aiment discuter sans prise de tête." },
++    "friction": { "title": "Un peu de tension entre vous ⚡", "body": "Tension visible {tension}/3 : ces {n} messages montrent quelques frottements. Il reste peut-être une question à éclaircir ; ce pourrait aussi être un moment gênant déjà passé." },
++    "clarify": { "title": "Votre lien reste difficile à lire ↗", "body": "Clarté {clarity}/3 : certains de ces {n} messages laissent plusieurs interprétations possibles. Il y a peut-être une question en suspens ; le ton de la voix manque peut-être simplement au texte. Ce chat ne définit pas votre relation." },
++    "everyday": { "title": "Votre lien reste à définir ✦", "body": "Ces {n} messages mêlent quotidien et échanges (chaleur {warmth}/3, réciprocité {reciprocity}/3). Cela peut correspondre à une amitié, à des personnes qui apprennent à se connaître ou à un chat ordinaire ; cet extrait ne permet pas de trancher." },
+     "uncertain": { "title": "N'inventons pas d'histoire ✦", "body": "Les personnes ne peuvent pas être vérifiées, ou les messages sont trop peu nombreux pour un duo. Les quatre échelles portent sur ce texte seulement." }
+   },
+   "scaleAccessible": "{trait} : niveau {score} sur 3 – {level}.",
+@@ -274,7 +275,7 @@
+   },
+   "connection": {
+     "friendly": "Échange plutôt chaleureux",
+-    "mixed": "Échange varié ou ordinaire",
++    "mixed": "Votre lien : encore ouvert",
+     "strained": "Friction visible dans cet extrait",
+     "uncertain": "Contexte vérifiable insuffisant",
+     "note": "Une impression fondée sur ces messages, pas une mesure de votre relation réelle. Silence et réponses brèves ne prouvent aucune hostilité.",
+--- a/js/locales/es.js
++++ b/js/locales/es.js
+@@ -5,6 +5,7 @@
+     "animals": "¿Qué animales sois en este chat?",
+     "second": "02 / Vuestro ambiente",
+     "vibe": "Vuestro ambiente",
++    "disclaimer": "Lectura lúdica de este fragmento · sin garantías. No juzga vuestra relación fuera del chat.",
+     "third": "03 / Un dato del chat",
+     "moment": "El momento del chat",
+     "guide": "¿Quieres más? Abre abajo los datos y las explicaciones.",
+@@ -29,10 +30,10 @@
+     }
+   },
+   "cardVibe": {
+-    "warm": "Este fragmento suele sonar amable y recíproco. No asegura nada fuera del chat.",
+-    "friction": "Se ven algunos roces en este fragmento. El contexto fuera del chat sigue abierto.",
+-    "clarify": "Algunos mensajes admiten varias lecturas. Una pregunta amable puede ayudar.",
+-    "everyday": "Este fragmento mezcla intercambios cotidianos. No cuenta toda la historia.",
++    "warm": "Vuestra conversación suena amable y cercana aquí; amistad o algo distinto, queda abierto.",
++    "friction": "Vuestra conversación suena tensa a ratos. Lo que significa para vuestra relación sigue abierto.",
++    "clarify": "Vuestro vínculo es difícil de leer aquí: los mensajes ambiguos no revelan lo que alguien realmente quiere decir.",
++    "everyday": "Vuestro contacto parece bastante cotidiano aquí; este fragmento no define la relación.",
+     "uncertain": "Faltan datos verificables para una lectura conjunta."
+   },
+   "title": "FakeorFriend · ¿Cómo os comunicáis?",
+@@ -214,10 +215,10 @@
+     "neutral": { "name": "Sticker sorpresa", "why": "Faltan mensajes verificables para asignar un animal." }
+   },
+   "story": {
+-    "warm": { "title": "Hay respuesta por los dos lados ✦", "body": "Calidez {warmth}/3 y diálogo {reciprocity}/3: ambos retoman lo que dice el otro en este fragmento. Podría sentirse como cercanía, pero estos {n} mensajes no dicen hacia dónde va vuestra relación." },
+-    "friction": { "title": "Un respiro primero ⚡", "body": "Tensión visible {tension}/3: hay roces en estos {n} mensajes. Una pregunta directa puede ayudar más que leer entre líneas; el chat no explica lo que ocurre fuera de él." },
+-    "clarify": { "title": "Faltan subtítulos ↗", "body": "Claridad {clarity}/3: algunas respuestas admiten varias interpretaciones. Preguntar una vez podría aclarar más que darle vueltas a estos {n} mensajes." },
+-    "everyday": { "title": "La historia sigue abierta ✦", "body": "Estos {n} mensajes no marcan una dirección clara: calidez {warmth}/3, diálogo {reciprocity}/3 y tensión {tension}/3. Podría surgir algo o ser un día normal; el chat no decide." },
++    "warm": { "title": "Tenéis un ritmo propio ✦", "body": "Calidez {warmth}/3 y diálogo {reciprocity}/3: en estos {n} mensajes vuestra conversación suena amable y fluida. Podría sugerir confianza; también podrían ser simplemente dos personas a las que les gusta charlar sin complicaciones." },
++    "friction": { "title": "Un poco de tensión entre vosotros ⚡", "body": "Tensión visible {tension}/3: en estos {n} mensajes hay algunos roces. Quizá quede algo por aclarar; quizá solo fue un momento incómodo que ya pasó." },
++    "clarify": { "title": "Vuestro vínculo: difícil de leer ↗", "body": "Claridad {clarity}/3: parte de estos {n} mensajes admite distintas lecturas. Puede quedar alguna pregunta en el aire; también puede faltar el tono de voz. El chat no permite definir vuestra relación." },
++    "everyday": { "title": "Lo vuestro sigue abierto ✦", "body": "Estos {n} mensajes mezclan rutina y conversación (calidez {warmth}/3, diálogo {reciprocity}/3). Podría encajar con una amistad, con gente que se está conociendo o con un chat cotidiano; el fragmento no permite decidirlo." },
+     "uncertain": { "title": "Todavía no inventemos historias ✦", "body": "No se pueden verificar los hablantes o faltan mensajes para un dúo. Las cuatro escalas hablan solo del texto enviado, no de vuestra relación." }
+   },
+   "scaleAccessible": "{trait}: nivel {score} de 3 – {level}.",
+@@ -274,7 +275,7 @@
+   },
+   "connection": {
+     "friendly": "Intercambio mayormente cálido",
+-    "mixed": "Intercambio variado o cotidiano",
++    "mixed": "Vuestro vínculo: por definir",
+     "strained": "Fricción visible en este fragmento",
+     "uncertain": "Contexto verificable insuficiente",
+     "note": "Una impresión de estos mensajes, no una medida de vuestra relación real. El silencio y las respuestas breves no prueban hostilidad.",
+--- a/scripts/mock-jev.js
++++ b/scripts/mock-jev.js
+@@ -1,5 +1,16 @@
+ // Served in place of js/jev.js only by scripts/preview-server.mjs.
+ // Never used by the normal site. No fetch, key storage or external request.
++import { SAMPLE_CHAT } from '../js/sample.js';
++import { parseChat } from '../js/parse.js';
++
++const sampleMessages = parseChat(SAMPLE_CHAT).map(({ author, text }) => ({ from: author, text }));
++function isExactSample(state) {
++  const messages = state?.messages;
++  return Array.isArray(messages) && messages.length === sampleMessages.length
++    && messages.every((message, index) => message.from === sampleMessages[index].from
++      && message.text === sampleMessages[index].text);
++}
++
+ export function isApiKey(value) {
+   return /^sk-or-[\w-]+$/.test(value);
+ }
+@@ -15,6 +26,10 @@
+   const counter = typeof document === 'undefined' ? null : document.getElementById('preview-requests');
+   if (counter) counter.textContent = String(Number(counter.textContent) + 1);
+ 
++  // These are explicitly scripted demonstration scores for our own fictional
++  // sample, never a model's assessment. Other chats stay on the neutral mock.
++  const demo = isExactSample(body.state);
++  const demoScores = { warmth: 3, reciprocity: 3, tension: 0, clarity: 2 };
+   const answers = {};
+   for (const [id, question] of Object.entries(body.questions)) {
+     if (question.type === 'choice') {
+@@ -27,12 +42,13 @@
+         probabilities: Object.fromEntries(options.map((value) => [value, value === choice ? 0.8 : 0.2 / (options.length - 1)])),
+       };
+     } else if (question.type === 'score') {
+-      answers[id] = { score: 1, confidence: 0.8, legend: { 0: '', 1: '', 2: '', 3: '' } };
++      answers[id] = { score: demo ? demoScores[id] ?? 1 : 1,
++        legend: { 0: '', 1: '', 2: '', 3: '' } };
+     } else if (question.type === 'noul') {
+       answers[id] = { noul: 0.4 };
+     } else {
+       throw new Error(`Unknown local test question type: ${question.type}`);
+     }
+   }
+-  return { answers, model: 'Local preview (no Jev)', usage: { cost: 0 } };
++  return { answers, model: demo ? 'Local preview · scripted fictional sample (no Jev)' : 'Local preview · generic mock (no Jev)', usage: { cost: 0 } };
+ }
+--- a/scripts/preview-server.mjs
++++ b/scripts/preview-server.mjs
+@@ -14,7 +14,7 @@
+   'X-Content-Type-Options': 'nosniff',
+ };
+ 
+-const banner = '<aside style="padding:.7rem 1rem;background:#edf4e8;color:#17281d;font:600 14px system-ui">FakeorFriend Testvorschau · simulierte Jev-Antworten · keine API-Anfrage · Auswertungen: <strong id="preview-requests">0</strong></aside>';
++const banner = '<aside style="padding:.7rem 1rem;background:#edf4e8;color:#17281d;font:600 14px system-ui">FakeorFriend Testvorschau · simulierte Jev-Antworten · Beispielchat: festes Demo-Ergebnis · eigene Chats: keine echte Einschätzung · keine API-Anfrage · Auswertungen: <strong id="preview-requests">0</strong></aside>';
+ 
+ async function responseFor(pathname) {
+   if (pathname === '/js/key.js') return { code: 404, data: 'Key unavailable in preview', type: 'text/plain' };
+--- a/test/preview.test.js
++++ b/test/preview.test.js
+@@ -3,6 +3,9 @@
+ import { createPreviewServer } from '../scripts/preview-server.mjs';
+ import { askJev, findApiKey } from '../scripts/mock-jev.js';
+ import { buildRequest, STATE_TOKEN_BUDGET } from '../js/questions.js';
++import { parseChat } from '../js/parse.js';
++import { SAMPLE_CHAT } from '../js/sample.js';
++import { duoStory } from '../js/animals.js';
+ 
+ test('browser preview serves mock Jev, blocks deployment key and external connections', async () => {
+   const server = createPreviewServer();
+@@ -40,3 +43,23 @@
+     assert.equal(result.answers.tension.legend[3], '');
+   } finally { globalThis.fetch = network; }
+ });
++
++test('only the exact fictional example receives scripted demo scores; no other chat is evaluated by the mock', async () => {
++  const original = globalThis.fetch;
++  globalThis.fetch = () => { throw new Error('No network in preview mock'); };
++  try {
++    const chat = parseChat(SAMPLE_CHAT);
++    const request = buildRequest(chat, ['Mara', 'Leo']);
++    assert.equal(request.judgedCount, 400);
++    const demo = await askJev('sk-or-preview-only', request.body);
++    assert.deepEqual(Object.fromEntries(Object.entries(demo.answers).map(([key, value]) => [key, value.score])),
++      { warmth: 3, reciprocity: 3, tension: 0, clarity: 2 });
++    assert.equal(duoStory(demo.answers, { n: request.judgedCount }), 'warm');
++    assert.match(demo.model, /scripted fictional sample/);
++    const other = buildRequest(chat.map((message, index) => index === 50
++      ? { ...message, text: 'Different invented message' } : message), ['Mara', 'Leo']);
++    const generic = await askJev('sk-or-preview-only', other.body);
++    assert.equal(generic.answers.warmth.score, 1);
++    assert.match(generic.model, /generic mock/);
++  } finally { globalThis.fetch = original; }
++});
+--- a/test/spotlight.test.js
++++ b/test/spotlight.test.js
+@@ -23,12 +23,15 @@
+   }
+   assert.match(html, /id="scope-note"/);
+   assert.match(html, /id="card-preview-details"/);
++  assert.match(first, /data-i18n="spotlight\.disclaimer"/);
+ });
+ 
+ test('every language explains the moment, no-data fallback and curated card without identity claims', () => {
+   for (const locale of [de, en, fr, es]) {
+     for (const key of ['animals', 'vibe', 'moment', 'moreReading', 'moreCharts', 'moreNumbers'])
+       assert.ok(locale.spotlight[key]?.trim());
++    assert.ok(locale.spotlight.disclaimer?.trim());
++    assert.ok(locale.story.warm.body.includes('{warmth}') && locale.story.warm.body.includes('{reciprocity}'));
+     for (const key of ['starter', 'reply']) {
+       assert.match(locale.moment[key].detail, /\{name\}/);
+       assert.match(locale.moment[key].card, /\{name\}/);

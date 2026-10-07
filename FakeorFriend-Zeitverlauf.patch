@@ -1,0 +1,629 @@
+diff --git a/README.md b/README.md
+index 78c8e4f..0f55e3b 100644
+--- a/README.md
++++ b/README.md
+@@ -102,6 +102,47 @@ hours start a new conversation. Length and reply medians need at least three
+ valid observations. Each available share highlight includes its sample size.
+ Records are awarded only on a clear lead with enough data.
+ 
++## Chat over time (local)
++
++`js/timeline.js` groups parsed text messages by the calendar fields represented
++by `at`; `stamps.js` encodes the export's written wall-clock date using UTC
++fields solely for comparison. No time zone is inferred or converted. Every
++calendar day between the first and last dated message appears, including
++zero-message days. If *any* message has a missing/ambiguous timestamp, the
++graph and pattern cards are omitted rather than showing a partial curve. Raw
++transcripts also have no timeline. Spans above 1,827 days show an explicit
++limit message. Chats up to 42 calendar days show daily counts; longer ones show
++consecutive seven-day blocks from the first observed date (the final block
++can be shorter). Labelled lines also differ in dash and marker shape, and an
++accessible table lists every displayed period.
++
++A faint ordinary least-squares line fits the **combined** message count across
++displayed periods, including zeros. An incomplete final week is excluded
++from the fit because it is shorter than the others. It needs at least 14
++complete periods and
++7 active periods. It is a display aid, not a prediction. Two predefined,
++exploratory patterns are eligible, with at most two cards:
++
++- Co-activity uses Spearman rank correlation of the two daily message counts
++  on days when either person writes. It needs at least 10 such days, five
++  active days for each person, variance in both series, and |r| >= 0.65.
++  Ranks limit one spike's influence; all-zero days remain in the graph but
++  are excluded from this comparison to avoid correlated inactivity.
++- Length by activity requires two messages from **each person** per day. A
++  day's length is the average of the two personal median character lengths,
++  giving each speaker equal weight despite unequal message counts. It needs
++  16 comparable days and a strict count difference
++  between the four busiest and four quietest days (no tie at the boundary).
++  The medians of those four daily medians must differ by eight characters
++  **and** 30%. Days, not individual messages, are the observations.
++
++These selected descriptive patterns have no significance tests or causal
++claim. No card appears if conditions fail. All calculations remain in browser
++memory. With complete dates, at least seven calendar days and three active
++days, the share card can show one fact (`activeDays` of `totalDays`); its
++visible preview and PNG use the same numbers. No local measures enter Jev's
++state or add a second request.
++
+ ## Data and sharing
+ 
+ Parsed chat text and imported files are held in page memory, not stored by the
+@@ -161,6 +202,7 @@ needs a separate deployment decision and a review of its data flow.
+ - `js/verdict.js`: excerpt label rule.
+ - `js/vibes.js`: map position, factual count shares and conversation idea.
+ - `js/animals.js`: local sticker selection and bounded story from existing scores.
++- `js/timeline.js`, `js/timeline-view.js`: local date buckets, cautious comparisons and accessible chart.
+ - `js/app.js`: input and result flow.
+ - `js/card.js`: the single image preview, download and Web Share flow.
+ - `js/locales/`: English, German, French and Spanish strings.
+diff --git a/css/style.css b/css/style.css
+index 42e1ad3..2e9a04a 100644
+--- a/css/style.css
++++ b/css/style.css
+@@ -1232,3 +1232,34 @@ textarea:focus-visible, input:focus-visible, button:focus-visible, .track:focus-
+   .counted .finding { padding: .55rem; }
+ }
+ @media (prefers-reduced-motion: reduce) { .results.revealed .animal-sticker { animation: none; } }
++
++/* Local timeline: patterns are summaries of counted days, not verdict scores. */
++.timeline-panel { min-width: 0; margin-top: 1rem; padding: clamp(1rem, 3vw, 1.4rem); border: 1px solid var(--rule); border-radius: 1.2rem; background: var(--paper-raised); }
++.timeline-panel h3 { margin: 0; font: 800 clamp(1.4rem, 3vw, 1.8rem) var(--font-display); }
++.timeline-panel > p { color: var(--ink-soft); margin: .4rem 0 1rem; }
++.timeline-scope, .timeline-caption { font-size: .83rem; color: var(--ink-soft); margin: .5rem 0; }
++.timeline-legend { display: flex; flex-wrap: wrap; gap: .5rem 1.3rem; margin: .7rem 0; }
++.timeline-key { min-width: 0; display: inline-flex; align-items: center; gap: .45rem; max-width: 100%; overflow-wrap: anywhere; }
++.timeline-key strong { min-width: 0; overflow-wrap: anywhere; }
++.key-symbol { display: inline-block; width: 2rem; flex: 0 0 2rem; border-top: 3px solid var(--accent); }
++.key-0 .key-symbol::after { content: '●'; display: block; margin-top: -.92rem; margin-left: .6rem; color: var(--accent); }
++.key-1 .key-symbol { border-top: 3px dashed var(--accent-blue); }
++.key-1 .key-symbol::after { content: '■'; display: block; margin-top: -.92rem; margin-left: .6rem; color: var(--accent-blue); }
++#timeline-content svg { display: block; width: 100%; height: auto; min-width: 0; background: #2d2032; border: 1px solid var(--rule); border-radius: .75rem; }
++.timeline-method { border-top: 1px solid var(--rule); margin-top: 1rem; padding-top: .8rem; color: var(--ink-soft); font-size: .83rem; }
++.timeline-method summary, .timeline-table summary { cursor: pointer; font-weight: 700; color: var(--accent-blue); }
++.timeline-table { margin: .8rem 0; font-size: .83rem; }
++.timeline-table table { width: 100%; border-collapse: collapse; margin-top: .5rem; text-align: left; }
++.timeline-table th, .timeline-table td { padding: .35rem .5rem; border-bottom: 1px solid var(--rule); overflow-wrap: anywhere; }
++.timeline-table tbody { display: block; max-height: 15rem; overflow-y: auto; }
++.timeline-table thead, .timeline-table tbody tr { display: table; width: 100%; table-layout: fixed; }
++.timeline-empty { padding: .8rem 1rem; background: #302235; border-radius: .8rem; }
++.pattern-cards { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,16rem),1fr)); gap: .8rem; margin-top: 1rem; }
++.pattern-card { min-width: 0; padding: 1rem; border: 1px solid var(--rule); border-radius: .9rem; background: #302235; }
++.pattern-card h4 { margin: 0 0 .4rem; font-size: 1rem; }
++.pattern-card p { margin: 0; color: var(--ink-soft); font-size: .84rem; line-height: 1.5; }
++.pattern-mini { height: 2.2rem; display: flex; align-items: end; gap: .5rem; margin-top: .8rem; }
++.pattern-bar { width: 1.4rem; min-height: .25rem; background: var(--accent-blue); border-radius: .3rem .3rem 0 0; }
++.pattern-bar:nth-child(2) { background: var(--accent); }
++.pattern-gauge { height: .55rem; align-self: center; border-radius: 1rem; background: var(--accent); }
++@media (max-width: 390px) { .timeline-panel { padding: .8rem; } .timeline-panel svg text { font-size: 13px; } }
+diff --git a/index.html b/index.html
+index 424522b..39754db 100644
+--- a/index.html
++++ b/index.html
+@@ -122,6 +122,12 @@
+             <div id="balance-bars" class="balance-bars"></div>
+           </section>
+         </div>
++        <section class="timeline-panel" aria-labelledby="timeline-title">
++          <h3 id="timeline-title" data-i18n="timeline.title"></h3>
++          <p data-i18n="timeline.intro"></p>
++          <div id="timeline-content"></div>
++          <details class="timeline-method"><summary data-i18n="timeline.methodTitle"></summary><p data-i18n="timeline.method"></p></details>
++        </section>
+         <section class="vibe-panel idea-panel" aria-labelledby="idea-title">
+           <h3 id="idea-title" data-i18n="visual.ideaTitle"></h3>
+           <p id="conversation-idea"></p>
+diff --git a/js/app.js b/js/app.js
+index ac572b4..01d8668 100644
+--- a/js/app.js
++++ b/js/app.js
+@@ -11,6 +11,8 @@ import { formatDuration, formatNumber, percent, recordDetail, statisticNotes, te
+ import { SAMPLE_CHAT } from './sample.js';
+ import { vibePoint, messageBalance, conversationIdea } from './vibes.js';
+ import { animalDuo, duoStory } from './animals.js';
++import { timelineOf } from './timeline.js';
++import { renderTimeline } from './timeline-view.js';
+ 
+ const MIN_LAB_MS = 1800;
+ const $ = (id) => document.getElementById(id);
+@@ -113,6 +115,7 @@ async function judgeChat() {
+         rawMode,
+         stats: rawMode ? null : chatStats(evidence),
+         stickerStats: rawMode ? null : chatStats(evidence.slice(-request.judgedCount)),
++        timeline: rawMode ? null : timelineOf(evidence, people),
+         meta: { judgedCount: request.judgedCount, totalCount: rawMode ? null : evidence.length,
+           truncated: request.truncated, ms: Math.round(performance.now() - started), model: response.model, cost: response.usage?.cost },
+       };
+@@ -180,7 +183,7 @@ function record(entry) {
+   );
+   return box;
+ }
+-function renderResults({ people, answers, rawMode, stats, stickerStats, meta }, { scroll = true } = {}) {
++function renderResults({ people, answers, rawMode, stats, stickerStats, timeline, meta }, { scroll = true } = {}) {
+   const label = interactionLabel(answers, { raw: rawMode });
+   const story = duoStory(answers, { raw: rawMode, n: meta.judgedCount });
+   const animals = animalDuo(stickerStats, people, { raw: rawMode || story === 'uncertain' });
+@@ -239,6 +242,7 @@ function renderResults({ people, answers, rawMode, stats, stickerStats, meta },
+     row.append(header, track);
+     return row;
+   }));
++  renderTimeline($('timeline-content'), timeline, people);
+   $('conversation-idea').textContent = t(`ideas.${conversationIdea(answers, rawMode)}`);
+   const records = stats ? recordsOf(stats, people) : [];
+   $('records').replaceChildren(...records.map(record));
+@@ -249,7 +253,7 @@ function renderResults({ people, answers, rawMode, stats, stickerStats, meta },
+       : t('evidenceAll', { n: meta.judgedCount });
+   const cost = meta.cost === undefined ? '' : ` · $${meta.cost.toFixed(6)}`;
+   $('footnote').textContent = `${evidence} · ${meta.model} · ${meta.ms} ms${cost}`;
+-  $('share').onclick = () => openCard({ label, story, storyVars, animals,
++  $('share').onclick = () => openCard({ label, story, storyVars, animals, timeFact: timeline?.cardFact,
+     people: people.map((name) => ({ name, highlights: shareHighlights(stats?.get(name)) })),
+     records: records.map((entry) => ({ key: entry.key, name: entry.name, detail: recordDetail(entry) })) });
+   results.hidden = false;
+diff --git a/js/card.js b/js/card.js
+index d3e4344..0e5b1b1 100644
+--- a/js/card.js
++++ b/js/card.js
+@@ -19,6 +19,7 @@ function highlightLabel({ key, median, n }) {
+ export function cardPreviewLines(verdict, shownName) {
+   return [t(`connection.${verdict.label}`),
+     ...(verdict.story ? [t(`cardStory.${verdict.story}`, verdict.storyVars)] : []),
++    ...(verdict.timeFact ? [t('timeline.cardFact', verdict.timeFact)] : []),
+     ...verdict.people.map((person, i) => `${shownName(person.name)}` +
+       (verdict.animals?.[i] ? ` · ${t(`animals.${verdict.animals[i].key}.name`)} · ${t(`animals.${verdict.animals[i].key}.why`, verdict.animals[i])}` : '') +
+       (person.highlights?.length ? ` · ${person.highlights.map(highlightLabel).join(' · ')}` : ''))];
+@@ -84,6 +85,7 @@ function drawCard(canvas, verdict, shownName) {
+   });
+   ctx.fillStyle = '#867589'; ctx.fillRect(94, 1186, 892, 2);
+   paint(t('cardFooter'), 94, 1230, 23, '#e1d2e3', 880, 500);
++  if (verdict.timeFact) paint(t('timeline.cardFact', verdict.timeFact), 94, 1270, 23, '#e9f056', 880, 500);
+ }
+ export function openCard(verdict) {
+   const dialog = $('card-dialog');
+diff --git a/js/locales/de.js b/js/locales/de.js
+index 863c4e6..ba24921 100644
+--- a/js/locales/de.js
++++ b/js/locales/de.js
+@@ -9,6 +9,24 @@ export default {
+   "stageResult": "02 / Euer Vibe auf einen Blick",
+   "stageShare": "03 / Karte ansehen & teilen",
+   "duoTitle": "Euer Sticker-Duo",
++  "timeline": {
++    "title": "Euer Chat im Zeitverlauf ↗", "intro": "Wann war viel los, wann Funkstille? Gezählt wird lokal – keine Gefühlsmessung.",
++    "scope": "{n} aktive von {total} Kalendertagen im erkannten Chat.",
++    "daily": "Durchgezogen = erste Person (Kreise), gestrichelt = zweite Person (Quadrate). Pro Tag; Lücken bleiben bei null.",
++    "weekly": "Wochenblöcke ab dem ersten Chattag; der letzte Block kann kürzer sein. Durchgezogen = erste Person, gestrichelt = zweite.",
++    "trend": "Die zarte Linie zeigt nur den linearen Trend der gesamten Nachrichtenzahl pro Zeitraum, auch über Null-Tage hinweg; eine verkürzte letzte Woche zählt dafür nicht. Sie sagt nichts über eure Beziehung voraus.",
++    "noTrend": "Eine Trendlinie gibt es erst ab mindestens 7 aktiven und 14 erfassten Zeiträumen.",
++    "accessible": "Nachrichtenverlauf von {first} bis {last} für {firstName} und {secondName}; die Werte stehen in der Tabelle.",
++    "tableTitle": "Alle Werte als Tabelle", "period": "Beginn des Zeitraums", "methodTitle": "Wie berechnet?",
++    "method": "Tageswerte umfassen beide Personen und alle Null-Tage; ab 43 Tagen werden aufeinanderfolgende Siebentageblöcke gezeigt. Die gestrichelte Trendlinie ist eine lineare Regression der Summe je Zeitraum. Zusammenhänge sind explorativ: Spearman-Rangkorrelation nur über mindestens 10 aktive Tage mit je mindestens 5 aktiven Tagen pro Person und |r| ≥ 0,65; Textlänge nur über mindestens 16 Tage mit je 2 Nachrichten pro Person; der Mittelwert der zwei Personen-Mediane je Tag, verglichen werden die Median-Zeichenlängen der vier aktivsten und vier ruhigsten Tage bei mindestens 30 % und 8 Zeichen Unterschied. Keine Signifikanztests, keine Ursache-Wirkung-Aussage. Datum wird wie im Export geschrieben ausgewertet; keine Zeitzone wird ergänzt.",
++    "empty": { "unavailable": "Für dieses Format gibt es keinen überprüfbaren Tagesverlauf.", "missingDates": "Einige Zeitstempel fehlen oder sind mehrdeutig. Damit kein scheinbarer Verlauf entsteht, zeigen wir hier keine Kurve.", "tooLong": "Der Chat umfasst über fünf Jahre. Für eine ehrliche, gut lesbare Kurve ist dieser Ausschnitt zu lang." },
++    "noPatterns": "Noch kein klares Muster: Hier sind die Daten zu knapp oder zu uneindeutig für einen fairen Vergleich.",
++    "cardFact": "Aktiv an {activeDays} von {totalDays} Tagen im erkannten Chat",
++    "pattern": {
++      "together": { "same": "Gleichzeitig mehr los ✦", "opposite": "Unterschiedliche Aktivität ↗", "detail": "An {n} aktiven Tagen lagen die Nachrichtenanzahlen beider Personen im Rangvergleich bei r = {rho}. Das beschreibt ein gemeinsames Muster, keine Ursache." },
++      "length": { "longer": "Viel los, längere Texte ✦", "shorter": "Viel los, kürzere Texte ↗", "detail": "Mediane Textlänge an vier ruhigen Tagen: {low} Zeichen; an vier aktiven Tagen: {high} Zeichen (n = {n} vergleichbare Tage). Das ist ein Vergleich von Tagen, keine Wirkung." }
++    }
++  },
+   "statsTitle": "Zahlen statt Gedankenlesen",
+   "cardStory": { "warm": "Wärme {warmth}/3 · Hin und Her {reciprocity}/3 · n = {n}", "friction": "Spannung {tension}/3 · n = {n} Nachrichten", "clarify": "Verständlichkeit {clarity}/3 · n = {n} Nachrichten", "everyday": "Wärme {warmth}/3 · Hin und Her {reciprocity}/3 · n = {n}", "uncertain": "Sprechende oder Stichprobe nicht überprüfbar" },
+   "technicalTitle": "Technische Angaben zum Ausschnitt",
+diff --git a/js/locales/en.js b/js/locales/en.js
+index a4836b6..f471cf4 100644
+--- a/js/locales/en.js
++++ b/js/locales/en.js
+@@ -9,6 +9,24 @@ export default {
+   "stageResult": "02 / Your vibe at a glance",
+   "stageShare": "03 / Preview & share your card",
+   "duoTitle": "Your sticker duo",
++  "timeline": {
++    "title": "Your chat over time ↗", "intro": "When was it busy, when was it quiet? Counted locally, without measuring feelings.",
++    "scope": "{n} active out of {total} calendar days in the recognised chat.",
++    "daily": "Solid = first person (circles); dashed = second (squares). Daily counts include zero days.",
++    "weekly": "Seven-day blocks starting with the chat's first day; the last may be shorter. Solid = first person, dashed = second.",
++    "trend": "The faint line is a linear trend in combined message counts per period, including zeros; an incomplete final week is excluded. It predicts nothing about your relationship.",
++    "noTrend": "A trend line needs at least 7 active and 14 observed periods.",
++    "accessible": "Message activity from {first} to {last} for {firstName} and {secondName}; values are available in the table.",
++    "tableTitle": "All values as a table", "period": "Period start", "methodTitle": "How is this calculated?",
++    "method": "Daily counts include both people and all zero days. After 42 days, consecutive seven-day blocks are shown. The faint line is ordinary linear regression of the combined period counts. Patterns are exploratory: Spearman rank correlation needs 10 active days, at least 5 days active per person and |r| ≥ 0.65; length comparison needs 16 days with at least 2 messages per person; each daily value averages both personal medians, comparing median character counts of the four busiest and four quietest days with a minimum difference of 30% and 8 characters. No significance tests or causal claims. Dates use the written export fields; no time zone is inferred.",
++    "empty": { "unavailable": "This format has no verifiable daily timeline.", "missingDates": "Some timestamps are missing or ambiguous. We won't draw a misleading timeline.", "tooLong": "This chat spans over five years. That is too long for a readable timeline here." },
++    "noPatterns": "No clear pattern yet: too few or too mixed observations for a fair comparison.",
++    "cardFact": "Active on {activeDays} of {totalDays} days in the recognised chat",
++    "pattern": {
++      "together": { "same": "Busy at the same time ✦", "opposite": "Different activity rhythms ↗", "detail": "Across {n} active days, the rank correlation of both message counts was r = {rho}. This describes an association, not a cause." },
++      "length": { "longer": "Busier days, longer texts ✦", "shorter": "Busier days, shorter texts ↗", "detail": "Median text length on four quiet days: {low} characters; on four busy days: {high} characters (n = {n} comparable days). This compares days, not effects." }
++    }
++  },
+   "statsTitle": "Numbers, no mind-reading",
+   "cardStory": { "warm": "Warmth {warmth}/3 · back-and-forth {reciprocity}/3 · n = {n}", "friction": "Visible tension {tension}/3 · n = {n} messages", "clarify": "Clarity {clarity}/3 · n = {n} messages", "everyday": "Warmth {warmth}/3 · back-and-forth {reciprocity}/3 · n = {n}", "uncertain": "Speakers or sample cannot be verified" },
+   "technicalTitle": "Technical excerpt details",
+diff --git a/js/locales/es.js b/js/locales/es.js
+index 6bc073e..b16f1cb 100644
+--- a/js/locales/es.js
++++ b/js/locales/es.js
+@@ -9,6 +9,24 @@ export default {
+   "stageResult": "02 / Vuestro chat de un vistazo",
+   "stageShare": "03 / Ver y compartir la tarjeta",
+   "duoTitle": "Vuestro dúo de stickers",
++  "timeline": {
++    "title": "Vuestro chat a lo largo del tiempo ↗", "intro": "¿Cuándo hubo más mensajes? Cifras locales, sin medir sentimientos.",
++    "scope": "{n} días activos de {total} días del chat reconocido.",
++    "daily": "Línea continua = primera persona (círculos); discontinua = segunda (cuadrados). Los días sin mensajes cuentan cero.",
++    "weekly": "Bloques de siete días desde el primero; el último puede ser más corto. Continua = primera persona, discontinua = segunda.",
++    "trend": "La línea tenue muestra la tendencia lineal del total por período, incluidos los ceros; se excluye la última semana incompleta. No predice vuestra relación.",
++    "noTrend": "Se necesitan al menos 7 períodos activos y 14 observados para mostrar una tendencia.",
++    "accessible": "Mensajes del {first} al {last} de {firstName} y {secondName}; las cifras están en la tabla.",
++    "tableTitle": "Todos los valores en tabla", "period": "Inicio del período", "methodTitle": "¿Cómo se calcula?",
++    "method": "Se incluyen todos los días sin mensajes. Tras 42 días, se muestran bloques sucesivos de siete días. La línea tenue es una regresión lineal del total por período. Patrones exploratorios: correlación de rangos de Spearman sobre al menos 10 días activos, con 5 días activos por persona y |r| ≥ 0,65; longitud en al menos 16 días con 2 mensajes por persona; cada día equilibra las dos medianas, comparando la mediana de caracteres de los cuatro días más activos y los cuatro más tranquilos, con diferencia mínima del 30 % y 8 caracteres. No hay pruebas de significación ni afirmaciones causales. Las fechas conservan los campos del archivo sin suponer zona horaria.",
++    "empty": { "unavailable": "Este formato no ofrece una cronología diaria verificable.", "missingDates": "Faltan fechas o son ambiguas. No dibujamos una curva engañosa.", "tooLong": "Este chat abarca más de cinco años; demasiado para un gráfico legible aquí." },
++    "noPatterns": "Todavía no hay un patrón claro: faltan observaciones o son demasiado ambiguas.",
++    "cardFact": "Actividad en {activeDays} de {totalDays} días del chat reconocido",
++    "pattern": {
++      "together": { "same": "Activos a la vez ✦", "opposite": "Ritmos distintos ↗", "detail": "En {n} días activos, la correlación de rangos de los mensajes de ambos fue r = {rho}. Es una asociación, no una causa." },
++      "length": { "longer": "Días activos, textos largos ✦", "shorter": "Días activos, textos cortos ↗", "detail": "Longitud mediana en cuatro días tranquilos: {low} caracteres; en cuatro días activos: {high} caracteres (n = {n} días comparables). Comparación, no efecto." }
++    }
++  },
+   "statsTitle": "Cifras sin leer la mente",
+   "cardStory": { "warm": "Calidez {warmth}/3 · diálogo {reciprocity}/3 · n = {n}", "friction": "Tensión visible {tension}/3 · n = {n} mensajes", "clarify": "Claridad {clarity}/3 · n = {n} mensajes", "everyday": "Calidez {warmth}/3 · diálogo {reciprocity}/3 · n = {n}", "uncertain": "Hablantes o muestra sin verificar" },
+   "technicalTitle": "Detalles técnicos del fragmento",
+diff --git a/js/locales/fr.js b/js/locales/fr.js
+index ff90c13..346ad72 100644
+--- a/js/locales/fr.js
++++ b/js/locales/fr.js
+@@ -9,6 +9,24 @@ export default {
+   "stageResult": "02 / Votre échange en bref",
+   "stageShare": "03 / Voir et partager la carte",
+   "duoTitle": "Votre duo de stickers",
++  "timeline": {
++    "title": "Votre chat dans le temps ↗", "intro": "Quand les messages affluent-ils ? Comptage local, sans mesurer les sentiments.",
++    "scope": "{n} jours actifs sur {total} jours du chat reconnu.",
++    "daily": "Trait plein = première personne (ronds), pointillé = deuxième (carrés). Les jours sans message comptent zéro.",
++    "weekly": "Blocs de sept jours depuis le premier jour ; le dernier peut être plus court. Trait plein = première personne, pointillé = deuxième.",
++    "trend": "La ligne fine montre la tendance du total par période, zéros inclus ; la dernière semaine incomplète est exclue. Elle ne prédit pas votre relation.",
++    "noTrend": "Il faut au moins 7 périodes actives sur 14 pour tracer une tendance.",
++    "accessible": "Messages du {first} au {last} pour {firstName} et {secondName} ; les valeurs sont dans le tableau.",
++    "tableTitle": "Toutes les valeurs en tableau", "period": "Début de période", "methodTitle": "Comment est-ce calculé ?",
++    "method": "Les jours à zéro sont conservés. Après 42 jours, des blocs successifs de sept jours sont affichés. La ligne fine est une régression linéaire du total par période. Motifs exploratoires : corrélation de rang de Spearman sur au moins 10 jours actifs, dont 5 pour chaque personne, avec |r| ≥ 0,65 ; longueur sur au moins 16 jours de 2 messages par personne ; chaque jour équilibre les deux médianes, médiane des caractères des quatre jours les plus chargés et des quatre plus calmes, différence d'au moins 30 % et 8 caractères. Aucun test de significativité ni lien causal. Les dates reprennent les champs écrits dans l'export, sans supposer de fuseau horaire.",
++    "empty": { "unavailable": "Ce format ne fournit pas de calendrier quotidien vérifiable.", "missingDates": "Des dates manquent ou sont ambiguës. Aucune courbe trompeuse n'est affichée.", "tooLong": "Le chat couvre plus de cinq ans : trop long pour une courbe lisible ici." },
++    "noPatterns": "Pas de motif clair : les observations sont trop rares ou trop ambiguës pour comparer.",
++    "cardFact": "Actif {activeDays} jours sur {totalDays} dans le chat reconnu",
++    "pattern": {
++      "together": { "same": "Actifs ensemble ✦", "opposite": "Rythmes différents ↗", "detail": "Sur {n} jours actifs, les nombres de messages des deux personnes ont une corrélation de rang r = {rho}. Association, pas cause." },
++      "length": { "longer": "Jours chargés, textes plus longs ✦", "shorter": "Jours chargés, textes plus courts ↗", "detail": "Longueur médiane sur quatre jours calmes : {low} caractères ; sur quatre jours chargés : {high} caractères (n = {n} jours comparables). Comparaison, pas effet." }
++    }
++  },
+   "statsTitle": "Des chiffres, pas de lecture de pensées",
+   "cardStory": { "warm": "Chaleur {warmth}/3 · échange {reciprocity}/3 · n = {n}", "friction": "Tension visible {tension}/3 · n = {n} messages", "clarify": "Clarté {clarity}/3 · n = {n} messages", "everyday": "Chaleur {warmth}/3 · échange {reciprocity}/3 · n = {n}", "uncertain": "Personnes ou échantillon non vérifiables" },
+   "technicalTitle": "Détails techniques de l'extrait",
+diff --git a/js/timeline-view.js b/js/timeline-view.js
+new file mode 100644
+index 0000000..e964038
+--- /dev/null
++++ b/js/timeline-view.js
+@@ -0,0 +1,99 @@
++import { t } from './i18n.js';
++
++const ns = 'http://www.w3.org/2000/svg';
++const svgEl = (tag, attributes = {}) => {
++  const element = document.createElementNS(ns, tag);
++  for (const [key, value] of Object.entries(attributes)) element.setAttribute(key, String(value));
++  return element;
++};
++const make = (tag, className, content) => {
++  const node = document.createElement(tag);
++  node.className = className;
++  if (content !== undefined) node.textContent = content;
++  return node;
++};
++const labelDate = (at) => new Date(at).toISOString().slice(0, 10);
++const COLORS = ['#e9f056', '#d7efff'];
++const text = (x, y, value, extra = {}) => {
++  const node = svgEl('text', { x, y, fill: '#e6d6e0', 'font-size': 12, ...extra });
++  node.textContent = String(value);
++  return node;
++};
++
++export function renderTimeline(root, timeline, shownNames) {
++  root.replaceChildren();
++  if (!timeline?.points) {
++    root.append(make('p', 'timeline-empty', t(`timeline.empty.${timeline?.reason ?? 'unavailable'}`)));
++    return;
++  }
++  const { points, trend, weekly, finds } = timeline;
++  const legend = make('div', 'timeline-legend');
++  timeline.people.forEach((name, i) => {
++    const line = make('span', `timeline-key key-${i}`);
++    line.append(make('span', 'key-symbol'), make('strong', '', shownNames?.[i] ?? name));
++    legend.append(line);
++  });
++  root.append(make('p', 'timeline-scope', t('timeline.scope', { n: timeline.activeDays, total: timeline.totalDays })), legend);
++  const chart = svgEl('svg', { viewBox: '0 0 700 300', role: 'img', 'aria-label': t('timeline.accessible', {
++    first: labelDate(points[0].at), last: labelDate(points.at(-1).at),
++    firstName: shownNames?.[0] ?? timeline.people[0], secondName: shownNames?.[1] ?? timeline.people[1],
++  }) });
++  const x = (i) => 54 + i * 620 / Math.max(1, points.length - 1);
++  const max = Math.max(1, ...points.flatMap(({ counts }) => counts), ...(trend ? [trend.start, trend.end] : []));
++  const ceiling = Math.ceil(max);
++  const y = (value) => 244 - Math.max(0, value) / ceiling * 200;
++  for (const tick of [0, 0.5, 1]) {
++    const height = y(ceiling * tick);
++    chart.append(svgEl('line', { x1: 54, x2: 674, y1: height, y2: height, stroke: '#78586d' }),
++      text(46, height + 4, Math.round(ceiling * tick), { 'text-anchor': 'end' }));
++  }
++  for (const i of [...new Set([0, Math.floor((points.length - 1) / 2), points.length - 1])])
++    chart.append(text(x(i), 277, labelDate(points[i].at), { 'text-anchor': i === 0 ? 'start' : i === points.length - 1 ? 'end' : 'middle' }));
++  for (const p of [0, 1]) {
++    const coords = points.map((row, i) => `${x(i)},${y(row.counts[p])}`).join(' ');
++    chart.append(svgEl('polyline', { points: coords, fill: 'none', stroke: COLORS[p], 'stroke-width': p ? 3 : 4,
++      'stroke-dasharray': p ? '8 5' : 'none', 'stroke-linejoin': 'round' }));
++    if (points.length <= 42) points.forEach((row, i) => chart.append(p
++      ? svgEl('rect', { x: x(i) - 3.5, y: y(row.counts[p]) - 3.5, width: 7, height: 7, fill: COLORS[p] })
++      : svgEl('circle', { cx: x(i), cy: y(row.counts[p]), r: 3.6, fill: COLORS[p] })));
++  }
++  if (trend) chart.append(svgEl('line', { x1: x(0), y1: y(trend.start), x2: x(trend.periods - 1), y2: y(trend.end),
++    stroke: '#ffb9a3', 'stroke-width': 2, 'stroke-dasharray': '3 7' }));
++  root.append(chart, make('p', 'timeline-caption', t(weekly ? 'timeline.weekly' : 'timeline.daily')));
++  root.append(make('p', 'timeline-caption', t(trend ? 'timeline.trend' : 'timeline.noTrend')));
++  const details = make('details', 'timeline-table');
++  details.append(make('summary', '', t('timeline.tableTitle')));
++  const table = make('table', '');
++  const head = document.createElement('thead');
++  const trHead = document.createElement('tr');
++  for (const value of [t('timeline.period'), ...(shownNames ?? timeline.people)]) trHead.append(make('th', '', value));
++  head.append(trHead); table.append(head);
++  const body = document.createElement('tbody');
++  for (const row of points) {
++    const tr = document.createElement('tr');
++    for (const value of [labelDate(row.at), ...row.counts]) tr.append(make('td', '', value));
++    body.append(tr);
++  }
++  table.append(body); details.append(table); root.append(details);
++  const cards = make('div', 'pattern-cards');
++  if (!finds.length) cards.append(make('p', 'timeline-empty', t('timeline.noPatterns')));
++  for (const find of finds.slice(0, 2)) {
++    const item = make('article', 'pattern-card');
++    item.append(make('h4', '', t(`timeline.pattern.${find.key}.${find.direction}`)));
++    item.append(make('p', '', t(`timeline.pattern.${find.key}.detail`, find)));
++    const bar = make('div', 'pattern-mini');
++    if (find.key === 'length') {
++      for (const v of [find.low, find.high]) {
++        const col = make('span', 'pattern-bar');
++        col.style.height = `${Math.max(8, v / Math.max(find.low, find.high) * 100)}%`;
++        bar.append(col);
++      }
++    } else {
++      const col = make('span', 'pattern-gauge');
++      col.style.width = `${Math.round(Math.abs(find.rho) * 100)}%`;
++      bar.append(col);
++    }
++    item.append(bar); cards.append(item);
++  }
++  root.append(cards);
++}
+diff --git a/js/timeline.js b/js/timeline.js
+new file mode 100644
+index 0000000..0bcf964
+--- /dev/null
++++ b/js/timeline.js
+@@ -0,0 +1,87 @@
++const DAY = 86_400_000;
++const MAX_DAYS = 1827;
++const safeDate = (at) => typeof at === 'number' && Number.isSafeInteger(at) && Number.isFinite(new Date(at).getTime());
++const dayOf = (at) => Math.floor(at / DAY) * DAY;
++const median = (values) => {
++  const sorted = [...values].sort((a, b) => a - b);
++  return sorted.length % 2 ? sorted[(sorted.length - 1) / 2] : (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2;
++};
++const ranks = (values) => {
++  const sorted = values.map((value, i) => [value, i]).sort((a, b) => a[0] - b[0]);
++  const output = Array(values.length);
++  for (let i = 0; i < sorted.length;) {
++    let j = i + 1;
++    while (j < sorted.length && sorted[j][0] === sorted[i][0]) j++;
++    for (let k = i; k < j; k++) output[sorted[k][1]] = (i + j - 1) / 2;
++    i = j;
++  }
++  return output;
++};
++function spearman(x, y) {
++  const a = ranks(x), b = ranks(y);
++  const av = a.reduce((sum, value) => sum + value, 0) / a.length;
++  const bv = b.reduce((sum, value) => sum + value, 0) / b.length;
++  const numerator = a.reduce((sum, value, i) => sum + (value - av) * (b[i] - bv), 0);
++  const aa = a.reduce((sum, value) => sum + (value - av) ** 2, 0);
++  const bb = b.reduce((sum, value) => sum + (value - bv) ** 2, 0);
++  return aa && bb ? numerator / Math.sqrt(aa * bb) : null;
++}
++
++// OLS line through equally spaced calendar periods, including zero periods.
++function trendOf(points) {
++  if (points.filter((point) => point.total > 0).length < 7 || points.length < 14) return null;
++  const mean = points.reduce((sum, item) => sum + item.total, 0) / points.length;
++  const center = (points.length - 1) / 2;
++  const denominator = points.reduce((sum, _, i) => sum + (i - center) ** 2, 0);
++  const slope = points.reduce((sum, item, i) => sum + (i - center) * (item.total - mean), 0) / denominator;
++  return { start: mean - slope * center, end: mean + slope * center, slope, periods: points.length };
++}
++
++/** No time zone conversion: UTC fields reflect the wall-clock fields kept by stamps.js. */
++export function timelineOf(messages, people) {
++  if (!Array.isArray(messages) || people?.length !== 2 || !messages.length ||
++      messages.some(({ author }) => !people.includes(author))) return { reason: 'unavailable' };
++  const valid = messages.filter(({ at }) => safeDate(at));
++  if (valid.length !== messages.length) return { reason: 'missingDates' };
++  const first = valid.reduce((min, { at }) => Math.min(min, dayOf(at)), Infinity);
++  const last = valid.reduce((max, { at }) => Math.max(max, dayOf(at)), -Infinity);
++  const days = Math.round((last - first) / DAY) + 1;
++  if (days > MAX_DAYS) return { reason: 'tooLong' };
++  const byDay = new Map();
++  for (let at = first; at <= last; at += DAY) byDay.set(at, { at, counts: [0, 0], lengths: [[], []] });
++  for (const { author, text, at } of valid) {
++    const row = byDay.get(dayOf(at));
++    const person = people.indexOf(author);
++    row.counts[person]++;
++    row.lengths[person].push(Array.from(text).length);
++  }
++  const daily = [...byDay.values()].map((row) => ({ ...row, total: row.counts[0] + row.counts[1] }));
++  const weekly = days > 42;
++  const points = weekly ? Array.from({ length: Math.ceil(days / 7) }, (_, i) => {
++    const rows = daily.slice(i * 7, i * 7 + 7);
++    return { at: rows[0].at, counts: [0, 1].map((p) => rows.reduce((sum, row) => sum + row.counts[p], 0)),
++      total: rows.reduce((sum, row) => sum + row.total, 0), days: rows.length };
++  }) : daily.map(({ at, counts, total }) => ({ at, counts, total, days: 1 }));
++  const finds = [];
++  const active = daily.filter((row) => row.total > 0);
++  if (active.length >= 10 && [0, 1].every((i) => active.filter((row) => row.counts[i] > 0).length >= 5)) {
++    const rho = spearman(active.map((row) => row.counts[0]), active.map((row) => row.counts[1]));
++    if (rho !== null && Math.abs(rho) >= 0.65) finds.push({ key: 'together', direction: rho > 0 ? 'same' : 'opposite', rho: Math.round(rho * 100) / 100, n: active.length });
++  }
++  // Equal weight per person avoids a change in writer mix looking like a
++  // change in text length. Each participant must supply two messages that day.
++  const lengths = active.filter((row) => row.counts.every((count) => count >= 2))
++    .map((row) => ({ total: row.total, chars: (median(row.lengths[0]) + median(row.lengths[1])) / 2 }))
++    .sort((a, b) => a.total - b.total);
++  if (lengths.length >= 16 && lengths[3].total < lengths.at(-4).total) {
++    const low = median(lengths.slice(0, 4).map((row) => row.chars));
++    const high = median(lengths.slice(-4).map((row) => row.chars));
++    if (Math.abs(high - low) >= 8 && Math.max(high, low) / Math.max(1, Math.min(high, low)) >= 1.3) {
++      finds.push({ key: 'length', direction: high > low ? 'longer' : 'shorter', low, high, n: lengths.length, perGroup: 4 });
++    }
++  }
++  return { people: [...people], daily, points, weekly,
++    trend: trendOf(weekly && points.at(-1).days < 7 ? points.slice(0, -1) : points), finds,
++    activeDays: active.length, totalDays: days,
++    cardFact: days >= 7 && active.length >= 3 ? { activeDays: active.length, totalDays: days } : null };
++}
+diff --git a/test/card.test.js b/test/card.test.js
+index 5f1134a..167d501 100644
+--- a/test/card.test.js
++++ b/test/card.test.js
+@@ -45,3 +45,14 @@ test('duo preview updates edited names and includes the score rule and each stic
+   assert.match(lines[2], /Neuer Name/);
+   assert.doesNotMatch(lines.join(' '), /151|private chat|Very Long/);
+ });
++
++test('share preview uses exactly one local calendar fact and never a raw timestamp', () => {
++  const verdict = { label: 'mixed', story: 'everyday', storyVars: { n: 18, warmth: 1, reciprocity: 1 },
++    timeFact: { activeDays: 8, totalDays: 14 },
++    people: [{ name: 'Mara', highlights: [] }, { name: 'Leo', highlights: [] }],
++    transcript: '[01.09.2026] private chat' };
++  const lines = cardPreviewLines(verdict, (name) => name);
++  assert.equal(lines.length, 5);
++  assert.match(lines[2], /8.*14/);
++  assert.doesNotMatch(lines.join(' '), /01\.09|private chat/);
++});
+diff --git a/test/timeline.test.js b/test/timeline.test.js
+new file mode 100644
+index 0000000..9e7b2fe
+--- /dev/null
++++ b/test/timeline.test.js
+@@ -0,0 +1,107 @@
++import { test } from 'node:test';
++import assert from 'node:assert/strict';
++import { timelineOf } from '../js/timeline.js';
++import { readStamps } from '../js/stamps.js';
++import { parseChat } from '../js/parse.js';
++import { SAMPLE_CHAT } from '../js/sample.js';
++import en from '../js/locales/en.js';
++import de from '../js/locales/de.js';
++import fr from '../js/locales/fr.js';
++import es from '../js/locales/es.js';
++const DAY = 86_400_000;
++const start = Date.UTC(2026, 8, 1);
++const people = ['Mara', 'Leo'];
++const message = (d, author, text = 'hey', time = 0) => ({ author, text, at: d === null ? null : start + d * DAY + time });
++
++test('daily line includes zero days and stays on export calendar fields', () => {
++  const result = timelineOf([message(0, 'Mara'), message(2, 'Leo'), message(2, 'Mara')], people);
++  assert.equal(result.weekly, false);
++  assert.deepEqual(result.points.map(({ counts }) => counts), [[1, 0], [0, 0], [1, 1]]);
++  assert.equal(result.activeDays, 2);
++  assert.equal(result.totalDays, 3);
++  assert.equal(result.trend, null);
++  assert.equal(result.cardFact, null);
++  assert.deepEqual(result.finds, []);
++});
++
++test('missing or ambiguous stamps produce no invented timeline', () => {
++  assert.equal(timelineOf([message(0, 'Mara'), message(null, 'Leo')], people).reason, 'missingDates');
++  const [unknown] = readStamps(['03/04/26, 11:20']);
++  assert.equal(unknown, null);
++  assert.equal(timelineOf([message(0, 'Mara'), { author: 'Leo', text: 'Hi', at: unknown }], people).reason, 'missingDates');
++  assert.equal(timelineOf([], people).reason, 'unavailable');
++});
++
++test('longer chats group consecutive seven-day blocks, including empty weeks', () => {
++  const result = timelineOf([message(0, 'Mara'), message(47, 'Leo')], people);
++  assert.equal(result.weekly, true);
++  assert.equal(result.points.length, 7);
++  assert.deepEqual(result.points.map(({ total }) => total), [1, 0, 0, 0, 0, 0, 1]);
++  assert.equal(result.points.at(-1).days, 6);
++  assert.equal(result.trend, null);
++  assert.deepEqual(result.cardFact, null);
++});
++
++test('a regression requires activity across enough actual periods; zeros affect its slope', () => {
++  const many = [];
++  for (let d = 0; d < 14; d += 2) many.push(message(d, d % 4 ? 'Mara' : 'Leo'));
++  const full = timelineOf(many, people);
++  assert.equal(full.points.length, 13);
++  assert.equal(full.trend, null);
++  many.push(message(13, 'Mara'));
++  const result = timelineOf(many, people);
++  assert.equal(result.points.length, 14);
++  assert.ok(result.trend);
++  assert.equal(result.cardFact.activeDays, 8);
++  assert.equal(result.cardFact.totalDays, 14);
++});
++
++test('an incomplete last week does not drag a weekly regression line', () => {
++  const messages = Array.from({ length: 14 }, (_, i) => message(i * 7, i % 2 ? 'Leo' : 'Mara'));
++  messages.push(...Array.from({ length: 30 }, () => message(98, 'Leo')));
++  const chart = timelineOf(messages, people);
++  assert.equal(chart.points.length, 15);
++  assert.equal(chart.trend.periods, 14);
++  assert.equal(chart.trend.slope, 0);
++});
++
++test('no correlation claim from very few days, constant counts, or a lone outlier', () => {
++  const constant = Array.from({ length: 20 }, (_, d) => [message(d, 'Mara'), message(d, 'Leo')]).flat();
++  assert.deepEqual(timelineOf(constant, people).finds, []);
++  const loneOutlier = [...constant, ...Array.from({ length: 50 }, () => message(19, 'Mara'))];
++  assert.deepEqual(timelineOf(loneOutlier, people).finds, []);
++  assert.deepEqual(timelineOf(parseChat(SAMPLE_CHAT), people).finds, []);
++});
++
++test('rank pattern uses active days; length pattern compares days, not individual messages', () => {
++  const co = [];
++  for (let d = 0; d < 12; d++) for (const author of people)
++    for (let k = 0; k <= d; k++) co.push(message(d, author));
++  const find = timelineOf(co, people).finds;
++  assert.equal(find.length, 1);
++  assert.deepEqual(find[0], { key: 'together', direction: 'same', rho: 1, n: 12 });
++  const lengths = [];
++  for (let d = 0; d < 16; d++) for (let k = 0; k < 4 + d; k++)
++    lengths.push(message(d, people[k % 2], 'x'.repeat(d < 8 ? 10 : 30)));
++  const lengthFind = timelineOf(lengths, people).finds.find(({ key }) => key === 'length');
++  assert.ok(lengthFind);
++  assert.equal(lengthFind.n, 16);
++  assert.equal(lengthFind.low, 10);
++  assert.equal(lengthFind.high, 30);
++  const skewed = [];
++  for (let d = 0; d < 20; d++) {
++    for (let i = 0; i < (d < 10 ? 2 : 12); i++) skewed.push(message(d, 'Mara', 'short'));
++    for (let i = 0; i < (d < 10 ? 12 : 2); i++) skewed.push(message(d, 'Leo', 'x'.repeat(80)));
++  }
++  assert.ok(!timelineOf(skewed, people).finds.some(({ key }) => key === 'length'),
++    'a changing writer mix with constant per-person length must not imply longer texts');
++});
++
++test('overly long calendar spans are explicit; locale text has corresponding fields', () => {
++  assert.equal(timelineOf([message(0, 'Mara'), message(1900, 'Leo')], people).reason, 'tooLong');
++  for (const locale of [de, en, fr, es]) {
++    assert.ok(locale.timeline.empty.missingDates && locale.timeline.noPatterns && locale.timeline.method);
++    assert.ok(locale.timeline.accessible.includes('{firstName}'));
++    assert.ok(locale.timeline.cardFact.includes('{activeDays}') && locale.timeline.cardFact.includes('{totalDays}'));
++  }
++});

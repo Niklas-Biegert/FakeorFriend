@@ -26,7 +26,7 @@ test('unrecognised transcripts send the raw excerpt with names, including raw da
 });
 
 test('delete personal key removes only its browser storage entry', async () => {
-  const values = new Map([['judgeyou.language', 'de']]);
+  const values = new Map([['fakeorfriend.language', 'de'], ['judgeyou.openrouterKey', 'sk-or-old-project']]);
   globalThis.localStorage = {
     getItem: (key) => values.get(key) ?? null,
     setItem: (key, value) => values.set(key, value),
@@ -35,8 +35,9 @@ test('delete personal key removes only its browser storage entry', async () => {
   rememberApiKey('sk-or-personal');
   assert.equal(await findApiKey(), 'sk-or-personal');
   forgetApiKey();
-  assert.equal(values.has('judgeyou.openrouterKey'), false);
-  assert.equal(values.get('judgeyou.language'), 'de');
+  assert.equal(values.has('fakeorfriend.openrouterKey'), false);
+  assert.equal(values.get('judgeyou.openrouterKey'), 'sk-or-old-project');
+  assert.equal(values.get('fakeorfriend.language'), 'de');
 });
 
 test('the raw disclosure and personal key deletion are visible around the judge action', async () => {

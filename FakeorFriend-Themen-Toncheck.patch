@@ -1,0 +1,599 @@
+diff --git a/README.md b/README.md
+--- a/README.md
++++ b/README.md
+@@ -78,6 +78,39 @@
+ image both derive from the same card data; the image never incorporates
+ personal readings, chat quotes or message text.
+ 
++### What stands out: recurring written cues
++
++`js/highlights.js` examines **only recognised `{from,text}` messages in the
++single submitted Jev excerpt**, locally. It returns category identifiers,
++message counts and the total checked; it returns no chat text, quotes,
++match lists, sender names or dates. Raw transcripts cannot verify their
++speakers and therefore receive no topic or tone counts. Multiple topics can
++match one message. Five small language-independent word/emoji dictionaries
++cover planning, daily life, help/thanks, laughter and clarifying/apologising.
++For a recurring topic to appear, the excerpt needs 12 messages; at least three
++different messages must match, both people must write at least one of those,
++and the first and last matches must be at least four messages apart. The
++three most frequent eligible topic cues appear. A phrase in one message is
++never described as a recurring topic.
++
++The local **tone phrase counts** cover only messages containing a defined
++thank-you phrase, a narrow direct-address insult phrase, or a mild compliment
++phrase in German, English, French or Spanish. Repeating a word in the same
++message counts once. For example, "blöd gelaufen" is not the same literal
++pattern as "du bist blöd"; the latter can still be a joke or quotation. Thus
++even a matched insult is a **written cue, never proof of hostility**. Cute
++compliments may sound flirty but do not establish attraction or intent.
++Teasing, sarcasm, coercion, explicit sexual content and a "toxic message"
++count have no reliable rule here and receive no invented total. Zero matches
++does not mean zero kindness, discomfort or risk. The separate four Jev scores
++are broad pair-level judgments over the entire excerpt, never per-message
++counts. No new Jev questions, state fields, API calls, tokens or provider cost
++are added. One existing conversation idea may pick up recurring planning or
++clarifying words, while visible tension and low clarity retain priority.
++No new cue data enters the share card or logs. The approach deliberately
++misses indirect language and unfamiliar dialects; it is neither a validated
++topic classifier nor a psychological assessment.
++
+ The mobile-first interface presents three stages: choose a chat, explore the
+ excerpt, then preview a share card. Its dark plum surfaces, pale blue panels
+ and lime actions use text labels alongside color. Each of the four ordinal
+@@ -237,6 +270,7 @@
+ - `js/verdict.js`: excerpt label rule.
+ - `js/vibes.js`: map position, factual count shares and conversation idea.
+ - `js/animals.js`: local sticker selection and bounded story from existing scores.
++- `js/reading.js`, `js/highlights.js`: excerpt-specific personal readings and narrow local written-cue counts.
+ - `js/timeline.js`, `js/timeline-view.js`: local date buckets, cautious comparisons and accessible chart.
+ - `js/app.js`: input and result flow.
+ - `js/card.js`: the single image preview, download and Web Share flow.
+diff --git a/css/style.css b/css/style.css
+--- a/css/style.css
++++ b/css/style.css
+@@ -1311,3 +1311,19 @@
+   .intake-bar .primary:active:not(:disabled) { transform: none; }
+   *, *::before, *::after { scroll-behavior: auto !important; }
+ }
++
++/* Recurring, narrowly counted written cues, separated from the Jev scores. */
++.cues-section { margin-top: clamp(2rem, 5vw, 3rem); border-top: 1px solid var(--rule); padding-top: clamp(1.5rem, 3vw, 2rem); }
++.cues-section > h3 { margin: 0; font: 750 clamp(1.7rem, 3.5vw, 2.5rem)/1.12 var(--font-display); }
++.cues-intro, .cue-limit { max-width: 70ch; line-height: 1.55; color: var(--ink-soft); }
++.cues-section > h4 { font: 700 1.15rem/1.25 var(--font-body); margin: 1.7rem 0 .8rem; }
++.cue-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: .8rem; }
++.cue-card { min-width: 0; padding: 1rem 1.1rem; border: 1px solid var(--rule); border-radius: 1rem; background: #ffffff0c; }
++.cue-card h4 { margin: 0 0 .5rem; color: var(--accent-blue); font: 750 1.15rem/1.2 var(--font-display); }
++.cue-card p { margin: 0; color: var(--ink-soft); line-height: 1.55; overflow-wrap: anywhere; }
++.cue-overview { padding: .9rem 1rem; border-left: 3px solid var(--accent); border-radius: .4rem; background: #e9f05612; line-height: 1.55; }
++.cue-empty { margin: .5rem 0; padding: 1rem; border: 1px dashed var(--rule); border-radius: .8rem; color: var(--ink-soft); }
++.cue-limit { font-size: .88rem; }
++.cue-method { border-top: 1px solid var(--rule); padding-top: .8rem; color: var(--ink-soft); font-size: .86rem; }
++.cue-method summary { cursor: pointer; color: var(--accent-blue); font-weight: 700; }
++.cue-method p { max-width: 76ch; line-height: 1.6; }
+diff --git a/index.html b/index.html
+--- a/index.html
++++ b/index.html
+@@ -105,6 +105,20 @@
+             <div class="reading-intro"><p class="step-label" data-i18n="reading.eyebrow"></p><h3 id="reading-title" data-i18n="reading.title"></h3><p data-i18n="reading.subtitle"></p></div>
+             <div id="person-readings" class="person-readings"></div>
+           </section>
++          <section class="cues-section" aria-labelledby="cues-title">
++            <p class="step-label" data-i18n="cues.eyebrow"></p>
++            <h3 id="cues-title" data-i18n="cues.title"></h3>
++            <p class="cues-intro" data-i18n="cues.intro"></p>
++            <h4 data-i18n="cues.topicsTitle"></h4>
++            <div id="topic-cards" class="cue-grid"></div>
++            <p id="topic-empty" class="cue-empty"></p>
++            <h4 data-i18n="cues.toneTitle"></h4>
++            <p id="tone-overview" class="cue-overview" hidden></p>
++            <div id="tone-cards" class="cue-grid"></div>
++            <p id="tone-empty" class="cue-empty"></p>
++            <p class="cue-limit" data-i18n="cues.limits"></p>
++            <details class="cue-method"><summary data-i18n="cues.methodTitle"></summary><p data-i18n="cues.method"></p></details>
++          </section>
+           <h3 class="scales-heading" data-i18n="reading.scalesTitle"></h3>
+           <div id="connection-scales" class="measures"></div>
+         </article>
+diff --git a/js/app.js b/js/app.js
+--- a/js/app.js
++++ b/js/app.js
+@@ -14,6 +14,7 @@
+ import { timelineOf } from './timeline.js';
+ import { renderTimeline } from './timeline-view.js';
+ import { duoDetail, personReadings } from './reading.js';
++import { highlightCues } from './highlights.js';
+ 
+ const MIN_LAB_MS = 1800;
+ const $ = (id) => document.getElementById(id);
+@@ -116,6 +117,7 @@
+         rawMode,
+         stats: rawMode ? null : chatStats(evidence),
+         stickerStats: rawMode ? null : chatStats(evidence.slice(-request.judgedCount)),
++        cues: highlightCues(rawMode ? null : request.body.state.messages, people, { raw: rawMode }),
+         timeline: rawMode ? null : timelineOf(evidence, people),
+         meta: { judgedCount: request.judgedCount, totalCount: rawMode ? null : evidence.length,
+           truncated: request.truncated, ms: Math.round(performance.now() - started), model: response.model, cost: response.usage?.cost },
+@@ -184,7 +186,7 @@
+   );
+   return box;
+ }
+-function renderResults({ people, answers, rawMode, stats, stickerStats, timeline, meta }, { scroll = true } = {}) {
++function renderResults({ people, answers, rawMode, stats, stickerStats, timeline, cues, meta }, { scroll = true } = {}) {
+   const label = interactionLabel(answers, { raw: rawMode });
+   const story = duoStory(answers, { raw: rawMode, n: meta.judgedCount });
+   const animals = animalDuo(stickerStats, people, { raw: rawMode || story === 'uncertain' });
+@@ -210,6 +212,25 @@
+     article.append(name, heading, body);
+     return article;
+   }));
++  const cueCard = (section, item) => {
++    const card = document.createElement('article'); card.className = 'cue-card';
++    const heading = document.createElement('h4'); heading.textContent = t(`cues.${section}.${item.key}.title`);
++    const body = document.createElement('p');
++    body.textContent = t(`cues.${section}.${item.key}.detail`, { n: formatNumber(item.n), total: formatNumber(cues.checked) });
++    card.append(heading, body); return card;
++  };
++  $('topic-cards').replaceChildren(...cues.topics.map((item) => cueCard('topics', item)));
++  $('topic-empty').hidden = cues.topics.length > 0;
++  $('topic-empty').textContent = t(cues.checked === null ? 'cues.raw' : 'cues.noTopics');
++  $('tone-cards').replaceChildren(...cues.tone.map((item) => cueCard('tone', item)));
++  $('tone-empty').hidden = cues.tone.length > 0;
++  $('tone-empty').textContent = t(cues.checked === null ? 'cues.raw' : 'cues.noTone');
++  const showCoarse = cues.checked !== null && meta.judgedCount >= 6;
++  $('tone-overview').hidden = !showCoarse;
++  if (showCoarse) $('tone-overview').textContent = t('cues.coarse', {
++    warmth: formatNumber(answers.warmth.score), tension: formatNumber(answers.tension.score),
++    n: formatNumber(meta.judgedCount),
++  });
+   $('animal-duo').replaceChildren(...people.map((name, i) => {
+     const sticker = animals[i];
+     const box = document.createElement('div'); box.className = 'animal-sticker';
+@@ -260,7 +281,7 @@
+     return row;
+   }));
+   renderTimeline($('timeline-content'), timeline, people);
+-  $('conversation-idea').textContent = t(`ideas.${conversationIdea(answers, rawMode)}`);
++  $('conversation-idea').textContent = t(`ideas.${conversationIdea(answers, rawMode, cues.topics.map(({ key }) => key))}`);
+   const records = stats ? recordsOf(stats, people) : [];
+   $('records').replaceChildren(...records.map(record));
+   $('records').hidden = !records.length;
+diff --git a/js/highlights.js b/js/highlights.js
+new file mode 100644
+--- /dev/null
++++ b/js/highlights.js
+@@ -0,0 +1,42 @@
++// Tiny, intentionally narrow dictionaries. A match is evidence of a written
++// cue, not a semantic classification of the message or its author. No quote,
++// snippet, matched word or message is returned to the UI or share card.
++const word = (alternatives) => new RegExp(`(?:^|[^\\p{L}])(?:${alternatives})(?!\\p{L})`, 'iu');
++const TOPICS = [
++  { key: 'plans', signal: word('zusammen|samstag|morgen|mitbringen|einkaufen|treffen|\\d{1,2}\\s*uhr|weekend|tomorrow|together|bring|meet|shopping|demain|ensemble|samedi|apporter|quedar|mañana|juntos|sábado|llevar') },
++  { key: 'support', signal: word('danke|geholfen|helfen|kein\\s+druck|kein\\s+stress|alles\\s+gut|freut\\s+mich|thanks|thank\\s+you|help|no\\s+pressure|proud\\s+of\\s+you|merci|aider|pas\\s+de\\s+pression|gracias|ayuda|sin\\s+presión') },
++  { key: 'clarify', signal: word('verwirrt|missverstanden|ich\\s+meinte|sorry|entschuldigung|nachfragen|wie\\s+meinst\\s+du|confused|i\\s+meant|sorry|what\\s+did\\s+you\\s+mean|désolé|pardon|je\\s+voulais\\s+dire|perdón|lo\\s+siento|quise\\s+decir') },
++  { key: 'daily', signal: word('referat|training|lernen|schule|arbeit|prüfung|homework|school|work|class|practice|exam|cours|travail|examen|école|escuela|trabajo|clase|examen') },
++  { key: 'humor', signal: /(?:^|[^\p{L}])(?:haha+|hehe+|lol|witzig|lustig|joking|funny|drôle|blague|broma|😂|😄|🤣)(?!\p{L})/iu },
++];
++
++// The three numeric tone labels are literal cue counts only. For example,
++// "blöd gelaufen" does not match a direct insult. Irony, friendly teasing,
++// coercion and actual intentions have no safe deterministic count.
++const TONE = [
++  { key: 'thanks', signal: word('danke|dankeschön|thanks|thank\\s+you|merci|gracias') },
++  { key: 'directInsult', signal: /(?:^|[^\p{L}])(?:du bist (?:echt |so )?(?:ein(?:e)? )?(?:idiot(?:in)?|dumm|blöd)|you(?: are|'re) (?:such an? |so )?(?:idiot|stupid)|tu es (?:un |une )?(?:idiot(?:e)?|stupide)|eres (?:un |una )?(?:idiota|estúpido|estúpida))(?!\p{L})/iu },
++  { key: 'compliment', signal: word('du\\s+bist\\s+süß|du\\s+bist\\s+super|you\\s+are\\s+cute|you.re\\s+cute|tu\\s+es\\s+mignon(?:ne)?|tu\\s+es\\s+adorable|eres\\s+adorable|eres\\s+muy\\s+lindo|eres\\s+muy\\s+linda') },
++];
++
++export const TOPIC_KEYS = Object.freeze(TOPICS.map(({ key }) => key));
++export const TONE_KEYS = Object.freeze(TONE.map(({ key }) => key));
++
++/** Only the already submitted, recognised `{from,text}` messages are scanned. */
++export function highlightCues(messages, people, { raw = false } = {}) {
++  if (raw || !Array.isArray(messages) || people.length !== 2 || new Set(people).size !== 2 ||
++      !messages.every((message) => people.includes(message.from) && typeof message.text === 'string')) {
++    return { topics: [], tone: [], checked: null };
++  }
++  const topics = TOPICS.map(({ key, signal }) => {
++    const matches = messages.flatMap((message, index) => signal.test(message.text) ? [{ index, from: message.from }] : []);
++    return { key, n: matches.length, spread: matches.at(-1)?.index - matches[0]?.index,
++      speakers: new Set(matches.map(({ from }) => from)).size };
++  }).filter(({ n, spread, speakers }) => messages.length >= 12 && n >= 3 && spread >= 4 && speakers === 2)
++    .sort((a, b) => b.n - a.n || TOPIC_KEYS.indexOf(a.key) - TOPIC_KEYS.indexOf(b.key))
++    .slice(0, 3).map(({ key, n }) => ({ key, n }));
++  const tone = TONE.map(({ key, signal }) => ({ key,
++    n: messages.filter(({ text }) => signal.test(text)).length,
++  })).filter(({ n }) => n > 0);
++  return { topics, tone, checked: messages.length };
++}
+diff --git a/js/locales/de.js b/js/locales/de.js
+--- a/js/locales/de.js
++++ b/js/locales/de.js
+@@ -51,6 +51,56 @@
+     "pattern": {
+       "together": { "same": "Gleichzeitig mehr los ✦", "opposite": "Unterschiedliche Aktivität ↗", "detail": "An {n} aktiven Tagen lagen die Nachrichtenanzahlen beider Personen im Rangvergleich bei r = {rho}. Das beschreibt ein gemeinsames Muster, keine Ursache." },
+       "length": { "longer": "Viel los, längere Texte ✦", "shorter": "Viel los, kürzere Texte ↗", "detail": "Mediane Textlänge an vier ruhigen Tagen: {low} Zeichen; an vier aktiven Tagen: {high} Zeichen (n = {n} vergleichbare Tage). Das ist ein Vergleich von Tagen, keine Wirkung." }
++    }
++  },
++  "cues": {
++    "eyebrow": "Euer Chat, ohne Gedankenlesen",
++    "title": "Was hier heraussticht",
++    "intro": "Wiederkehrende Signalwörter im geprüften Ausschnitt, keine automatische Zusammenfassung eurer Gespräche. Jede Zahl zählt Nachrichten mit einem klar definierten Ausdruck.",
++    "topicsTitle": "Themenhinweise",
++    "toneTitle": "Ton-Check · Wortsignale",
++    "noTopics": "Noch kein wiederkehrendes Thema mit mindestens drei passenden Nachrichten von beiden Seiten.",
++    "noTone": "Kein Treffer für die eng definierten Ton-Wortsignale. Das sagt nichts darüber, wie freundlich der gesamte Chat war.",
++    "raw": "Für Rohtext ohne überprüfbare Sprechende zeigen wir keine Themen oder Zählungen.",
++    "coarse": "Jev ordnet den gesamten Ausschnitt grob ein: Wärme {warmth}/3, sichtbare Spannung {tension}/3 (n = {n} Nachrichten). Das sind keine Zählungen einzelner Nachrichten.",
++    "limits": "Ironie, freundliches Necken, Anziehung und Druck lassen sich aus einzelnen Formulierungen nicht verlässlich zählen. Auch ein direkter Ausdruck kann scherzhaft gemeint sein. Hier wird niemand als „toxisch“ bezeichnet.",
++    "methodTitle": "Wie entstehen diese Karten?",
++    "method": "Lokal werden ausschließlich die erkannten Textnachrichten gezählt, die auch im einen Jev-Ausschnitt liegen. Ein Themenhinweis braucht mindestens 12 Nachrichten insgesamt, drei passende Nachrichten, beide Sprechenden und mindestens vier Nachrichten Abstand zwischen erstem und letztem Treffer. Höchstens drei Themen erscheinen. Wortsignale zählen nur Nachrichten mit den festgelegten Formulierungen, nie alle freundlichen, flirtenden oder abwertenden Nachrichten. Mehrere Themen können dieselbe Nachricht enthalten. Rohtext bleibt ungeprüft. Keine Zitate, Zeitstempel oder Trefferlisten werden gespeichert oder geteilt.",
++    "topics": {
++      "plans": {
++        "title": "Pläne in Bewegung",
++        "detail": "In {n} von {total} Nachrichten stehen Planungswörter. Das Thema kommt im Ausschnitt wiederholt bei beiden vor, ohne zu zeigen, was daraus wurde."
++      },
++      "daily": {
++        "title": "Alltag auf Sendung",
++        "detail": "In {n} von {total} Nachrichten stehen Wörter zu Schule, Arbeit oder Training. Hier taucht der Alltag wiederholt auf."
++      },
++      "support": {
++        "title": "Unterstützende Worte",
++        "detail": "In {n} von {total} Nachrichten stehen Dankes- oder Hilfswörter. Das zeigt Textsignale, keine gemessenen Gefühle."
++      },
++      "humor": {
++        "title": "Ein paar Lacher",
++        "detail": "In {n} von {total} Nachrichten stehen Lachwörter oder Lach-Emojis. Ob beide denselben Witz meinen, bleibt offen."
++      },
++      "clarify": {
++        "title": "Nochmal nachgefragt",
++        "detail": "In {n} von {total} Nachrichten stehen Klärungs- oder Entschuldigungswörter. Hier wird im Ausschnitt mehr als einmal nachjustiert."
++      }
++    },
++    "tone": {
++      "thanks": {
++        "title": "Dankesformeln",
++        "detail": "{n} von {total} Nachrichten enthalten eine erkannte Dankesformel. Gezählt wird der Ausdruck, nicht jede nette Nachricht."
++      },
++      "directInsult": {
++        "title": "Direkte abwertende Formulierung",
++        "detail": "{n} von {total} Nachrichten enthalten eines der eng definierten Muster mit direkter Anrede. Der Kontext kann die Bedeutung ändern; das ist kein Urteil über eine Person."
++      },
++      "compliment": {
++        "title": "Kompliment-Wörter",
++        "detail": "{n} von {total} Nachrichten enthalten eine der gezählten freundlichen Anreden. Das kann neckisch oder flirty klingen, belegt aber keine Absicht."
++      }
+     }
+   },
+   "statsTitle": "Zahlen statt Gedankenlesen",
+@@ -229,6 +279,8 @@
+     "bookLink2": "Lehrbuch: OpenStax, Psychology 2e, Kapitel 12.7"
+   },
+   "ideas": {
++    "repair": "Frag nach einem Detail, das ihr unterschiedlich verstanden habt: „Was hattest du genau gemeint?“ Weil im Ausschnitt mehrmals geklärt wird, passt eine offene Nachfrage – ohne Schuldzuweisung.",
++    "plan": "Frag: „Was davon wollen wir wirklich zusammen machen?“ Im Ausschnitt tauchen mehrfach Pläne auf; eine konkrete Frage kann helfen, sie abzustimmen.",
+     "pause": "Erst durchatmen, dann: „Was war dir dabei wichtig?“ Wenn der Ausschnitt Reibung zeigt, kann eine offene Frage mehr bringen als der nächste Konter.",
+     "clarify": "Frag locker: „Wie hast du das gemeint?“ Im Text fehlen Tonfall und Gesichtsausdruck; das kann eine schräge Lesart auflösen.",
+     "appreciate": "Sag eine kleine Sache, die du an eurem Austausch magst. Wenn ihr schon freundlich aufeinander eingeht, macht das den Moment sichtbar – ohne Erwartungsdruck.",
+diff --git a/js/locales/en.js b/js/locales/en.js
+--- a/js/locales/en.js
++++ b/js/locales/en.js
+@@ -51,6 +51,56 @@
+     "pattern": {
+       "together": { "same": "Busy at the same time ✦", "opposite": "Different activity rhythms ↗", "detail": "Across {n} active days, the rank correlation of both message counts was r = {rho}. This describes an association, not a cause." },
+       "length": { "longer": "Busier days, longer texts ✦", "shorter": "Busier days, shorter texts ↗", "detail": "Median text length on four quiet days: {low} characters; on four busy days: {high} characters (n = {n} comparable days). This compares days, not effects." }
++    }
++  },
++  "cues": {
++    "eyebrow": "Your chat, without mind-reading",
++    "title": "What stands out here",
++    "intro": "Recurring written cues in the checked excerpt, not an automatic summary of everything you discussed. Each number counts messages with a defined phrase.",
++    "topicsTitle": "Topic cues",
++    "toneTitle": "Tone check · written cues",
++    "noTopics": "No recurring topic cue appears in at least three messages from both sides yet.",
++    "noTone": "No match for these narrowly defined tone phrases. That says nothing about the overall kindness of the chat.",
++    "raw": "Raw text has no verifiable speakers, so topic and tone counts stay hidden.",
++    "coarse": "Jev gives a broad reading of the whole excerpt: warmth {warmth}/3, visible tension {tension}/3 (n = {n} messages). These scores do not count individual messages.",
++    "limits": "Irony, friendly teasing, attraction and pressure cannot be reliably counted from isolated phrases. Even direct words might be a joke. No one is labelled “toxic”.",
++    "methodTitle": "How are these cards made?",
++    "method": "Only recognised text messages in the same excerpt sent to Jev are checked locally. A topic cue needs at least 12 messages overall, three matching messages, both speakers and four messages between the first and last match. Up to three topics appear. Tone counts cover only predefined expressions, never all kind, flirtatious or rude messages. Topics may overlap within one message. Raw text is excluded. No quotes, timestamps or match lists are stored or shared.",
++    "topics": {
++      "plans": {
++        "title": "Plans taking shape",
++        "detail": "Planning words appear in {n} of {total} messages. They recur on both sides of this excerpt; the chat cannot show what happened next."
++      },
++      "daily": {
++        "title": "Daily life in the mix",
++        "detail": "School, work or training words appear in {n} of {total} messages. Daily life comes up more than once here."
++      },
++      "support": {
++        "title": "Support in words",
++        "detail": "Thanks or help words appear in {n} of {total} messages. These are written signals, not measured feelings."
++      },
++      "humor": {
++        "title": "A few laughs",
++        "detail": "Laugh words or emojis appear in {n} of {total} messages. Whether the joke landed the same way for both is unknown."
++      },
++      "clarify": {
++        "title": "A second look",
++        "detail": "Clarifying or apology words appear in {n} of {total} messages. The exchange readjusts more than once."
++      }
++    },
++    "tone": {
++      "thanks": {
++        "title": "Thank-you phrases",
++        "detail": "{n} of {total} messages contain a recognised thank-you phrase. This counts words, not every kind message."
++      },
++      "directInsult": {
++        "title": "Directly disparaging phrasing",
++        "detail": "{n} of {total} messages match a narrow direct-address phrase. Context could change its meaning; this is no verdict on a person."
++      },
++      "compliment": {
++        "title": "Compliment wording",
++        "detail": "{n} of {total} messages contain one of the counted compliments. It may sound playful or mildly flirty, but cannot prove intent."
++      }
+     }
+   },
+   "statsTitle": "Numbers, no mind-reading",
+@@ -229,6 +279,8 @@
+     "bookLink2": "Textbook: OpenStax, Psychology 2e, section 12.7"
+   },
+   "ideas": {
++    "repair": "Ask about a detail you read differently: “What exactly did you mean?” Clarifying words come up repeatedly, so an open question fits without placing blame.",
++    "plan": "Ask: “Which of these should we actually do together?” Plans come up repeatedly here; a concrete question can help you coordinate.",
+     "pause": "Take a breath, then ask: “What mattered most to you about that?” When this excerpt shows friction, an open question may do more than another comeback.",
+     "clarify": "Ask: “What did you mean by that?” Text has no tone of voice; one question might clear up a strange reading.",
+     "appreciate": "Name one small thing you like about talking together. If you already respond warmly, this makes it visible without demanding anything back.",
+diff --git a/js/locales/fr.js b/js/locales/fr.js
+--- a/js/locales/fr.js
++++ b/js/locales/fr.js
+@@ -51,6 +51,56 @@
+     "pattern": {
+       "together": { "same": "Actifs ensemble ✦", "opposite": "Rythmes différents ↗", "detail": "Sur {n} jours actifs, les nombres de messages des deux personnes ont une corrélation de rang r = {rho}. Association, pas cause." },
+       "length": { "longer": "Jours chargés, textes plus longs ✦", "shorter": "Jours chargés, textes plus courts ↗", "detail": "Longueur médiane sur quatre jours calmes : {low} caractères ; sur quatre jours chargés : {high} caractères (n = {n} jours comparables). Comparaison, pas effet." }
++    }
++  },
++  "cues": {
++    "eyebrow": "Votre chat, sans lire les pensées",
++    "title": "Ce qui ressort ici",
++    "intro": "Des indices écrits répétés dans cet extrait, pas un résumé automatique de toute la conversation. Chaque chiffre compte des messages avec une formule définie.",
++    "topicsTitle": "Indices de thèmes",
++    "toneTitle": "Le ton · indices écrits",
++    "noTopics": "Aucun indice de thème répété dans trois messages des deux personnes.",
++    "noTone": "Aucune formule de cette liste limitée. Cela ne dit rien de la gentillesse générale du chat.",
++    "raw": "Sans personnes vérifiables dans le texte brut, aucun thème ni nombre n’est affiché.",
++    "coarse": "Jev évalue globalement l’extrait : chaleur {warmth}/3, tension visible {tension}/3 (n = {n} messages). Ces notes ne comptent pas les messages un par un.",
++    "limits": "Ironie, taquinerie, attirance et pression ne se comptent pas de manière fiable avec quelques mots. Même une formule directe peut être une blague. Personne n’est qualifié de « toxique ».",
++    "methodTitle": "Comment ces cartes sont-elles calculées ?",
++    "method": "Seuls les messages texte reconnus dans le même extrait envoyé à Jev sont analysés localement. Un thème exige au moins 12 messages en tout, trois messages concordants, les deux personnes et quatre messages entre les premier et dernier indices. Trois thèmes au maximum. Les nombres de ton couvrent seulement des formules prévues, pas tous les messages aimables, séducteurs ou blessants. Les thèmes peuvent se chevaucher. Le texte brut est exclu. Aucune citation, date ni liste de messages n’est conservée ou partagée.",
++    "topics": {
++      "plans": {
++        "title": "Des projets en vue",
++        "detail": "Des mots de planification apparaissent dans {n} messages sur {total}. Ils reviennent chez les deux personnes ; la suite reste inconnue."
++      },
++      "daily": {
++        "title": "Le quotidien passe aussi",
++        "detail": "École, travail ou entraînement apparaissent dans {n} messages sur {total}. Le quotidien revient plus d’une fois."
++      },
++      "support": {
++        "title": "Des mots de soutien",
++        "detail": "Des mots de remerciement ou d’aide apparaissent dans {n} messages sur {total}. Ce sont des indices écrits, pas des sentiments mesurés."
++      },
++      "humor": {
++        "title": "Quelques rires",
++        "detail": "Des mots ou emojis de rire apparaissent dans {n} messages sur {total}. On ignore si la blague est perçue de la même façon."
++      },
++      "clarify": {
++        "title": "On se précise",
++        "detail": "Des mots de clarification ou d’excuse apparaissent dans {n} messages sur {total}. L’échange se réajuste plusieurs fois."
++      }
++    },
++    "tone": {
++      "thanks": {
++        "title": "Formules de remerciement",
++        "detail": "{n} messages sur {total} contiennent une formule reconnue. Ce nombre ne couvre pas tous les messages gentils."
++      },
++      "directInsult": {
++        "title": "Formule directement dépréciative",
++        "detail": "{n} messages sur {total} correspondent à une adresse directe limitée. Le contexte peut changer son sens : aucun jugement sur la personne."
++      },
++      "compliment": {
++        "title": "Mots de compliment",
++        "detail": "{n} messages sur {total} contiennent un compliment de la liste. Le ton peut sembler taquin ou légèrement séducteur, sans prouver une intention."
++      }
+     }
+   },
+   "statsTitle": "Des chiffres, pas de lecture de pensées",
+@@ -229,6 +279,8 @@
+     "bookLink2": "Manuel : OpenStax, Psychology 2e, section 12.7"
+   },
+   "ideas": {
++    "repair": "Demandez ce qui a été compris différemment : « Tu voulais dire quoi exactement ? » Les clarifications reviennent ici, alors une question ouverte peut aider sans accuser.",
++    "plan": "Demandez : « Lequel de ces projets voulons-nous vraiment faire ensemble ? » Plusieurs projets reviennent ici ; une question concrète peut aider à se coordonner.",
+     "pause": "Respirez, puis demandez : « Qu’est-ce qui comptait pour toi ? » Si cet extrait montre des frictions, une question ouverte peut aider plus qu'une réplique.",
+     "clarify": "Demandez : « Qu’est-ce que tu voulais dire ? » Le texte n'a pas de ton de voix ; une question peut dissiper un malentendu.",
+     "appreciate": "Dites une petite chose que vous aimez dans vos échanges. Quand vous vous répondez avec chaleur, cela le rend visible sans rien exiger en retour.",
+diff --git a/js/locales/es.js b/js/locales/es.js
+--- a/js/locales/es.js
++++ b/js/locales/es.js
+@@ -51,6 +51,56 @@
+     "pattern": {
+       "together": { "same": "Activos a la vez ✦", "opposite": "Ritmos distintos ↗", "detail": "En {n} días activos, la correlación de rangos de los mensajes de ambos fue r = {rho}. Es una asociación, no una causa." },
+       "length": { "longer": "Días activos, textos largos ✦", "shorter": "Días activos, textos cortos ↗", "detail": "Longitud mediana en cuatro días tranquilos: {low} caracteres; en cuatro días activos: {high} caracteres (n = {n} días comparables). Comparación, no efecto." }
++    }
++  },
++  "cues": {
++    "eyebrow": "Vuestro chat, sin leer la mente",
++    "title": "Lo que destaca aquí",
++    "intro": "Señales escritas repetidas en este fragmento, no un resumen automático de todo lo hablado. Cada cifra cuenta mensajes con una expresión definida.",
++    "topicsTitle": "Pistas sobre temas",
++    "toneTitle": "Chequeo del tono · pistas escritas",
++    "noTopics": "Aún no hay una pista temática repetida en tres mensajes de ambos participantes.",
++    "noTone": "No hay coincidencias con estas expresiones limitadas. Eso no describe la amabilidad general del chat.",
++    "raw": "Sin participantes verificables en el texto bruto, no mostramos temas ni cifras.",
++    "coarse": "Jev valora el fragmento en conjunto: calidez {warmth}/3 y tensión visible {tension}/3 (n = {n} mensajes). Estas puntuaciones no cuentan mensajes individuales.",
++    "limits": "La ironía, las bromas amistosas, la atracción y la presión no se pueden contar con fiabilidad a partir de frases aisladas. Incluso una expresión directa puede ser una broma. Nadie recibe la etiqueta «tóxico».",
++    "methodTitle": "¿Cómo se hacen estas tarjetas?",
++    "method": "Solo se revisan localmente los mensajes reconocidos del mismo fragmento enviado a Jev. Una pista temática necesita al menos 12 mensajes en total, tres coincidencias, ambos participantes y cuatro mensajes de separación entre la primera y última. Aparecen como máximo tres temas. Las cifras del tono incluyen únicamente expresiones predefinidas, no todos los mensajes amables, coquetos u ofensivos. Un mensaje puede contar en varios temas. Se excluye el texto bruto. No se guardan ni comparten citas, fechas ni listas de coincidencias.",
++    "topics": {
++      "plans": {
++        "title": "Planes en marcha",
++        "detail": "Palabras de planes aparecen en {n} de {total} mensajes. Se repiten en ambos lados, aunque el chat no dice qué sucedió después."
++      },
++      "daily": {
++        "title": "Un poco de vida diaria",
++        "detail": "Palabras de escuela, trabajo o entrenamiento aparecen en {n} de {total} mensajes. El día a día vuelve varias veces."
++      },
++      "support": {
++        "title": "Apoyo en palabras",
++        "detail": "Palabras de agradecimiento o ayuda aparecen en {n} de {total} mensajes. Son señales escritas, no sentimientos medidos."
++      },
++      "humor": {
++        "title": "Unas risas",
++        "detail": "Risas o emojis de risa aparecen en {n} de {total} mensajes. No sabemos si la broma se entendió igual por ambos."
++      },
++      "clarify": {
++        "title": "Aclarando las cosas",
++        "detail": "Palabras de aclaración o disculpa aparecen en {n} de {total} mensajes. El intercambio se reajusta más de una vez."
++      }
++    },
++    "tone": {
++      "thanks": {
++        "title": "Expresiones de agradecimiento",
++        "detail": "{n} de {total} mensajes contienen una fórmula reconocida. Cuenta palabras, no todos los mensajes amables."
++      },
++      "directInsult": {
++        "title": "Expresión directamente despectiva",
++        "detail": "{n} de {total} mensajes coinciden con un patrón limitado de segunda persona. El contexto puede cambiar su significado; no juzga a nadie."
++      },
++      "compliment": {
++        "title": "Palabras de cumplido",
++        "detail": "{n} de {total} mensajes contienen un cumplido de la lista. Puede sonar juguetón o algo coqueto, sin probar intención."
++      }
+     }
+   },
+   "statsTitle": "Cifras sin leer la mente",
+@@ -229,6 +279,8 @@
+     "bookLink2": "Libro: OpenStax, Psychology 2e, apartado 12.7"
+   },
+   "ideas": {
++    "repair": "Preguntad por un detalle entendido de forma distinta: «¿Qué querías decir exactamente?». Las aclaraciones se repiten aquí; una pregunta abierta puede ayudar sin culpar.",
++    "plan": "Preguntad: «¿Cuál de estos planes queremos hacer juntos de verdad?». Los planes se repiten aquí; una pregunta concreta puede ayudar a organizarse.",
+     "pause": "Respirad y preguntad: «¿Qué era importante para ti?» Si este fragmento muestra roces, una pregunta abierta puede ayudar más que otra réplica.",
+     "clarify": "Preguntad: «¿Qué querías decir?» El texto no tiene tono de voz; una pregunta puede aclarar un malentendido.",
+     "appreciate": "Decid algo pequeño que os guste de vuestras charlas. Si ya os respondéis con calidez, lo hace visible sin exigir nada a cambio.",
+diff --git a/js/vibes.js b/js/vibes.js
+--- a/js/vibes.js
++++ b/js/vibes.js
+@@ -20,10 +20,12 @@
+ }
+ 
+ /** Supportive, fixed conversation ideas; never diagnose a person. */
+-export function conversationIdea(answers, raw = false) {
++export function conversationIdea(answers, raw = false, topics = []) {
+   if (raw) return 'open';
+   if (answers?.tension?.score >= 2) return 'pause';
+   if (answers?.clarity?.score <= 1) return 'clarify';
++  if (topics.includes('clarify')) return 'repair';
+   if (answers?.warmth?.score >= 2 && answers?.reciprocity?.score >= 2) return 'appreciate';
++  if (topics.includes('plans')) return 'plan';
+   return 'open';
+ }
+diff --git a/test/highlights.test.js b/test/highlights.test.js
+new file mode 100644
+--- /dev/null
++++ b/test/highlights.test.js
+@@ -0,0 +1,93 @@
++import { test } from 'node:test';
++import assert from 'node:assert/strict';
++import { readFile } from 'node:fs/promises';
++import { highlightCues, TONE_KEYS, TOPIC_KEYS } from '../js/highlights.js';
++import { conversationIdea } from '../js/vibes.js';
++import { buildRequest } from '../js/questions.js';
++import { parseChat } from '../js/parse.js';
++import { SAMPLE_CHAT } from '../js/sample.js';
++import de from '../js/locales/de.js';
++import en from '../js/locales/en.js';
++import fr from '../js/locales/fr.js';
++import es from '../js/locales/es.js';
++
++const people = ['Mara', 'Leo'];
++const m = (from, text) => ({ from, text });
++
++test('fictional sample finds only recurring local cues, without revealing any chat text', () => {
++  const messages = parseChat(SAMPLE_CHAT).map(({ author, text }) => m(author, text));
++  const result = highlightCues(messages, people);
++  assert.equal(result.checked, 40);
++  assert.deepEqual(result.topics.map(({ key }) => key), ['support', 'plans', 'clarify']);
++  assert.ok(result.topics.every(({ n }) => n >= 3));
++  assert.deepEqual(result.tone.map(({ key }) => key), ['thanks']);
++  assert.equal(result.tone[0].n, 4);
++  assert.doesNotMatch(JSON.stringify(result), /Tomaten|Basilikum|Mara|Leo/);
++  assert.equal(conversationIdea({ tension: { score: 0 }, clarity: { score: 3 }, warmth: { score: 1 } }, false, result.topics.map(({ key }) => key)), 'repair');
++});
++
++test('one-off topic, one speaker and tiny samples cannot make a recurring theme', () => {
++  const many = Array.from({ length: 16 }, (_, i) => m(people[i % 2], i === 0 ? 'Samstag treffen?' : 'okay'));
++  assert.deepEqual(highlightCues(many, people).topics, []);
++  for (const i of [0, 3, 10]) many[i] = m('Mara', 'Samstag treffen?');
++  assert.deepEqual(highlightCues(many, people).topics, []);
++  many[10] = m('Leo', 'Samstag treffen?');
++  assert.deepEqual(highlightCues(many, people).topics, [{ key: 'plans', n: 3 }]);
++  assert.deepEqual(highlightCues(many.slice(0, 8), people).topics, []);
++});
++
++test('literal tone cues are counted per message; sarcasm, short replies and hints of pressure are not classed as toxicity', () => {
++  const messages = [m('Mara', 'Danke. Danke!'), m('Leo', 'Danke!'), m('Mara', 'Du bist blöd'),
++    m('Leo', 'wäre blöd gelaufen'), m('Mara', 'Du bist süß'), m('Leo', 'lol du Quatschkopf'),
++    m('Mara', 'wenn du nicht antwortest ...'), m('Leo', 'k'), m('Mara', 'Ich liebe dich')];
++  const result = highlightCues(messages, people);
++  assert.deepEqual(result.tone, [
++    { key: 'thanks', n: 2 }, { key: 'directInsult', n: 1 }, { key: 'compliment', n: 1 },
++  ]);
++  assert.deepEqual(result.topics, []);
++  assert.ok(!['toxic', 'flirty', 'pressure'].some((key) => TONE_KEYS.includes(key)));
++  assert.deepEqual(highlightCues([m('Mara', '“Du bist blöd” war ein Zitat')], people).tone,
++    [{ key: 'directInsult', n: 1 }]); // Even literal cues need human context.
++});
++
++test('unrecognised raw formats and third speakers cannot receive counts', () => {
++  const data = [m('Mara', 'Danke'), m('Leo', 'Danke')];
++  assert.deepEqual(highlightCues(null, people, { raw: true }), { topics: [], tone: [], checked: null });
++  assert.equal(highlightCues(data, people, { raw: true }).checked, null);
++  assert.equal(highlightCues([...data, m('Dritte', 'Danke')], people).checked, null);
++});
++
++test('defined English, French and Spanish phrases are counted without interpreting intent', () => {
++  const data = [m('Mara', 'Thank you! You are cute'), m('Leo', 'Merci, tu es adorable'),
++    m('Mara', 'Gracias, eres adorable'), m('Leo', 'you are stupid'),
++    m('Mara', 'tu es stupide'), m('Leo', 'eres idiota')];
++  assert.deepEqual(highlightCues(data, people).tone, [
++    { key: 'thanks', n: 3 }, { key: 'directInsult', n: 3 }, { key: 'compliment', n: 3 },
++  ]);
++  assert.deepEqual(highlightCues([m('Leo', 'du bist nicht dumm')], people).tone, []);
++});
++
++test('four languages and the visible result flow have the complete cautions', async () => {
++  for (const locale of [de, en, fr, es]) {
++    assert.ok(locale.cues.title && locale.cues.noTopics && locale.cues.raw && locale.cues.method);
++    assert.ok(locale.cues.coarse.includes('{warmth}') && locale.cues.coarse.includes('{tension}'));
++    for (const key of TOPIC_KEYS) assert.ok(locale.cues.topics[key].title && locale.cues.topics[key].detail.includes('{n}'));
++    for (const key of TONE_KEYS) assert.ok(locale.cues.tone[key].title && locale.cues.tone[key].detail.includes('{total}'));
++    assert.ok(locale.ideas.repair && locale.ideas.plan);
++  }
++  const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
++  const source = await readFile(new URL('../js/app.js', import.meta.url), 'utf8');
++  assert.ok(html.indexOf('id="person-readings"') < html.indexOf('id="topic-cards"'));
++  assert.ok(html.indexOf('id="topic-cards"') < html.indexOf('id="connection-scales"'));
++  assert.ok(source.includes('request.body.state.messages'));
++  assert.doesNotMatch(source.slice(source.indexOf("$('share').onclick")), /cues\.topics|cues\.tone/);
++});
++
++test('new local cues do not add Jev questions or state metadata', () => {
++  const { body } = buildRequest([m('Mara', 'Danke'), m('Leo', 'Sure')].map(({ from, text }) => ({ author: from, text })), people);
++  assert.deepEqual(Object.keys(body.questions), ['warmth', 'reciprocity', 'tension', 'clarity']);
++  assert.deepEqual(Object.keys(body.state.messages[0]), ['from', 'text']);
++  assert.equal(conversationIdea({ tension: { score: 2 }, clarity: { score: 3 } }, false, ['clarify']), 'pause');
++  assert.equal(conversationIdea({ tension: { score: 0 }, clarity: { score: 3 }, warmth: { score: 0 } }, false, ['plans']), 'plan');
++  assert.equal(conversationIdea({}, true, ['plans']), 'open');
++});

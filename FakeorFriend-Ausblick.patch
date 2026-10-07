@@ -1,0 +1,617 @@
+--- a/README.md
++++ b/README.md
+@@ -211,6 +211,61 @@
+ visible preview and PNG use the same numbers. No local measures enter Jev's
+ state or add a second request.
+ 
++## What might happen next? (local, experimental)
++
++`js/outlook.js` reuses the existing daily calendar counts. Calendar weeks
++are **Monday through Sunday in the date as written in the export**, not the
++display's seven-day blocks anchored to the first message. The weeks containing
++the first and last observed messages are excluded because an export can start
++or end partway through either day. All intervening silent days and weeks count
++as zero. A missing or ambiguous timestamp suppresses all temporal summaries.
++Raw transcripts also receive no temporal summaries. No device time zone is
++used to reinterpret the export date.
++
++The rhythm card compares the median weekly message count in the latest three
++complete weeks with the six immediately before them. It needs at least three
++active weeks among the six, an earlier median of at least four, a difference
++of at least four messages per week, and either a fall of at least 35% or a
++rise of at least 50%. Medians limit the effect of a single unusually active
++week. The shared-day card counts days when both people wrote, comparing two
++equal windows of four complete weeks (28 days each) when both exist; it makes
++no claim that their activity is caused by each other.
++
++The **two-week-ahead** forecast targets the full week *after* the currently
++observed, potentially partial week. This is the week after the last week
++visible in an imported export, which could be historical if an old export was
++loaded. The current partial week's counts are not used. At least 26 complete
++weeks (16 with messages) are needed. Exponential smoothing uses a coefficient
++selected from 0.2, 0.4, 0.6 and 0.8 with targets in the initial 18 weeks;
++an observation is capped at three times the median of the last eight weeks
++(minimum four) when forecasting so one isolated spike does not dominate.
++The final eight weeks are held out from coefficient selection and are tested
++at the same two-week horizon. The reference is the median of the four latest
++weeks available at each origin. The model's mean absolute error must beat
++that reference by at least 5% **and** be no higher than the larger of three
++messages and 60% of the median weekly count in the latest eight weeks.
++Otherwise the page shows no forecast. The displayed span surrounds the model
++prediction by the seventh-smallest absolute error from its eight holdout
++predictions: seven of eight *historical* errors were no larger, but there is
++no statistical guarantee for a future week. This model has **not** been
++validated on independent real chats; for one user's short example it should
++show no prediction. Neither the forecast nor its fit describes interest,
++affection or relationship quality.
++
++The separate playful cards require 12 verified submitted messages, ordinal
++pair scores and corroborating cues. A flirt reading requires warmth at least
++two and two matches to a narrow compliment phrase; a developing-conversation
++reading additionally requires reciprocity at least two and a recurring plans
++or support topic. Both are suppressed when tension is at least two or a
++direct-address insult phrase is detected. A quieter-chat card appears only
++when the measured rhythm falls under the rules above. Every card includes a
++plausible alternate explanation and is explicitly labelled an imaginative
++reading of the excerpt. No probability of love, ghosting or future romance is
++computed. Raw transcripts and small or contradictory samples have no such
++cards. None of these interpretations, raw messages or forecast features is
++sent to Jev or included automatically on the PNG/share card. The existing
++single local calendar fact in the card remains unchanged.
++
+ ## Data and sharing
+ 
+ Parsed chat text and imported files are held in page memory, not stored by the
+--- a/css/style.css
++++ b/css/style.css
+@@ -1321,6 +1321,27 @@
+ .cue-card { min-width: 0; padding: 1rem 1.1rem; border: 1px solid var(--rule); border-radius: 1rem; background: #ffffff0c; }
+ .cue-card h4 { margin: 0 0 .5rem; color: var(--accent-blue); font: 750 1.15rem/1.2 var(--font-display); }
+ .cue-card p { margin: 0; color: var(--ink-soft); line-height: 1.55; overflow-wrap: anywhere; }
++
++/* Forecasts are kept separate from the playful readings below them. */
++.outlook-panel { min-width: 0; margin: 1.3rem 0; padding: clamp(1rem, 3vw, 1.6rem); border: 1px solid var(--rule); border-radius: 1.3rem; background: linear-gradient(145deg, #32253c, #252c3d); }
++.outlook-panel h3 { margin: .25rem 0; font: 750 clamp(1.7rem, 4vw, 2.45rem)/1.13 var(--font-display); }
++.outlook-intro, .outlook-disclaimer { max-width: 68ch; color: var(--ink-soft); line-height: 1.55; }
++.outlook-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); gap: .85rem; margin: 1rem 0; }
++.outlook-card { min-width: 0; padding: 1.1rem; border: 1px solid #a1b4cb55; border-radius: 1rem; background: #ffffff0b; overflow-wrap: anywhere; }
++.outlook-card h4 { margin: 0 0 .65rem; font: 740 clamp(1.15rem, 2.7vw, 1.5rem)/1.2 var(--font-display); color: var(--accent-blue); }
++.outlook-card p { margin: 0; line-height: 1.55; color: var(--ink-soft); }
++.outlook-card .outlook-diagnostic { margin-top: .75rem; padding-top: .75rem; border-top: 1px solid var(--rule); font-size: .8rem; }
++.outlook-scenes-title { margin: 1.5rem 0 0; font: 750 1.35rem var(--font-display); }
++.outlook-scenes .outlook-card { border-color: #e9f05655; }
++.outlook-scenes .outlook-card h4 { color: var(--accent); }
++.outlook-empty { padding: 1rem; border-radius: .8rem; background: #ffffff0b; color: var(--ink-soft); }
++.outlook-method { border-top: 1px solid var(--rule); padding-top: .8rem; margin-top: 1.2rem; color: var(--ink-soft); font-size: .87rem; line-height: 1.6; }
++.outlook-method summary { cursor: pointer; color: var(--accent-blue); font-weight: 700; }
++.outlook-method summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
++.outlook-bars { height: 5rem; display: flex; align-items: end; gap: .4rem; max-width: 32rem; padding: .4rem; border-bottom: 1px solid var(--rule); }
++.outlook-bar { flex: 1 1 0; min-width: 0; height: var(--height); border: 2px solid var(--accent-blue); border-radius: .25rem .25rem 0 0; background: repeating-linear-gradient(135deg, #d7efff66 0 3px, #d7efff10 3px 6px); }
++.outlook-bar-caption { font-size: .82rem; color: var(--ink-soft); margin: 1rem 0 .1rem; }
++@media (max-width: 390px) { .outlook-panel { padding: .85rem; } .outlook-grid { grid-template-columns: 1fr; } }
+ .cue-overview { padding: .9rem 1rem; border-left: 3px solid var(--accent); border-radius: .4rem; background: #e9f05612; line-height: 1.55; }
+ .cue-empty { margin: .5rem 0; padding: 1rem; border: 1px dashed var(--rule); border-radius: .8rem; color: var(--ink-soft); }
+ .cue-limit { font-size: .88rem; }
+--- a/index.html
++++ b/index.html
+@@ -147,6 +147,13 @@
+           <div id="timeline-content"></div>
+           <details class="timeline-method"><summary data-i18n="timeline.methodTitle"></summary><p data-i18n="timeline.method"></p></details>
+         </section>
++        <section class="outlook-panel" aria-labelledby="outlook-title">
++          <p class="step-label" data-i18n="outlook.eyebrow"></p>
++          <h3 id="outlook-title" data-i18n="outlook.title"></h3>
++          <p class="outlook-intro" data-i18n="outlook.intro"></p>
++          <div id="outlook-content"></div>
++          <details class="outlook-method"><summary data-i18n="outlook.methodTitle"></summary><p data-i18n="outlook.method"></p></details>
++        </section>
+         <section class="vibe-panel idea-panel" aria-labelledby="idea-title">
+           <h3 id="idea-title" data-i18n="visual.ideaTitle"></h3>
+           <p id="conversation-idea"></p>
+--- a/js/app.js
++++ b/js/app.js
+@@ -15,6 +15,8 @@
+ import { renderTimeline } from './timeline-view.js';
+ import { duoDetail, personReadings } from './reading.js';
+ import { highlightCues } from './highlights.js';
++import { outlookOf } from './outlook.js';
++import { renderOutlook } from './outlook-view.js';
+ 
+ const MIN_LAB_MS = 1800;
+ const $ = (id) => document.getElementById(id);
+@@ -281,6 +283,7 @@
+     return row;
+   }));
+   renderTimeline($('timeline-content'), timeline, people);
++  renderOutlook($('outlook-content'), outlookOf(timeline, cues, answers, { raw: rawMode, judgedCount: meta.judgedCount }));
+   $('conversation-idea').textContent = t(`ideas.${conversationIdea(answers, rawMode, cues.topics.map(({ key }) => key))}`);
+   const records = stats ? recordsOf(stats, people) : [];
+   $('records').replaceChildren(...records.map(record));
+--- a/js/locales/de.js
++++ b/js/locales/de.js
+@@ -34,6 +34,52 @@
+       "limits": "Das ist eine Lesart dieser Nachrichten, keine feste Eigenschaft oder ein Blick in den Kopf.",
+       "unknown": "Die Sprechenden oder mindestens drei Textnachrichten je Person sind hier nicht sicher überprüfbar. Darum gibt es keine persönliche Deutung."
+     }
++  },
++  "outlook": {
++    "eyebrow": "Blick nach vorn · lokal berechnet",
++    "title": "Was könnte als Nächstes passieren?",
++    "intro": "Erst messbare Wochenmuster, dann ein paar ausdrücklich spielerische Lesarten. Eine Chatkurve kennt keine Gefühle.",
++    "rhythmTitle": "Plot Twist im Chat-Rhythmus",
++    "rhythm": {
++      "up": "In den letzten 3 vollständigen Wochen: Median {recent} Nachrichten pro Woche; in den 6 Wochen davor: {old}. Hier war zuletzt mehr los.",
++      "down": "In den letzten 3 vollständigen Wochen: Median {recent} Nachrichten pro Woche; in den 6 Wochen davor: {old}. Hier war zuletzt weniger los.",
++      "empty": "Kein deutlicher Wechsel aus 3 gegenüber 6 vollständigen Wochen erkennbar – oder der Verlauf ist noch zu kurz."
++    },
++    "coactiveTitle": "Gleiche Tage, beide dabei?",
++    "coactive": {
++      "first": "Beide schrieben an {recent} von {days} Tagen der letzten 4 vollständigen Wochen.",
++      "compare": "Beide schrieben zuletzt an {recent} von {days} Tagen; in den 4 Wochen davor an {previous} von {days} Tagen. Das misst gemeinsame Chat-Tage, keine Nähe.",
++      "empty": "Noch keine 4 vollständigen Kalenderwochen für einen Tagesvergleich."
++    },
++    "forecastTitle": "Nächste volle Woche im Verlauf",
++    "forecast": {
++      "ready": "Für die Woche ab {date} liegt die lokale Vorschau bei etwa {first}–{last} Nachrichten. Bei 7 von 8 früheren Prüfungen lag der Fehler innerhalb von ±{error} Nachrichten. Keine Garantie für die nächste Woche.",
++      "test": "Rückblick mit 8 Prüfwochen: mittlerer Fehler des Modells {model}, der einfachen Referenz {baseline} Nachrichten.",
++      "short": "Für eine Aktivitätsvorschau fehlen noch mindestens 26 vollständige Wochen mit mindestens 16 aktiven Wochen. Der Beispielchat ist dafür zu kurz.",
++      "weak": "Das Modell war im Rückblick nicht deutlich besser als ein einfacher Vergleich oder noch zu ungenau. Deshalb gibt es keine Vorschau.",
++      "empty": "Ohne vollständige, eindeutige Kalenderdaten ist keine faire Wochenvorschau möglich."
++    },
++    "barTitle": "Letzte vollständige Wochen; jeder Balken zählt Nachrichten einschließlich Null-Wochen.",
++    "barLabel": "Woche ab {date}: {n} Nachrichten.",
++    "scenesTitle": "Und jetzt: Was wäre, wenn?",
++    "disclaimer": "Angaben ohne Gewähr. Nur die Wochenvorschau ist eine überprüfte Rechenprognose; die Karten darunter sind spielerische Lesarten des Chat-Ausschnitts, keine Vorhersagen über Gefühle, Absichten oder eine Beziehung.",
++    "scenes": {
++      "flirt": {
++        "title": "Flirt oder einfach euer Humor? ✦",
++        "body": "In {n} von {total} geprüften Nachrichten stand eine eng definierte Komplimentformulierung; Jev sah wiederholt Wärme. Das könnte verspielt wirken – vielleicht ist es auch einfach eure freundliche Art. Absichten sind daraus nicht erkennbar."
++      },
++      "quiet": {
++        "title": "Wird’s gerade still? ↘",
++        "body": "Im Median {newMedian} Nachrichten pro Woche zuletzt statt {oldMedian} zuvor (3 gegenüber 6 vollständigen Wochen). Vielleicht ändern sich Termine oder der Gesprächsstoff; der Chat zeigt keinen Grund und belegt kein Ghosting."
++      },
++      "develop": {
++        "title": "Da könnte sich was entwickeln? ✧",
++        "body": "Wärme {warmth}/3 und Hin und Her {reciprocity}/3 in {n} geprüften Nachrichten; außerdem tauchen Pläne oder Unterstützung wiederholt auf. Das kann nach einem guten Gesprächsfaden klingen – oder einfach zu einer schon vertrauten Freundschaft passen."
++      },
++      "empty": "Hier wären Zukunftsgeschichten geraten. Es fehlen eindeutige, wiederholte Signale im überprüften Ausschnitt."
++    },
++    "methodTitle": "Woher kommen die Zahlen und Lesarten?",
++    "method": "Kalenderwochen laufen Montag bis Sonntag nach dem geschriebenen Exportdatum, ohne erfundene Zeitzone. Die erste und letzte beobachtete Woche fallen als möglicherweise unvollständig weg. Stille Tage und Wochen zählen als null. Rhythmus: Median der letzten 3 gegenüber den 6 vorherigen vollständigen Wochen; mindestens 3 aktive Vergleichswochen, früherer Median ≥ 4, Differenz ≥ 4 Nachrichten und mindestens 35 % Rückgang bzw. 50 % Anstieg. Gemeinsame Tage: beide schreiben am selben Tag, verglichen über zwei gleich lange 28-Tage-Fenster. Prognose: mindestens 26 vollständige und 16 aktive Wochen; exponentielle Glättung mit einem auf den ersten 18 Wochen geprüften Parameter und gekappten Ausreißern; acht spätere Zwei-Wochen-Vorhersagen gegen den Median der vier letzten verfügbaren Wochen. Nur wenn der mittlere Fehler mindestens 5 % kleiner und relativ zum üblichen Wochenwert begrenzt ist, erscheint eine Spanne aus 7 von 8 früheren absoluten Fehlern. Das ist keine statistisch garantierte Abdeckung. Die spielerischen Karten nutzen nur bestehende Jev-Skalen und eng begrenzte Wortsignale; weder ein Kompliment noch Ruhe beweist Absicht oder Gefühle."
+   },
+   "timeline": {
+     "title": "Euer Chat im Zeitverlauf ↗", "intro": "Wann war viel los, wann Funkstille? Gezählt wird lokal – keine Gefühlsmessung.",
+--- a/js/locales/en.js
++++ b/js/locales/en.js
+@@ -34,6 +34,52 @@
+       "limits": "This describes these messages, not a lasting trait or a window into anyone’s thoughts.",
+       "unknown": "The speakers or at least three text messages from each cannot be verified here. There is no personal reading."
+     }
++  },
++  "outlook": {
++    "eyebrow": "A look ahead · calculated locally",
++    "title": "What might happen next?",
++    "intro": "First, measurable weekly patterns. Then a few explicitly playful readings. A chat chart cannot see feelings.",
++    "rhythmTitle": "Plot twist in your chat rhythm",
++    "rhythm": {
++      "up": "Median {recent} messages per week over the last 3 complete weeks, versus {old} over the previous 6. This excerpt has been busier lately.",
++      "down": "Median {recent} messages per week over the last 3 complete weeks, versus {old} over the previous 6. This excerpt has been quieter lately.",
++      "empty": "No clear shift across 3 versus 6 complete weeks, or not enough history yet."
++    },
++    "coactiveTitle": "Same days, both here?",
++    "coactive": {
++      "first": "Both wrote on {recent} of {days} days in the last 4 complete weeks.",
++      "compare": "Both wrote on {recent} of {days} recent days, versus {previous} of {days} days in the 4 weeks before. This counts shared chat days, not closeness.",
++      "empty": "Four complete calendar weeks are needed to compare shared days."
++    },
++    "forecastTitle": "Next full week in the timeline",
++    "forecast": {
++      "ready": "For the week starting {date}, the local forecast is about {first}–{last} messages. In 7 of 8 previous checks, the error was within ±{error} messages. No guarantee for the next week.",
++      "test": "Eight retrospective checks: average model error {model} messages; simple baseline error {baseline}.",
++      "short": "A forecast needs at least 26 complete weeks, including 16 active weeks. The example chat is too short.",
++      "weak": "The model did not clearly outperform a simple baseline or was still too inaccurate. No forecast is shown.",
++      "empty": "Without complete, unambiguous calendar dates, there is no fair weekly forecast."
++    },
++    "barTitle": "Recent complete weeks; bars count messages including zero-message weeks.",
++    "barLabel": "Week starting {date}: {n} messages.",
++    "scenesTitle": "And now: what if?",
++    "disclaimer": "Figures without guarantee. Only the weekly outlook is a checked numerical forecast; the cards below are playful readings of this excerpt, not predictions of feelings, intentions or a relationship.",
++    "scenes": {
++      "flirt": {
++        "title": "Flirting or just your humour? ✦",
++        "body": "A narrow compliment phrase appeared in {n} of {total} checked messages, and Jev saw recurring warmth. This could feel playful; perhaps it is simply how you talk as friends. Intent cannot be read from this."
++      },
++      "quiet": {
++        "title": "Getting quieter lately? ↘",
++        "body": "The recent median is {newMedian} messages a week versus {oldMedian} before (3 versus 6 complete weeks). Schedules or topics may have changed; this chat cannot explain why or prove ghosting."
++      },
++      "develop": {
++        "title": "Could something grow here? ✧",
++        "body": "Warmth {warmth}/3 and back-and-forth {reciprocity}/3 across {n} checked messages, with recurring planning or support words. This may feel like a good thread to pick up—or simply a comfortable friendship."
++      },
++      "empty": "A future storyline would be a guess here. There are not enough clear, recurring signals in the checked excerpt."
++    },
++    "methodTitle": "How are the numbers and readings made?",
++    "method": "Calendar weeks run Monday to Sunday as written in the export; no time zone is invented. The first and last observed weeks are dropped as possibly incomplete. Silent days and weeks count as zero. Rhythm compares the median of the latest 3 complete weeks with the previous 6: at least 3 active comparison weeks, earlier median ≥ 4, absolute difference ≥ 4, and at least a 35% fall or 50% rise. Shared days count days on which both wrote across equal 28-day windows. The forecast requires 26 complete and 16 active weeks; an exponentially smoothed model selects its parameter on the first 18 weeks and caps outliers. Eight later two-week-ahead checks are compared with the median of the last four available weeks. A range appears only if mean error is at least 5% lower and remains moderate relative to typical weekly activity. The range uses the error of 7 of 8 previous checks; it has no guaranteed statistical coverage. Playful cards use existing Jev scores and narrow word cues only. Compliments and quieter weeks do not establish intent or feelings."
+   },
+   "timeline": {
+     "title": "Your chat over time ↗", "intro": "When was it busy, when was it quiet? Counted locally, without measuring feelings.",
+--- a/js/locales/fr.js
++++ b/js/locales/fr.js
+@@ -34,6 +34,52 @@
+       "limits": "Cette lecture concerne ces messages, pas un trait durable ni les pensées de quelqu’un.",
+       "unknown": "Impossible de vérifier les personnes ou trois messages texte au moins par personne. Aucune lecture personnelle n’est proposée."
+     }
++  },
++  "outlook": {
++    "eyebrow": "Regard vers la suite · calcul local",
++    "title": "Et après, que pourrait-il se passer ?",
++    "intro": "D’abord des tendances hebdomadaires mesurables, puis des lectures explicitement ludiques. Une courbe ne lit pas les sentiments.",
++    "rhythmTitle": "Changement de rythme",
++    "rhythm": {
++      "up": "Médiane de {recent} messages par semaine sur les 3 dernières semaines complètes, contre {old} durant les 6 précédentes. Cet extrait est plus animé récemment.",
++      "down": "Médiane de {recent} messages par semaine sur les 3 dernières semaines complètes, contre {old} durant les 6 précédentes. Cet extrait est plus calme récemment.",
++      "empty": "Pas de changement net entre 3 et 6 semaines complètes, ou historique encore trop court."
++    },
++    "coactiveTitle": "En ligne les mêmes jours ?",
++    "coactive": {
++      "first": "Vous avez écrit tous les deux pendant {recent} jours sur {days} au cours des 4 dernières semaines complètes.",
++      "compare": "Vous avez écrit tous les deux pendant {recent} jours sur {days}, contre {previous} jours sur {days} dans les 4 semaines précédentes. Cela compte les jours, pas la proximité.",
++      "empty": "Il faut 4 semaines calendaires complètes pour comparer les jours."
++    },
++    "forecastTitle": "Semaine complète suivante",
++    "forecast": {
++      "ready": "Pour la semaine du {date}, estimation locale : environ {first} à {last} messages. Dans 7 des 8 contrôles antérieurs, l’erreur ne dépassait pas ±{error} messages. Aucune garantie pour la suite.",
++      "test": "Huit contrôles rétrospectifs : erreur moyenne du modèle {model} messages ; référence simple {baseline}.",
++      "short": "Il faut au moins 26 semaines complètes, dont 16 actives, pour estimer la suite. Le chat exemple est trop court.",
++      "weak": "Le modèle ne fait pas clairement mieux que la référence simple, ou reste trop imprécis. Aucune prévision affichée.",
++      "empty": "Sans dates calendaires complètes et non ambiguës, aucune prévision hebdomadaire fiable."
++    },
++    "barTitle": "Dernières semaines complètes ; les barres incluent les semaines sans message.",
++    "barLabel": "Semaine du {date} : {n} messages.",
++    "scenesTitle": "Et si… ?",
++    "disclaimer": "Indications sans garantie. Seule la prévision hebdomadaire repose sur un calcul vérifié ; les cartes ci-dessous sont des lectures ludiques de cet extrait, pas des prédictions de sentiments ou de relation.",
++    "scenes": {
++      "flirt": {
++        "title": "Flirt ou simplement votre humour ? ✦",
++        "body": "Une formule de compliment précise apparaît dans {n} messages sur {total}, et Jev relève une chaleur répétée. Cela peut sembler joueur, ou simplement amical. Les intentions restent inconnues."
++      },
++      "quiet": {
++        "title": "Le chat se calme ? ↘",
++        "body": "Médiane récente de {newMedian} messages par semaine contre {oldMedian} avant (3 semaines complètes contre 6). L’emploi du temps ou les sujets peuvent changer ; cela ne prouve pas un « ghosting »."
++      },
++      "develop": {
++        "title": "Une histoire à suivre ? ✧",
++        "body": "Chaleur {warmth}/3 et échanges {reciprocity}/3 sur {n} messages analysés, avec des mots de projets ou de soutien répétés. Ce fil peut donner envie de poursuivre, ou refléter une amitié déjà familière."
++      },
++      "empty": "Inventer une suite serait hasardeux : les signaux clairs et répétés manquent dans cet extrait."
++    },
++    "methodTitle": "Comment sont calculés ces résultats ?",
++    "method": "Les semaines vont du lundi au dimanche selon la date écrite dans l’export, sans fuseau horaire supposé. Les première et dernière semaines observées sont exclues car possiblement incomplètes. Les jours et semaines sans message valent zéro. Le rythme compare la médiane des 3 dernières semaines complètes aux 6 précédentes : au moins 3 semaines actives de référence, médiane antérieure ≥ 4, écart ≥ 4 messages et baisse ≥ 35 % ou hausse ≥ 50 %. Les jours communs sont comptés sur deux périodes égales de 28 jours. Prévision : au moins 26 semaines complètes, dont 16 actives ; lissage exponentiel avec paramètre choisi sur les 18 premières semaines et valeurs extrêmes plafonnées ; huit contrôles ultérieurs à horizon de deux semaines, comparés à la médiane des quatre dernières semaines disponibles. Une plage n’apparaît que si l’erreur moyenne est au moins 5 % plus faible et reste modérée par rapport à l’activité habituelle. Elle reprend les erreurs de 7 contrôles sur 8, sans garantie statistique de couverture. Les lectures ludiques utilisent uniquement les scores Jev existants et quelques expressions précises ; ni compliment ni silence ne prouvent une intention."
+   },
+   "timeline": {
+     "title": "Votre chat dans le temps ↗", "intro": "Quand les messages affluent-ils ? Comptage local, sans mesurer les sentiments.",
+--- a/js/locales/es.js
++++ b/js/locales/es.js
+@@ -34,6 +34,52 @@
+       "limits": "Es una lectura de estos mensajes, no un rasgo permanente ni una ventana a sus pensamientos.",
+       "unknown": "No se pueden verificar los participantes o al menos tres mensajes de cada uno. No hay lectura personal."
+     }
++  },
++  "outlook": {
++    "eyebrow": "Mirando adelante · cálculo local",
++    "title": "¿Qué podría pasar después?",
++    "intro": "Primero, patrones semanales medibles; luego, lecturas explícitamente lúdicas. Una gráfica no conoce los sentimientos.",
++    "rhythmTitle": "Giro en el ritmo del chat",
++    "rhythm": {
++      "up": "Mediana de {recent} mensajes semanales en las últimas 3 semanas completas, frente a {old} en las 6 anteriores. El fragmento ha estado más activo.",
++      "down": "Mediana de {recent} mensajes semanales en las últimas 3 semanas completas, frente a {old} en las 6 anteriores. El fragmento ha estado más tranquilo.",
++      "empty": "No hay un cambio claro entre 3 y 6 semanas completas, o aún faltan datos."
++    },
++    "coactiveTitle": "¿Coincidís los mismos días?",
++    "coactive": {
++      "first": "Ambas personas escribieron {recent} de {days} días en las últimas 4 semanas completas.",
++      "compare": "Ambas escribieron {recent} de {days} días recientes, frente a {previous} de {days} días en las 4 semanas anteriores. Son días compartidos, no cercanía.",
++      "empty": "Hacen falta 4 semanas completas para comparar los días."
++    },
++    "forecastTitle": "Siguiente semana completa",
++    "forecast": {
++      "ready": "Para la semana del {date}, la estimación local es de unos {first}–{last} mensajes. En 7 de 8 comprobaciones anteriores, el error fue como máximo ±{error} mensajes. No garantiza la semana siguiente.",
++      "test": "Ocho comprobaciones retrospectivas: error medio del modelo {model} mensajes; referencia sencilla {baseline}.",
++      "short": "La estimación requiere al menos 26 semanas completas, incluidas 16 activas. El chat de ejemplo es demasiado corto.",
++      "weak": "El modelo no mejoró claramente la referencia sencilla o fue demasiado impreciso. No mostramos pronóstico.",
++      "empty": "Sin fechas de calendario completas y claras, no hay un pronóstico semanal justo."
++    },
++    "barTitle": "Últimas semanas completas; las barras incluyen semanas sin mensajes.",
++    "barLabel": "Semana del {date}: {n} mensajes.",
++    "scenesTitle": "Y ahora: ¿qué pasaría si…?",
++    "disclaimer": "Datos sin garantía. Solo la previsión semanal es un cálculo comprobado; las tarjetas siguientes son lecturas lúdicas de este fragmento, no predicciones de sentimientos, intenciones o relaciones.",
++    "scenes": {
++      "flirt": {
++        "title": "¿Coqueteo o solo vuestro humor? ✦",
++        "body": "Una expresión concreta de halago aparece en {n} de {total} mensajes y Jev detecta calidez repetida. Puede sonar juguetón o sencillamente amistoso. No revela intenciones."
++      },
++      "quiet": {
++        "title": "¿Se está calmando el chat? ↘",
++        "body": "Mediana reciente de {newMedian} mensajes semanales frente a {oldMedian} antes (3 semanas completas frente a 6). Quizá cambiaron los horarios o los temas; el chat no demuestra que alguien ignore a nadie."
++      },
++      "develop": {
++        "title": "¿Una historia por descubrir? ✧",
++        "body": "Calidez {warmth}/3 y diálogo {reciprocity}/3 en {n} mensajes revisados, además de palabras recurrentes sobre planes o apoyo. Puede invitar a seguir conversando o reflejar una amistad cómoda."
++      },
++      "empty": "Inventar una continuación sería adivinar: faltan señales claras y repetidas en el fragmento revisado."
++    },
++    "methodTitle": "¿Cómo se calculan los números y lecturas?",
++    "method": "Las semanas van de lunes a domingo según la fecha escrita en la exportación; no se inventa zona horaria. Se descartan la primera y la última semana observadas por si están incompletas. Los días y semanas sin mensajes valen cero. El ritmo compara la mediana de las últimas 3 semanas completas con las 6 anteriores: al menos 3 semanas activas previas, mediana anterior ≥ 4, diferencia ≥ 4 mensajes y caída ≥ 35 % o subida ≥ 50 %. Los días compartidos se cuentan en dos ventanas iguales de 28 días. Pronóstico: al menos 26 semanas completas, 16 activas; suavizado exponencial con parámetro elegido en las primeras 18 semanas y valores extremos acotados; ocho pruebas posteriores a dos semanas vista frente a la mediana de las últimas cuatro semanas disponibles. Solo aparece un rango si el error medio es al menos un 5 % menor y resulta moderado frente a la actividad habitual. El rango procede de los errores de 7 de 8 pruebas anteriores; no tiene cobertura estadística garantizada. Las tarjetas lúdicas utilizan las escalas Jev existentes y unas pocas expresiones definidas; un halago o un silencio no demuestra ninguna intención."
+   },
+   "timeline": {
+     "title": "Vuestro chat a lo largo del tiempo ↗", "intro": "¿Cuándo hubo más mensajes? Cifras locales, sin medir sentimientos.",
+--- /dev/null
++++ b/js/outlook.js
+@@ -0,0 +1,100 @@
++// All dates are the written calendar fields encoded by stamps.js. The UTC
++// arithmetic below is calendar arithmetic, not a time-zone conversion.
++const DAY = 86_400_000;
++const WEEK = 7 * DAY;
++const median = (values) => {
++  const sorted = [...values].sort((a, b) => a - b);
++  const mid = Math.floor(sorted.length / 2);
++  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
++};
++const monday = (at) => at - ((new Date(at).getUTCDay() + 6) % 7) * DAY;
++
++/** Discard both edge weeks, whose first/last days may be partial exports. */
++export function completeWeeks(timeline) {
++  const daily = timeline?.daily;
++  if (!Array.isArray(daily) || daily.length < 15) return [];
++  const byDay = new Map(daily.map((row) => [row.at, row]));
++  const weeks = [];
++  for (let at = monday(daily[0].at) + WEEK; at < monday(daily.at(-1).at); at += WEEK) {
++    const days = Array.from({ length: 7 }, (_, i) => byDay.get(at + i * DAY));
++    if (days.some((day) => !day)) return [];
++    weeks.push({ at, total: days.reduce((sum, day) => sum + day.total, 0),
++      together: days.filter((day) => day.counts[0] > 0 && day.counts[1] > 0).length });
++  }
++  return weeks;
++}
++
++// Bounded past observations prevent one imported burst from setting the
++// entire forecast. Alpha is selected using only training weeks.
++function model(history, alpha) {
++  const cap = Math.max(4, median(history.slice(-8)) * 3);
++  const values = history.slice(-8).map((n) => Math.min(n, cap));
++  return values.slice(1).reduce((level, value) => alpha * value + (1 - alpha) * level, values[0]);
++}
++const baseline = (history) => median(history.slice(-4));
++const mean = (values) => values.reduce((sum, n) => sum + n, 0) / values.length;
++
++/** Two-week horizon: current partial week is unknown; target is the next one. */
++export function forecastWeeks(weeks) {
++  if (weeks.length < 26 || weeks.filter((week) => week.total > 0).length < 16)
++    return { reason: 'short' };
++  const totals = weeks.map(({ total }) => total);
++  // The first 18 weeks select a fixed smoothing coefficient. Backtesting
++  // uses the following eight weeks, with each target two weeks ahead.
++  const alphas = [0.2, 0.4, 0.6, 0.8];
++  const fitError = (alpha) => mean(Array.from({ length: 10 }, (_, i) => {
++    const target = 8 + i;
++    return Math.abs(model(totals.slice(0, target - 1), alpha) - totals[target]);
++  }));
++  const alpha = alphas.reduce((best, next) => fitError(next) < fitError(best) ? next : best);
++  const errors = [];
++  const baselineErrors = [];
++  for (let target = totals.length - 8; target < totals.length; target++) {
++    const past = totals.slice(0, target - 1); // exclude unknown intermediate week
++    errors.push(Math.abs(model(past, alpha) - totals[target]));
++    baselineErrors.push(Math.abs(baseline(past) - totals[target]));
++  }
++  const mae = mean(errors);
++  const baselineMae = mean(baselineErrors);
++  const diagnostics = { mae: Math.round(mae * 10) / 10, baselineMae: Math.round(baselineMae * 10) / 10,
++    folds: errors.length, alpha };
++  if (!baselineMae || mae > baselineMae * 0.95 || mae > Math.max(3, median(totals.slice(-8)) * 0.6))
++    return { reason: 'weak', diagnostics };
++  const prediction = model(totals, alpha);
++  // Seven of the last eight held-out errors did not exceed this distance.
++  // An empirical error band is not a calibrated coverage probability.
++  const error = Math.ceil([...errors].sort((a, b) => a - b)[6]);
++  return { lower: Math.max(0, Math.floor(prediction - error)), upper: Math.ceil(prediction + error),
++    prediction: Math.round(prediction), error, diagnostics };
++}
++
++export function outlookOf(timeline, cues, answers, { raw = false, judgedCount = 0 } = {}) {
++  const weeks = raw ? [] : completeWeeks(timeline);
++  const newest = weeks.slice(-3), older = weeks.slice(-9, -3);
++  let rhythm = null;
++  if (older.length === 6 && older.filter((week) => week.total > 0).length >= 3) {
++    const oldMedian = median(older.map((week) => week.total));
++    const newMedian = median(newest.map((week) => week.total));
++    if (oldMedian >= 4 && Math.abs(newMedian - oldMedian) >= 4) {
++      const direction = newMedian <= oldMedian * 0.65 ? 'down' : newMedian >= oldMedian * 1.5 ? 'up' : null;
++      if (direction) rhythm = { direction, oldMedian, newMedian, oldWeeks: 6, newWeeks: 3 };
++    }
++  }
++  const recent = weeks.slice(-4), previous = weeks.slice(-8, -4);
++  const coactive = recent.length === 4 ? { recent: recent.reduce((sum, week) => sum + week.together, 0), days: 28,
++    previous: previous.length === 4 ? previous.reduce((sum, week) => sum + week.together, 0) : null } : null;
++  const forecast = raw || !timeline?.daily ? { reason: timeline?.reason ?? 'unavailable' } : forecastWeeks(weeks);
++  const nextMonday = timeline?.daily?.length ? monday(timeline.daily.at(-1).at) + WEEK : null;
++  const safe = !raw && judgedCount >= 12 && Number.isInteger(cues?.checked) && answers &&
++    ['warmth', 'reciprocity', 'tension'].every((key) => Number.isInteger(answers[key]?.score));
++  const noConflict = safe && answers.tension.score <= 1 && !cues.tone.some(({ key }) => key === 'directInsult');
++  const scenes = [];
++  if (noConflict && answers.warmth.score >= 2 && (cues.tone.find(({ key }) => key === 'compliment')?.n ?? 0) >= 2)
++    scenes.push({ key: 'flirt', evidence: { n: cues.tone.find(({ key }) => key === 'compliment').n, total: cues.checked } });
++  if (rhythm?.direction === 'down') scenes.push({ key: 'quiet', evidence: rhythm });
++  if (noConflict && answers.warmth.score >= 2 && answers.reciprocity.score >= 2 &&
++      cues.topics.some(({ key }) => key === 'plans' || key === 'support'))
++    scenes.push({ key: 'develop', evidence: { warmth: answers.warmth.score,
++      reciprocity: answers.reciprocity.score, n: judgedCount } });
++  return { weeks, rhythm, coactive, forecast, nextMonday, scenes };
++}
+--- /dev/null
++++ b/js/outlook-view.js
+@@ -0,0 +1,67 @@
++import { t } from './i18n.js';
++import { formatNumber } from './presentation.js';
++
++const node = (tag, className, value) => {
++  const item = document.createElement(tag);
++  item.className = className;
++  if (value !== undefined) item.textContent = value;
++  return item;
++};
++const n = (value) => formatNumber(value);
++const date = (at) => new Date(at).toISOString().slice(0, 10);
++const card = (title, body) => {
++  const article = node('article', 'outlook-card');
++  article.append(node('h4', '', title), node('p', '', body));
++  return article;
++};
++
++export function renderOutlook(root, outlook) {
++  const measured = node('div', 'outlook-grid');
++  const rhythm = outlook.rhythm;
++  measured.append(card(t('outlook.rhythmTitle'), rhythm
++    ? t(`outlook.rhythm.${rhythm.direction}`, { old: n(rhythm.oldMedian), recent: n(rhythm.newMedian) })
++    : t('outlook.rhythm.empty')));
++  const coactive = outlook.coactive;
++  measured.append(card(t('outlook.coactiveTitle'), coactive
++    ? t(coactive.previous === null ? 'outlook.coactive.first' : 'outlook.coactive.compare', {
++      recent: n(coactive.recent), previous: n(coactive.previous), days: n(coactive.days),
++    }) : t('outlook.coactive.empty')));
++  const forecast = outlook.forecast;
++  const next = outlook.nextMonday === null ? null : date(outlook.nextMonday);
++  const forecastCard = card(t('outlook.forecastTitle'), forecast.prediction !== undefined
++    ? t('outlook.forecast.ready', { first: n(forecast.lower), last: n(forecast.upper),
++      date: next, error: n(forecast.error) })
++    : t(`outlook.forecast.${forecast.reason === 'weak' ? 'weak' : 'empty'}`));
++  if (forecast.prediction !== undefined) {
++    const diagnostic = node('p', 'outlook-diagnostic', t('outlook.forecast.test', {
++      model: n(forecast.diagnostics.mae), baseline: n(forecast.diagnostics.baselineMae),
++      folds: n(forecast.diagnostics.folds),
++    }));
++    forecastCard.append(diagnostic);
++  }
++  measured.append(forecastCard);
++  const figure = node('div', 'outlook-bars');
++  const sample = outlook.weeks.slice(-9);
++  if (sample.length) {
++    figure.setAttribute('role', 'group');
++    figure.setAttribute('aria-label', t('outlook.barTitle'));
++    const max = Math.max(1, ...sample.map((week) => week.total));
++    for (const week of sample) {
++      const bar = node('span', 'outlook-bar');
++      bar.style.setProperty('--height', `${Math.round(week.total / max * 100)}%`);
++      bar.title = t('outlook.barLabel', { date: date(week.at), n: n(week.total) });
++      bar.setAttribute('role', 'img');
++      bar.setAttribute('aria-label', bar.title);
++      figure.append(bar);
++    }
++    measured.prepend(node('p', 'outlook-bar-caption', t('outlook.barTitle')), figure);
++  }
++  const scenes = node('div', 'outlook-grid outlook-scenes');
++  if (outlook.scenes.length) scenes.append(...outlook.scenes.map(({ key, evidence }) =>
++    card(t(`outlook.scenes.${key}.title`), t(`outlook.scenes.${key}.body`, {
++      ...Object.fromEntries(Object.entries(evidence).map(([name, value]) => [name, n(value)])),
++    }))));
++  else scenes.append(node('p', 'outlook-empty', t('outlook.scenes.empty')));
++  root.replaceChildren(measured, node('h4', 'outlook-scenes-title', t('outlook.scenesTitle')),
++    node('p', 'outlook-disclaimer', t('outlook.disclaimer')), scenes);
++}
+--- /dev/null
++++ b/test/outlook.test.js
+@@ -0,0 +1,92 @@
++import { test } from 'node:test';
++import assert from 'node:assert/strict';
++import { timelineOf } from '../js/timeline.js';
++import { completeWeeks, forecastWeeks, outlookOf } from '../js/outlook.js';
++import { parseChat } from '../js/parse.js';
++import { SAMPLE_CHAT } from '../js/sample.js';
++import de from '../js/locales/de.js';
++import en from '../js/locales/en.js';
++import fr from '../js/locales/fr.js';
++import es from '../js/locales/es.js';
++
++const DAY = 86_400_000;
++const MONDAY = Date.UTC(2026, 0, 5);
++const people = ['Mara', 'Leo'];
++function messagesForWeeks(totals, { together = false } = {}) {
++  const messages = [{ at: MONDAY, author: 'Mara', text: 'start' }];
++  for (let week = 0; week < totals.length; week++) {
++    const start = MONDAY + (week + 1) * 7 * DAY;
++    for (let i = 0; i < totals[week]; i++) messages.push({ at: start + i % 5 * DAY + i * 1000,
++      author: together ? people[i % 2] : 'Mara', text: 'hello' });
++  }
++  messages.push({ at: MONDAY + (totals.length + 1) * 7 * DAY, author: 'Leo', text: 'end' });
++  return messages;
++}
++const timeline = (totals, options) => timelineOf(messagesForWeeks(totals, options), people);
++const cues = { checked: 30, tone: [{ key: 'compliment', n: 3 }], topics: [{ key: 'plans', n: 4 }] };
++const scores = { warmth: { score: 2 }, reciprocity: { score: 3 }, tension: { score: 0 } };
++
++test('complete Monday–Sunday weeks include silent weeks but exclude uncertain edge weeks', () => {
++  const chart = timeline([12, 0, 8, 0]);
++  assert.deepEqual(completeWeeks(chart).map(({ total }) => total), [12, 0, 8, 0]);
++  const incomplete = timelineOf([...messagesForWeeks([12, 0]), { at: null, author: 'Mara', text: 'unknown' }], people);
++  assert.equal(incomplete.reason, 'missingDates');
++  assert.equal(completeWeeks(incomplete).length, 0);
++  assert.equal(outlookOf(incomplete, cues, scores).forecast.reason, 'missingDates');
++});
++
++test('short sample and ambiguous dates receive no pretend forecast', () => {
++  const sample = outlookOf(timelineOf(parseChat(SAMPLE_CHAT), people), cues, scores, { judgedCount: 40 });
++  assert.equal(sample.forecast.reason, 'short');
++  assert.equal(sample.rhythm, null);
++  assert.equal(sample.coactive, null);
++  assert.equal(sample.nextMonday !== null, true);
++});
++
++test('rhythm uses robust medians of 3 and 6 complete weeks and coactivity uses 28-day windows', () => {
++  const chart = timeline([12, 12, 12, 12, 12, 1000, 3, 3, 3], { together: true });
++  const outlook = outlookOf(chart, cues, scores, { judgedCount: 40 });
++  assert.equal(outlook.rhythm.direction, 'down');
++  assert.equal(outlook.rhythm.oldMedian, 12);
++  assert.equal(outlook.rhythm.newMedian, 3);
++  assert.equal(outlook.coactive.days, 28);
++  assert.equal(outlook.coactive.recent >= 0 && outlook.coactive.recent <= 28, true);
++  assert.ok(outlook.scenes.some(({ key }) => key === 'quiet'));
++  assert.equal(outlookOf(timeline([12, 12, 12, 12, 12, 12, 12, 12, 12]), cues, scores).rhythm, null);
++});
++
++test('future activity needs held-out accuracy better than baseline; quiet and outlier series cannot force a forecast', () => {
++  const rising = outlookOf(timeline(Array.from({ length: 30 }, (_, i) => 10 + 2 * i)), cues, scores);
++  assert.ok(Number.isInteger(rising.forecast.prediction));
++  assert.equal(rising.forecast.diagnostics.folds, 8);
++  assert.ok(rising.forecast.diagnostics.mae <= rising.forecast.diagnostics.baselineMae * 0.95);
++  assert.ok(rising.forecast.lower <= rising.forecast.prediction && rising.forecast.upper >= rising.forecast.prediction);
++  assert.equal(forecastWeeks(Array.from({ length: 28 }, (_, i) => ({ total: i % 2 ? 0 : 5 }))).reason, 'short');
++  assert.equal(outlookOf(timeline(Array(30).fill(20)), cues, scores).forecast.reason, 'weak');
++  const spike = Array(30).fill(20); spike[25] = 2000;
++  assert.equal(outlookOf(timeline(spike), cues, scores).forecast.reason, 'weak');
++});
++
++test('speculative cards require corroborating cues and never label a person or raw transcript', () => {
++  const warm = outlookOf(timeline(Array(9).fill(10)), cues, scores, { judgedCount: 30 });
++  assert.deepEqual(warm.scenes.map(({ key }) => key), ['flirt', 'develop']);
++  const conflict = outlookOf(timeline(Array(9).fill(10)), { ...cues, tone: [...cues.tone, { key: 'directInsult', n: 1 }] }, scores, { judgedCount: 30 });
++  assert.deepEqual(conflict.scenes, []);
++  assert.deepEqual(outlookOf(null, cues, scores, { raw: true, judgedCount: 30 }).scenes, []);
++  assert.deepEqual(outlookOf(null, cues, scores, { judgedCount: 5 }).scenes, []);
++});
++
++test('each language labels measured forecast, uncertain scenes and method separately', () => {
++  const keys = (value) => [...String(value).matchAll(/\{(\w+)\}/g)].map((match) => match[1]).sort();
++  for (const locale of [de, en, fr, es]) {
++    assert.ok(locale.outlook.title && locale.outlook.disclaimer && locale.outlook.method.length > 200);
++    for (const type of ['flirt', 'quiet', 'develop']) {
++      assert.ok(locale.outlook.scenes[type].title && locale.outlook.scenes[type].body);
++      assert.deepEqual(keys(locale.outlook.scenes[type].body), keys(en.outlook.scenes[type].body));
++    }
++    for (const path of ['ready', 'test', 'short', 'weak', 'empty']) {
++      assert.ok(locale.outlook.forecast[path]);
++      assert.deepEqual(keys(locale.outlook.forecast[path]), keys(en.outlook.forecast[path]));
++    }
++  }
++});

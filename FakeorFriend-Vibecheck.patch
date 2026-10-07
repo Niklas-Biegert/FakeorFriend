@@ -1,0 +1,665 @@
+diff --git a/README.md b/README.md
+index e7a770e..2671afd 100644
+--- a/README.md
++++ b/README.md
+@@ -39,6 +39,31 @@ If the scores are unavailable or the format is unrecognised, the label is
+ that Jev sees, not a real relationship outside the excerpt. Jev's scores can
+ still be wrong and no passages or quotes are displayed as proof.
+ 
++## Playful presentation and research basis
++
++The result shows an original two-chat-bubble illustration for each of the
++four possible labels, a two-axis map of Jev's **warmth** (horizontal, 0–3)
++and **visible tension** (vertical, 0–3), and a local bar chart of each
++speaker's message count. The dot is placed by dividing each ordinal level by
++3; this makes the picture readable, **not** statistically continuous. The
++count bars are shares of messages, not measures of affection or effort.
++Raw transcripts receive no map or count comparison because speakers cannot
++be verified. A short fixed conversation idea offers a supportive next step;
++there is no point system, ranking of people, or pressure to upload more chats.
++
++The topics come from the [OpenStax developmental psychology textbook, chapter
++10.4](https://openstax.org/books/lifespan-development/pages/10-4-social-contexts-in-adolescence),
++which describes listening, sharing, social support and constructive handling
++of disagreements in adolescent relationships. [OpenStax Psychology 2e,
++chapter 12.7](https://openstax.org/books/psychology-2e/pages/12-7-prosocial-behavior)
++discusses empathy and prosocial support. An [original study of 1,713
++adolescents aged 11–19](https://pubmed.ncbi.nlm.nih.gov/36834137/) reported
++an association between positive feedback and friendship quality on social
++network sites. These publications provide *ideas for conversation topics*;
++they did not validate our questions, thresholds, score map, game labels or
++inferences about individuals from exported chats. In particular, 10-year-olds
++and 21-year-olds are not interchangeable research populations.
++
+ Locally calculated counts remain per person: number of messages, median words
+ and characters, length of the longest message and median reply time. A reply
+ starts when the other person's previous message block ends. Silences over six
+@@ -67,11 +92,17 @@ be kept in browser `localStorage`; FakeorFriend uses its own storage keys
+ separate from JudgeYou. The delete button removes only your stored key. An
+ optional `js/key.js` provided by a deployment would still be available.
+ 
+-No public deployment is configured in this new repository. Before a public
+-launch, plan server-side key handling rather than publishing a key inside
+-readable `js/key.js`. Provider processing and retention, third-party chat
+-participants and lawful basis also need assessment. This document does not
+-claim legal clearance.
++No public deployment is configured in this new repository. The 10–21 audience
++includes children. For now, younger users should try only invented chats in
++the local test preview, which makes no provider request. Before any public
++launch, plan a child-appropriate experience, establish an appropriate basis
++for handling the data of *both* chat participants, assess provider processing,
++retention and age-related consent requirements, and keep API keys on a server
++rather than publishing them in readable `js/key.js`. The UK Information
++Commissioner's [Children's Code on profiling](https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/childrens-information/childrens-code-guidance-and-resources/age-appropriate-design-a-code-of-practice-for-online-services/12-profiling/)
++recommends child profiling be off by default unless there is a compelling
++best-interests reason. This is design guidance, not a conclusion that the
++prototype is legally cleared in Germany or elsewhere.
+ 
+ ## Local preview (no API key)
+ 
+@@ -96,6 +127,7 @@ needs a separate deployment decision and a review of its data flow.
+ - `js/stats.js`: locally counted statistics.
+ - `js/questions.js`: bounded state and four Jev questions.
+ - `js/verdict.js`: excerpt label rule.
++- `js/vibes.js`: map position, factual count shares and conversation idea.
+ - `js/app.js`: input and result flow.
+ - `js/card.js`: the single image preview, download and Web Share flow.
+ - `js/locales/`: English, German, French and Spanish strings.
+diff --git a/css/style.css b/css/style.css
+index c47d7f4..3fd2dc1 100644
+--- a/css/style.css
++++ b/css/style.css
+@@ -1020,3 +1020,79 @@ button {
+ @media (max-width: 620px) {
+   .connection-summary .measures { grid-template-columns: 1fr; }
+ }
++
++/* Vibe gallery: descriptive, ordinal observations rather than a diagnosis. */
++.vibe-hero {
++  display: grid;
++  grid-template-columns: minmax(0, 1fr) minmax(8rem, 15rem);
++  align-items: center;
++  gap: 1.2rem;
++}
++.vibe-hero img { width: 100%; height: auto; filter: drop-shadow(0 12px 20px rgba(0, 0, 0, .08)); }
++.vibe-gallery {
++  display: grid;
++  grid-template-columns: repeat(2, minmax(0, 1fr));
++  gap: 1rem;
++  margin-top: 1.25rem;
++}
++.vibe-panel {
++  min-width: 0;
++  padding: 1.2rem;
++  border: 1px solid var(--rule);
++  border-radius: 1rem;
++  background: var(--paper-raised);
++}
++.vibe-panel h3 { margin: 0; font: 700 clamp(1.25rem, 3vw, 1.65rem)/1.15 var(--font-display); }
++.vibe-panel p { color: var(--ink-soft); font-size: .9rem; }
++.vibe-map {
++  position: relative;
++  height: clamp(12rem, 24vw, 18rem);
++  margin: 2.1rem 2.6rem 2.5rem;
++  border: 2px solid var(--ink);
++  border-radius: .4rem;
++  background:
++    linear-gradient(90deg, transparent calc(50% - 1px), var(--rule) 50%, transparent calc(50% + 1px)),
++    linear-gradient(0deg, transparent calc(50% - 1px), var(--rule) 50%, transparent calc(50% + 1px)),
++    linear-gradient(135deg, #e7d7fa 0%, #f8e3c7 48%, #d7f4dc 100%);
++}
++.map-dot {
++  position: absolute;
++  z-index: 1;
++  width: 1.65rem;
++  height: 1.65rem;
++  border: 3px solid white;
++  border-radius: 50%;
++  background: var(--ink);
++  box-shadow: 0 0 0 2px var(--ink);
++  transform: translate(-50%, 50%);
++}
++.axis-label { position: absolute; font: 600 .72rem/1.25 var(--font-mono); white-space: nowrap; }
++.axis-label.top { top: -1.7rem; left: 0; }
++.axis-label.bottom { bottom: -1.7rem; left: 0; }
++.axis-label.left { bottom: -2.5rem; left: 0; }
++.axis-label.right { bottom: -2.5rem; right: 0; }
++.balance-bars { display: grid; gap: 1rem; margin-top: 1.5rem; }
++.balance-row-head { display: flex; gap: .6rem; justify-content: space-between; font-size: .88rem; }
++.chart-n { margin-bottom: 0; font: .75rem var(--font-mono); }
++.balance-row-head strong { min-width: 0; overflow-wrap: anywhere; }
++.balance-row-head span { flex: none; font: .8rem var(--font-mono); }
++.balance-track { height: 1.3rem; margin-top: .4rem; border-radius: 1rem; background: var(--rule-soft); overflow: hidden; }
++.balance-track span { display: block; height: 100%; border-radius: inherit; background: #a2dfb6; }
++.balance-row:nth-child(2) .balance-track span { background: #bdb0e9; }
++.idea-panel { grid-column: 1 / -1; background: linear-gradient(115deg, #e7f5e7, #f4ecfa); }
++.idea-panel p { max-width: 50rem; font-size: 1.05rem; color: var(--ink); }
++.method-note { margin-top: 1rem; padding: 1rem 1.2rem; border: 1px solid var(--rule); border-radius: .75rem; }
++.method-note summary { cursor: pointer; font-weight: 700; }
++.method-note p { font-size: .86rem; }
++.method-note a { color: var(--accent); overflow-wrap: anywhere; }
++@media (max-width: 690px) {
++  .vibe-gallery { grid-template-columns: 1fr; }
++  .vibe-hero { grid-template-columns: minmax(0, 1fr) minmax(5rem, 8rem); }
++  .axis-label { font-size: .65rem; }
++}
++@media (max-width: 390px) {
++  .vibe-hero { grid-template-columns: 1fr; }
++  .vibe-hero img { width: 8rem; }
++  .vibe-map { margin-inline: 1.9rem; }
++  .axis-label { white-space: normal; max-width: 50%; }
++}
+diff --git a/img/vibes/friendly.svg b/img/vibes/friendly.svg
+new file mode 100644
+index 0000000..9e3b099
+--- /dev/null
++++ b/img/vibes/friendly.svg
+@@ -0,0 +1,12 @@
++<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 360" role="img" aria-hidden="true">
++<defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#b8f4cc"/><stop offset="1" stop-color="#e8ffcf"/></linearGradient></defs>
++<rect width="440" height="360" rx="56" fill="url(#bg)"/>
++<path d="M84 53 l7 17 17 6-17 7-7 16-7-16-17-7 17-6zM356 72 l5 12 12 5-12 5-5 12-5-12-12-5 12-5z" fill="#fff" opacity=".86"/>
++<circle cx="327" cy="293" r="12" fill="#fff" opacity=".6"/><circle cx="86" cy="291" r="8" fill="#fff" opacity=".65"/>
++<path d="M92 121q0-35 35-35h93q36 0 36 35v73q0 36-36 36h-46l-35 29 7-29h-19q-35 0-35-36z" fill="#fff" stroke="#40a974" stroke-width="6"/>
++<path d="M211 165q0-37 37-37h66q36 0 36 36v75q0 37-36 37h-31l-32 27 4-27h-7q-37 0-37-37z" fill="#e8ffcf" stroke="#1b6145" stroke-width="6"/>
++<circle cx="143" cy="145" r="6" fill="#40a974"/><circle cx="196" cy="145" r="6" fill="#40a974"/>
++<circle cx="246" cy="175" r="5" fill="#1b6145"/><circle cx="296" cy="175" r="5" fill="#1b6145"/>
++<path d="M148 166 Q172 189 200 165" stroke="#40a974" stroke-width="6" stroke-linecap="round" fill="none"/>
++<path d="M241 190 Q266 212 294 190" stroke="#1b6145" stroke-width="6" stroke-linecap="round" fill="none"/>
++</svg>
+\ No newline at end of file
+diff --git a/img/vibes/mixed.svg b/img/vibes/mixed.svg
+new file mode 100644
+index 0000000..d9cedd3
+--- /dev/null
++++ b/img/vibes/mixed.svg
+@@ -0,0 +1,12 @@
++<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 360" role="img" aria-hidden="true">
++<defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#ceb9ff"/><stop offset="1" stop-color="#fff1b9"/></linearGradient></defs>
++<rect width="440" height="360" rx="56" fill="url(#bg)"/>
++<path d="M84 53 l7 17 17 6-17 7-7 16-7-16-17-7 17-6zM356 72 l5 12 12 5-12 5-5 12-5-12-12-5 12-5z" fill="#fff" opacity=".86"/>
++<circle cx="327" cy="293" r="12" fill="#fff" opacity=".6"/><circle cx="86" cy="291" r="8" fill="#fff" opacity=".65"/>
++<path d="M92 121q0-35 35-35h93q36 0 36 35v73q0 36-36 36h-46l-35 29 7-29h-19q-35 0-35-36z" fill="#fff" stroke="#8263bd" stroke-width="6"/>
++<path d="M211 165q0-37 37-37h66q36 0 36 36v75q0 37-36 37h-31l-32 27 4-27h-7q-37 0-37-37z" fill="#fff1b9" stroke="#73523e" stroke-width="6"/>
++<circle cx="143" cy="145" r="6" fill="#8263bd"/><circle cx="196" cy="145" r="6" fill="#8263bd"/>
++<circle cx="246" cy="175" r="5" fill="#73523e"/><circle cx="296" cy="175" r="5" fill="#73523e"/>
++<path d="M148 170 L199 170" stroke="#8263bd" stroke-width="6" stroke-linecap="round" fill="none"/>
++<path d="M241 195 Q264 184 294 195" stroke="#73523e" stroke-width="6" stroke-linecap="round" fill="none"/>
++</svg>
+\ No newline at end of file
+diff --git a/img/vibes/strained.svg b/img/vibes/strained.svg
+new file mode 100644
+index 0000000..c5561db
+--- /dev/null
++++ b/img/vibes/strained.svg
+@@ -0,0 +1,12 @@
++<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 360" role="img" aria-hidden="true">
++<defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#ffd4a9"/><stop offset="1" stop-color="#c8d4ff"/></linearGradient></defs>
++<rect width="440" height="360" rx="56" fill="url(#bg)"/>
++<path d="M84 53 l7 17 17 6-17 7-7 16-7-16-17-7 17-6zM356 72 l5 12 12 5-12 5-5 12-5-12-12-5 12-5z" fill="#fff" opacity=".86"/>
++<circle cx="327" cy="293" r="12" fill="#fff" opacity=".6"/><circle cx="86" cy="291" r="8" fill="#fff" opacity=".65"/>
++<path d="M92 121q0-35 35-35h93q36 0 36 35v73q0 36-36 36h-46l-35 29 7-29h-19q-35 0-35-36z" fill="#fff" stroke="#cc713c" stroke-width="6"/>
++<path d="M211 165q0-37 37-37h66q36 0 36 36v75q0 37-36 37h-31l-32 27 4-27h-7q-37 0-37-37z" fill="#c8d4ff" stroke="#5550a4" stroke-width="6"/>
++<circle cx="143" cy="145" r="6" fill="#cc713c"/><circle cx="196" cy="145" r="6" fill="#cc713c"/>
++<circle cx="246" cy="175" r="5" fill="#5550a4"/><circle cx="296" cy="175" r="5" fill="#5550a4"/>
++<path d="M148 181 Q175 160 200 181" stroke="#cc713c" stroke-width="6" stroke-linecap="round" fill="none"/>
++<path d="M241 203 L294 203" stroke="#5550a4" stroke-width="6" stroke-linecap="round" fill="none"/>
++</svg>
+\ No newline at end of file
+diff --git a/img/vibes/uncertain.svg b/img/vibes/uncertain.svg
+new file mode 100644
+index 0000000..c2a2c8f
+--- /dev/null
++++ b/img/vibes/uncertain.svg
+@@ -0,0 +1,12 @@
++<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 360" role="img" aria-hidden="true">
++<defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#e3e6ed"/><stop offset="1" stop-color="#f3ebd9"/></linearGradient></defs>
++<rect width="440" height="360" rx="56" fill="url(#bg)"/>
++<path d="M84 53 l7 17 17 6-17 7-7 16-7-16-17-7 17-6zM356 72 l5 12 12 5-12 5-5 12-5-12-12-5 12-5z" fill="#fff" opacity=".86"/>
++<circle cx="327" cy="293" r="12" fill="#fff" opacity=".6"/><circle cx="86" cy="291" r="8" fill="#fff" opacity=".65"/>
++<path d="M92 121q0-35 35-35h93q36 0 36 35v73q0 36-36 36h-46l-35 29 7-29h-19q-35 0-35-36z" fill="#fff" stroke="#878fa7" stroke-width="6"/>
++<path d="M211 165q0-37 37-37h66q36 0 36 36v75q0 37-36 37h-31l-32 27 4-27h-7q-37 0-37-37z" fill="#f3ebd9" stroke="#917e67" stroke-width="6"/>
++<circle cx="143" cy="145" r="6" fill="#878fa7"/><circle cx="196" cy="145" r="6" fill="#878fa7"/>
++<circle cx="246" cy="175" r="5" fill="#917e67"/><circle cx="296" cy="175" r="5" fill="#917e67"/>
++<path d="M150 174 L199 174" stroke="#878fa7" stroke-width="6" stroke-linecap="round" fill="none"/>
++<path d="M242 196 L293 196" stroke="#917e67" stroke-width="6" stroke-linecap="round" fill="none"/>
++</svg>
+\ No newline at end of file
+diff --git a/index.html b/index.html
+index 0d65222..b88fee9 100644
+--- a/index.html
++++ b/index.html
+@@ -41,6 +41,7 @@
+           <div id="subjects" class="subjects" aria-live="polite"></div>
+           <div class="data-notice">
+             <p data-i18n="fineprint"></p>
++            <p data-i18n="youthNotice"></p>
+             <p id="raw-notice" data-i18n="rawNotice" hidden></p>
+           </div>
+           <div class="intake-bar">
+@@ -83,11 +84,46 @@
+ 
+       <section id="results" class="results" aria-live="polite" hidden>
+         <article class="connection-summary">
+-          <p class="kicker" data-i18n="summaryTitle"></p>
+-          <h2 id="connection-label"></h2>
+-          <p id="connection-note"></p>
++          <div class="vibe-hero">
++            <div>
++              <p class="kicker" data-i18n="summaryTitle"></p>
++              <h2 id="connection-label"></h2>
++              <p id="connection-note"></p>
++            </div>
++            <img id="vibe-sticker" src="img/vibes/uncertain.svg" width="240" height="196" alt="" />
++          </div>
+           <div id="connection-scales" class="measures"></div>
+         </article>
++        <div class="vibe-gallery">
++          <section id="map-panel" class="vibe-panel" aria-labelledby="map-title">
++            <h3 id="map-title" data-i18n="visual.mapTitle"></h3>
++            <p data-i18n="visual.mapIntro"></p>
++            <div id="vibe-map" class="vibe-map" role="img">
++              <span class="axis-label top" data-i18n="visual.moreTension"></span>
++              <span class="axis-label bottom" data-i18n="visual.lessTension"></span>
++              <span class="axis-label left" data-i18n="visual.lessWarmth"></span>
++              <span class="axis-label right" data-i18n="visual.moreWarmth"></span>
++              <span id="map-dot" class="map-dot"></span>
++            </div>
++            <p id="map-n" class="chart-n"></p>
++          </section>
++          <section id="balance-panel" class="vibe-panel" aria-labelledby="balance-title" hidden>
++            <h3 id="balance-title" data-i18n="visual.balanceTitle"></h3>
++            <p data-i18n="visual.balanceIntro"></p>
++            <div id="balance-bars" class="balance-bars"></div>
++          </section>
++          <section class="vibe-panel idea-panel" aria-labelledby="idea-title">
++            <h3 id="idea-title" data-i18n="visual.ideaTitle"></h3>
++            <p id="conversation-idea"></p>
++          </section>
++        </div>
++        <details class="method-note">
++          <summary data-i18n="visual.methodTitle"></summary>
++          <p data-i18n="visual.methodIntro"></p>
++          <p><a href="https://openstax.org/books/lifespan-development/pages/10-4-social-contexts-in-adolescence" target="_blank" rel="noreferrer" data-i18n="visual.bookLink"></a></p>
++          <p><a href="https://openstax.org/books/psychology-2e/pages/12-7-prosocial-behavior" target="_blank" rel="noreferrer" data-i18n="visual.bookLink2"></a></p>
++          <p><a href="https://pubmed.ncbi.nlm.nih.gov/36834137/" target="_blank" rel="noreferrer" data-i18n="visual.studyLink"></a></p>
++        </details>
+         <div id="records" class="records"></div>
+         <div id="plates" class="plates"></div>
+         <div class="results-foot">
+diff --git a/js/app.js b/js/app.js
+index 3de6560..3e6839d 100644
+--- a/js/app.js
++++ b/js/app.js
+@@ -9,6 +9,7 @@ import { shareHighlights } from './card-data.js';
+ import { LANGUAGES, lang, setLanguage, t, translatePage } from './i18n.js';
+ import { formatDuration, formatNumber, percent, recordDetail, statisticNotes, textLengthPresentation } from './presentation.js';
+ import { SAMPLE_CHAT } from './sample.js';
++import { vibePoint, messageBalance, conversationIdea } from './vibes.js';
+ 
+ const MIN_LAB_MS = 1800;
+ const $ = (id) => document.getElementById(id);
+@@ -177,7 +178,43 @@ function renderResults({ people, answers, rawMode, stats, meta }, { scroll = tru
+   const label = interactionLabel(answers, { raw: rawMode });
+   $('connection-label').textContent = t(`connection.${label}`);
+   $('connection-note').textContent = t(rawMode ? 'connection.rawNote' : 'connection.note');
++  $('vibe-sticker').src = `img/vibes/${label}.svg`;
+   $('connection-scales').replaceChildren(...DIMENSIONS.map((key) => scale(key, answers[key])));
++  const point = vibePoint(answers, rawMode);
++  $('map-panel').hidden = !point;
++  if (point) {
++    $('map-n').textContent = t('visual.sample', { n: formatNumber(meta.judgedCount) });
++    const map = $('vibe-map');
++    map.setAttribute('aria-label', t('visual.mapAccessible', {
++      warmth: formatNumber(answers.warmth.score), tension: formatNumber(answers.tension.score),
++    }));
++    $('map-dot').style.left = `${point.x * 100}%`;
++    $('map-dot').style.bottom = `${point.y * 100}%`;
++  }
++  const balance = messageBalance(stats, people);
++  $('balance-panel').hidden = !balance;
++  if (balance) $('balance-bars').replaceChildren(...people.map((name, i) => {
++    const row = document.createElement('div');
++    row.className = 'balance-row';
++    const header = document.createElement('div');
++    header.className = 'balance-row-head';
++    header.append(
++      Object.assign(document.createElement('strong'), { textContent: name }),
++      Object.assign(document.createElement('span'), { textContent: t('visual.messages', { count: formatNumber(balance.counts[i]) }) }),
++    );
++    const track = document.createElement('div');
++    track.className = 'balance-track';
++    track.setAttribute('role', 'img');
++    track.setAttribute('aria-label', t('visual.balanceAccessible', {
++      name, count: formatNumber(balance.counts[i]), total: formatNumber(balance.total),
++    }));
++    const fill = document.createElement('span');
++    fill.style.width = `${balance.shares[i] * 100}%`;
++    track.append(fill);
++    row.append(header, track);
++    return row;
++  }));
++  $('conversation-idea').textContent = t(`ideas.${conversationIdea(answers, rawMode)}`);
+   const records = stats ? recordsOf(stats, people) : [];
+   $('records').replaceChildren(...records.map(record));
+   $('records').hidden = !records.length;
+diff --git a/js/card.js b/js/card.js
+index 2537b72..b236a55 100644
+--- a/js/card.js
++++ b/js/card.js
+@@ -40,8 +40,30 @@ function drawCard(canvas, verdict, shownName) {
+   paint('FakeorFriend', 72, 100, 50);
+   ctx.fillStyle = '#272421'; ctx.fillRect(72, 130, 936, 3);
+   paint(t('summaryTitle'), 72, 205, 28, '#67635d');
+-  paint(t(`connection.${verdict.label}`), 72, 280, 65);
++  paint(t(`connection.${verdict.label}`), 72, 280, 65, '#252421', 680);
+   paint(t('connection.cardNote'), 72, 325, 22, '#67635d');
++  // Draw the two chat characters into the same PNG as the names and numbers.
++  // No image fetch or additional sharing path is needed.
++  const colors = {
++    friendly: ['#a6efc0', '#ffedb3'], mixed: ['#cbb5ff', '#fff1b9'],
++    strained: ['#ffd0a5', '#c6d4ff'], uncertain: ['#e3e6ed', '#f3ebd9'],
++  };
++  const [first, second] = colors[verdict.label] ?? colors.uncertain;
++  ctx.fillStyle = first;
++  ctx.beginPath(); ctx.roundRect(790, 165, 130, 100, 28); ctx.fill();
++  ctx.fillStyle = second;
++  ctx.beginPath(); ctx.roundRect(855, 230, 125, 98, 28); ctx.fill();
++  ctx.fillStyle = '#252421';
++  for (const [x, y] of [[822, 207], [873, 207], [887, 269], [937, 269]]) {
++    ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fill();
++  }
++  ctx.lineWidth = 4; ctx.strokeStyle = '#252421';
++  for (const [x, y] of [[822, 231], [887, 292]]) {
++    ctx.beginPath();
++    if (verdict.label === 'strained') { ctx.moveTo(x, y + 7); ctx.lineTo(x + 54, y + 7); }
++    else { ctx.moveTo(x, y); ctx.quadraticCurveTo(x + 27, y + 24, x + 54, y); }
++    ctx.stroke();
++  }
+   verdict.people.forEach((person, i) => {
+     const y = 430 + i * 235;
+     ctx.fillStyle = '#a8a39a'; ctx.fillRect(72, y - 30, 936, 1);
+diff --git a/js/locales/de.js b/js/locales/de.js
+index f2362dd..9d04b0e 100644
+--- a/js/locales/de.js
++++ b/js/locales/de.js
+@@ -4,7 +4,7 @@ export default {
+   "volume": "Bd. I · 2026",
+   "language": "Sprache",
+   "hero": "Wie läuft’s <em>zwischen euch</em>?",
+-  "lede": "Entdecke, wie zwei Personen in diesem Chatabschnitt miteinander schreiben. Jev beurteilt den Austausch; dein Browser zählt Nachrichten, Längen und Antworten.",
++  "lede": "Euer Chat, eure Dynamik: vier kleine Vibe-Skalen, Zahlen zum Hin und Her und eine Gesprächsidee. Spielerisch, mit psychologischen Konzepten als Inspiration – kein Test für eure Beziehung.",
+   "exhibit": "Euer Chat",
+   "evidence": "Zwei Personen",
+   "chatLabel": "Chatverlauf",
+@@ -138,5 +138,32 @@ export default {
+       "Meist verständlich",
+       "Durchgehend verständlich"
+     ]
++  },
++  "youthNotice": "Du bist unter 18? Nutze für die Testvorschau erfundene Chats. Die normale KI-Auswertung sendet Chattexte an externe Anbieter; lade keine privaten Chats anderer Personen hoch.",
++  "visual": {
++    "mapTitle": "Vibe-Karte",
++    "mapIntro": "Die Position zeigt nur Jevs Stufen für Wärme und sichtbare Spannung (je 0–3). Sie misst keine Beziehung.",
++    "moreTension": "mehr Spannung",
++    "lessTension": "weniger Spannung",
++    "lessWarmth": "weniger Wärme",
++    "moreWarmth": "mehr Wärme",
++    "mapAccessible": "Vibe-Karte: Wärme {warmth} von 3; sichtbare Spannung {tension} von 3.",
++    "balanceTitle": "Wer schreibt wie viel?",
++    "balanceIntro": "Anteil an den gezählten Textnachrichten. Mehr Nachrichten bedeuten nicht mehr Interesse.",
++    "messages": "{count} Nachrichten",
++    "balanceAccessible": "{name}: {count} von {total} Nachrichten.",
++    "ideaTitle": "Mini-Mission für euch",
++    "methodTitle": "Woher kommen diese Ideen?",
++    "methodIntro": "Angelehnt an Fachliteratur zu Zuhören, Unterstützung und konstruktivem Umgang mit Meinungsverschiedenheiten. Die vier Jev-Skalen und diese Grafik sind eigene, nicht wissenschaftlich validierte Spielregeln. Aus einem Chat lässt sich keine Beziehung diagnostizieren.",
++    "bookLink": "Lehrbuch: OpenStax, Lifespan Development, Kapitel 10.4",
++    "studyLink": "Studie: Liu et al. (2023) zu positivem Feedback und Freundschaft bei Jugendlichen",
++    "sample": "Jev sah n = {n} Nachrichten.",
++    "bookLink2": "Lehrbuch: OpenStax, Psychology 2e, Kapitel 12.7"
++  },
++  "ideas": {
++    "pause": "Legt bei einer Meinungsverschiedenheit kurz eine Pause ein und fragt danach: „Was war dir dabei wichtig?“",
++    "clarify": "Frag einmal freundlich nach: „Wie hast du das gemeint?“ – gerade Text kann missverständlich sein.",
++    "appreciate": "Schickt euch eine kleine Nachricht darüber, was ihr an eurem Austausch mögt.",
++    "open": "Frag die andere Person nach einem Thema, das sie gerade beschäftigt – ohne Antwortdruck."
+   }
+ };
+diff --git a/js/locales/en.js b/js/locales/en.js
+index 3756131..1f67fcc 100644
+--- a/js/locales/en.js
++++ b/js/locales/en.js
+@@ -4,7 +4,7 @@ export default {
+   "volume": "Vol. I · 2026",
+   "language": "Language",
+   "hero": "How is your <em>connection</em>?",
+-  "lede": "Explore how two people communicate in this chat excerpt. Jev checks the exchange; your browser counts messages, lengths and replies.",
++  "lede": "Your chat, your dynamic: four small vibe scales, a look at the back-and-forth and one conversation idea. Playful and inspired by psychology, but not a relationship test.",
+   "exhibit": "Your chat",
+   "evidence": "Two people",
+   "chatLabel": "Chat transcript",
+@@ -138,5 +138,32 @@ export default {
+       "Mostly clear",
+       "Consistently clear"
+     ]
++  },
++  "youthNotice": "Under 18? Use invented chats in the test preview. The normal AI analysis sends text to external providers; do not upload other people’s private chats.",
++  "visual": {
++    "mapTitle": "Vibe map",
++    "mapIntro": "The dot shows only Jev’s warmth and visible-tension levels (0–3 each). It does not measure a relationship.",
++    "moreTension": "more tension",
++    "lessTension": "less tension",
++    "lessWarmth": "less warmth",
++    "moreWarmth": "more warmth",
++    "mapAccessible": "Vibe map: warmth {warmth} of 3; visible tension {tension} of 3.",
++    "balanceTitle": "Who sends how many?",
++    "balanceIntro": "Share of counted text messages. Writing more does not mean caring more.",
++    "messages": "{count} messages",
++    "balanceAccessible": "{name}: {count} of {total} messages.",
++    "ideaTitle": "A tiny quest for you two",
++    "methodTitle": "Where did these ideas come from?",
++    "methodIntro": "Inspired by research and textbooks on listening, support and handling disagreements constructively. These four Jev scales and this graphic are our own unvalidated game rules. A chat cannot diagnose a relationship.",
++    "bookLink": "Textbook: OpenStax, Lifespan Development, section 10.4",
++    "studyLink": "Study: Liu et al. (2023) on positive feedback and adolescent friendship",
++    "sample": "Jev saw n = {n} messages.",
++    "bookLink2": "Textbook: OpenStax, Psychology 2e, section 12.7"
++  },
++  "ideas": {
++    "pause": "If you disagree, take a short pause, then ask: “What mattered most to you about that?”",
++    "clarify": "Try asking kindly: “What did you mean by that?” Text can be easy to misread.",
++    "appreciate": "Send each other one small thing you appreciate about your chats.",
++    "open": "Ask what’s on their mind lately, without pressuring them to reply."
+   }
+ };
+diff --git a/js/locales/es.js b/js/locales/es.js
+index a3aa2df..2532e76 100644
+--- a/js/locales/es.js
++++ b/js/locales/es.js
+@@ -4,7 +4,7 @@ export default {
+   "volume": "Vol. I · 2026",
+   "language": "Idioma",
+   "hero": "¿Cómo va vuestra <em>conexión</em>?",
+-  "lede": "Descubre cómo se comunican dos personas en este fragmento. Jev observa el intercambio; tu navegador cuenta mensajes, longitudes y respuestas.",
++  "lede": "Vuestro chat, vuestra dinámica: cuatro escalas de ambiente, el ida y vuelta y una idea para conversar. Un juego inspirado en psicología, no un test de vuestra relación.",
+   "exhibit": "Vuestro chat",
+   "evidence": "Dos personas",
+   "chatLabel": "Transcripción del chat",
+@@ -138,5 +138,32 @@ export default {
+       "Generalmente claro",
+       "Siempre claro"
+     ]
++  },
++  "youthNotice": "¿Tienes menos de 18 años? Usa chats inventados en la vista de prueba. El análisis normal con IA envía textos a proveedores externos; no subas chats privados de otras personas.",
++  "visual": {
++    "mapTitle": "Mapa del ambiente",
++    "mapIntro": "El punto muestra solo las categorías de calidez y tensión visible de Jev (de 0 a 3). No mide una relación.",
++    "moreTension": "más tensión",
++    "lessTension": "menos tensión",
++    "lessWarmth": "menos calidez",
++    "moreWarmth": "más calidez",
++    "mapAccessible": "Mapa: calidez {warmth} de 3; tensión visible {tension} de 3.",
++    "balanceTitle": "¿Quién escribe cuánto?",
++    "balanceIntro": "Parte de los mensajes de texto contados. Escribir más no significa querer más.",
++    "messages": "{count} mensajes",
++    "balanceAccessible": "{name}: {count} de {total} mensajes.",
++    "ideaTitle": "Una pequeña misión para dos",
++    "methodTitle": "¿De dónde salen estas ideas?",
++    "methodIntro": "Inspirado en textos sobre escuchar, apoyar y resolver desacuerdos de manera constructiva. Las cuatro escalas de Jev y este gráfico son reglas propias sin validación científica. Un chat no puede diagnosticar una relación.",
++    "bookLink": "Libro: OpenStax, Lifespan Development, apartado 10.4",
++    "studyLink": "Estudio: Liu y colaboradores (2023) sobre respuestas positivas y amistad adolescente",
++    "sample": "Jev vio n = {n} mensajes.",
++    "bookLink2": "Libro: OpenStax, Psychology 2e, apartado 12.7"
++  },
++  "ideas": {
++    "pause": "Si no estáis de acuerdo, haced una pausa breve y preguntad: «¿Qué era importante para ti?»",
++    "clarify": "Preguntad con amabilidad: «¿Qué querías decir?» Un texto puede interpretarse mal.",
++    "appreciate": "Decid una pequeña cosa que os guste de vuestra forma de hablar.",
++    "open": "Preguntad qué le ronda la cabeza a la otra persona, sin presionarla para responder."
+   }
+ };
+diff --git a/js/locales/fr.js b/js/locales/fr.js
+index 1b4303d..fbcfddf 100644
+--- a/js/locales/fr.js
++++ b/js/locales/fr.js
+@@ -4,7 +4,7 @@ export default {
+   "volume": "Vol. I · 2026",
+   "language": "Langue",
+   "hero": "Comment se passe votre <em>échange</em> ?",
+-  "lede": "Découvrez comment deux personnes communiquent dans cet extrait. Jev lit l’échange ; votre navigateur compte les messages, les longueurs et les réponses.",
++  "lede": "Votre chat, votre dynamique : quatre petites échelles d’ambiance, un aperçu des échanges et une idée de conversation. Inspiré de la psychologie, mais ce n’est pas un test de relation.",
+   "exhibit": "Votre chat",
+   "evidence": "Deux personnes",
+   "chatLabel": "Transcription de la discussion",
+@@ -138,5 +138,32 @@ export default {
+       "Plutôt clair",
+       "Toujours clair"
+     ]
++  },
++  "youthNotice": "Moins de 18 ans ? Utilisez des chats inventés dans la prévisualisation. L’analyse IA normale envoie le texte à des prestataires externes ; ne transférez pas les chats privés d’autrui.",
++  "visual": {
++    "mapTitle": "Carte de l’ambiance",
++    "mapIntro": "Le point montre seulement la chaleur et la tension visible selon Jev (de 0 à 3). Il ne mesure pas une relation.",
++    "moreTension": "plus de tension",
++    "lessTension": "moins de tension",
++    "lessWarmth": "moins de chaleur",
++    "moreWarmth": "plus de chaleur",
++    "mapAccessible": "Carte : chaleur {warmth} sur 3 ; tension visible {tension} sur 3.",
++    "balanceTitle": "Qui écrit combien ?",
++    "balanceIntro": "Part des messages texte comptés. Écrire davantage ne signifie pas tenir davantage à l’autre.",
++    "messages": "{count} messages",
++    "balanceAccessible": "{name} : {count} messages sur {total}.",
++    "ideaTitle": "Une petite mission à deux",
++    "methodTitle": "D’où viennent ces idées ?",
++    "methodIntro": "Inspiré de la littérature sur l’écoute, le soutien et la gestion constructive des désaccords. Ces quatre échelles Jev et ce graphique sont nos règles ludiques non validées scientifiquement. Un chat ne permet pas de diagnostiquer une relation.",
++    "bookLink": "Manuel : OpenStax, Lifespan Development, section 10.4",
++    "studyLink": "Étude : Liu et al. (2023) sur les retours positifs et l’amitié adolescente",
++    "sample": "Jev a vu n = {n} messages.",
++    "bookLink2": "Manuel : OpenStax, Psychology 2e, section 12.7"
++  },
++  "ideas": {
++    "pause": "En cas de désaccord, faites une courte pause puis demandez : « Qu’est-ce qui comptait pour toi ? »",
++    "clarify": "Demandez gentiment : « Qu’est-ce que tu voulais dire ? » Un texte peut être mal compris.",
++    "appreciate": "Envoyez-vous une petite chose que vous appréciez dans vos échanges.",
++    "open": "Demandez ce qui préoccupe l’autre ces jours-ci, sans exiger de réponse."
+   }
+ };
+diff --git a/js/vibes.js b/js/vibes.js
+new file mode 100644
+index 0000000..ab87e36
+--- /dev/null
++++ b/js/vibes.js
+@@ -0,0 +1,29 @@
++/** Display rules for a playful excerpt, not a validated relationship measure. */
++export const VIBE_KEYS = Object.freeze(['friendly', 'mixed', 'strained', 'uncertain']);
++
++/** The map shows only Jev's two ordinal scores. No hidden weighting. */
++export function vibePoint(answers, raw = false) {
++  if (raw) return null;
++  const warmth = answers?.warmth?.score;
++  const tension = answers?.tension?.score;
++  if (![warmth, tension].every((value) => Number.isFinite(value) && value >= 0 && value <= 3)) return null;
++  return { x: warmth / 3, y: tension / 3 };
++}
++
++/** A factual count chart, kept separate from any judgement of the exchange. */
++export function messageBalance(stats, people) {
++  if (!stats || people.length !== 2) return null;
++  const counts = people.map((name) => stats.get(name)?.messages);
++  if (counts.some((value) => !Number.isInteger(value) || value < 0)) return null;
++  const total = counts[0] + counts[1];
++  return total > 0 ? { counts, total, shares: counts.map((value) => value / total) } : null;
++}
++
++/** Supportive, fixed conversation ideas; never diagnose a person. */
++export function conversationIdea(answers, raw = false) {
++  if (raw) return 'open';
++  if (answers?.tension?.score >= 2) return 'pause';
++  if (answers?.clarity?.score <= 1) return 'clarify';
++  if (answers?.warmth?.score >= 2 && answers?.reciprocity?.score >= 2) return 'appreciate';
++  return 'open';
++}
+diff --git a/test/preview.test.js b/test/preview.test.js
+index 808af1d..6904881 100644
+--- a/test/preview.test.js
++++ b/test/preview.test.js
+@@ -18,6 +18,9 @@ test('browser preview serves mock Jev, blocks deployment key and external connec
+     assert.match(mock, /sk-or-preview-only/);
+     assert.doesNotMatch(mock, /fetch\(|openrouter\.ai/);
+     assert.equal((await fetch(`${base}/js/key.js`)).status, 404);
++    const illustration = await fetch(`${base}/img/vibes/friendly.svg`);
++    assert.equal(illustration.status, 200);
++    assert.match(illustration.headers.get('content-type'), /image\/svg\+xml/);
+     assert.equal((await fetch(`${base}/../README.md`)).status, 404);
+     assert.equal((await fetch(base, { method: 'POST' })).status, 405);
+   } finally {
+diff --git a/test/vibes.test.js b/test/vibes.test.js
+new file mode 100644
+index 0000000..e43bdbc
+--- /dev/null
++++ b/test/vibes.test.js
+@@ -0,0 +1,45 @@
++import { test } from 'node:test';
++import assert from 'node:assert/strict';
++import { readFile } from 'node:fs/promises';
++import { vibePoint, messageBalance, conversationIdea, VIBE_KEYS } from '../js/vibes.js';
++import en from '../js/locales/en.js';
++import de from '../js/locales/de.js';
++import fr from '../js/locales/fr.js';
++import es from '../js/locales/es.js';
++const answers = (warmth, tension, reciprocity = 2, clarity = 2) => ({
++  warmth: { score: warmth }, tension: { score: tension }, reciprocity: { score: reciprocity }, clarity: { score: clarity },
++});
++test('map uses the two displayed ordinal scores, not a personality probability', () => {
++  assert.deepEqual(vibePoint(answers(3, 0)), { x: 1, y: 0 });
++  assert.deepEqual(vibePoint(answers(0, 3)), { x: 0, y: 1 });
++  assert.equal(vibePoint(answers(2, 1), true), null);
++  assert.equal(vibePoint(answers(8, 1)), null);
++});
++test('message balance counts the two speakers without interpreting unequal lengths or frequency', () => {
++  const stats = new Map([['Ana', { messages: 4, text: 'private' }], ['Ben', { messages: 6 }]]);
++  assert.deepEqual(messageBalance(stats, ['Ana', 'Ben']), { counts: [4, 6], total: 10, shares: [0.4, 0.6] });
++  assert.equal(messageBalance(stats, ['Ana', 'Ben', 'Cy']), null);
++  assert.equal(messageBalance(null, ['Ana', 'Ben']), null);
++  assert.equal(messageBalance(new Map([['Ana', { messages: 0 }], ['Ben', { messages: 0 }]]), ['Ana', 'Ben']), null);
++});
++test('small quests are supportive and raw excerpts avoid a false inferred relationship', () => {
++  assert.equal(conversationIdea(answers(3, 0)), 'appreciate');
++  assert.equal(conversationIdea(answers(1, 2)), 'pause');
++  assert.equal(conversationIdea(answers(1, 0, 2, 0)), 'clarify');
++  assert.equal(conversationIdea(answers(3, 0), true), 'open');
++});
++test('all four labels have original illustrations and all locales explain the map', async () => {
++  const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
++  assert.match(html, /id="vibe-map"[^>]*role="img"/);
++  assert.match(html, /id="card-canvas"/);
++  for (const label of VIBE_KEYS) {
++    const svg = await readFile(new URL(`../img/vibes/${label}.svg`, import.meta.url), 'utf8');
++    assert.match(svg, /<svg[^>]*viewBox=/);
++    assert.doesNotMatch(svg, /<script|<image|<foreignObject|href=/i);
++  }
++  for (const locale of [en, de, fr, es]) {
++    assert.match(locale.visual.methodIntro, /[.!]/);
++    assert.ok(locale.visual.mapAccessible.includes('{warmth}') && locale.visual.mapAccessible.includes('{tension}'));
++    assert.ok(locale.youthNotice && locale.ideas.pause && locale.visual.sample.includes('{n}'));
++  }
++});
